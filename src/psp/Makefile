@@ -39,7 +39,9 @@ clean :
 	cd ./include; \
 	rm -f *.o; \
 	rm -f *.mod; \
-	rm -f *.a
+	rm -f *.a; \
+	cd ../test/; \
+	rm -f *.x
 
 .F90.o : 
 	$(FORTRAN) $(OPTS) $(FPPFLAGS) -c $< -I$(PSPINCLUDEPATH) -o $@
