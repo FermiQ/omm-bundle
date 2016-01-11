@@ -1,7 +1,9 @@
 SHELL     = /bin/sh
-FORTRAN   = mpiifort
+FORTRAN   = mpif90
 OPTS      = -O3
 FPPFLAGS  = -DMPI -DLAP -DSLAP
+PSPDIR    = psp/
+PSPINCLUDE= psp/include
 MSLIBPATH = MatrixSwitch-0.1.2/src/
 ARCH      = ar
 ARCHFLAGS = cr

@@ -1,20 +1,11 @@
-#-include ../src/make.inc
-#-include make.inc
-
-ifeq ($(strip $(MPI)),yes)
-  FPPFLAGS += -DMPI
-endif
-ifeq ($(strip $(LAP)),yes)
-  FPPFLAGS += -DLAP
-endif
-ifeq ($(strip $(SLAP)),yes)
-  FPPFLAGS += -DSLAP
-endif
+BASEDIR = ../src
+include ../src/make.inc
+include make.inc
 
 .SUFFIXES:
 .SUFFIXES: .x .f90 .F90
 
-all : example1.x example2.x example3.x example4.x example5.x example6.x example7.x
+all : example1.x example2.x example3.x example4.x example5.x example6.x example7.x example8.x example9.x example10.x
 
 example1.x : example1.F90
 
@@ -30,13 +21,19 @@ example6.x : example6.F90
 
 example7.x : example7.F90
 
+example8.x : example8.F90
+
+example9.x : example9.F90
+
+example10.x : example10.F90
+
 clean : 
 	rm -f *.x
 
-LINK_MACRO = $< -I../src -I../src/MatrixSwitch-0.1.2/src -L../src -lOMM -L../src/MatrixSwitch-0.1.2/src -lmatrixswitch $(SCALAPACK) -lblas -llapack -o $@
+LINK_MACRO = $< -I$(LIBPATH) -I$(MSLIBPATH) -I$(PSPINCLUDE) $(LIBPATH)/$(LIBNAME) $(MSLIB) $(PSPLIB) $(SLAPLIB) $(LAPLIB) $(BLASLIB) -o $@
 
 .F90.x : 
-	$(MPIFC) $(FCFLAGS_O) $(FPPFLAGS) $(LINK_MACRO)
+	$(FORTRAN) $(OPTS) $(FPPFLAGS) $(LINK_MACRO)
 
 .f90.x : 
-	$(MPIFC) $(FCFLAGS_O) $(LINK_MACRO)
+	$(FORTRAN) $(OPTS) $(LINK_MACRO)

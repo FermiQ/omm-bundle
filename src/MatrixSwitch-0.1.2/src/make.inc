@@ -1,8 +1,6 @@
-SHELL     = /bin/sh
-FORTRAN   = mpiifort
-OPTS      = -O3
-FPPFLAGS  = -DMPI -DLAP -DSLAP -DCONV
-ARCH      = ar
-ARCHFLAGS = cr
-RANLIB    = ranlib
-LIBNAME   = libmatrixswitch.a
+include ../../make.inc
+
+FPPFLAGS := $(FPPFLAGS) -DCONV
+LIBNAME   = MatrixSwitch.a
+PSPINCLUDE = ../../psp/include
+PSPLIB   = $(PSPINCLUDE)/libpspblas.a

@@ -1,0 +1,1008 @@
+MODULE pspUtility
+  use pspVariable
+
+#ifdef MPI
+  include 'mpif.h'
+#endif
+
+  private
+
+  !**** PARAMS ************************************!
+
+  integer, parameter :: dp=selected_real_kind(15,300)
+
+  complex(dp), parameter :: cmplx_1=(1.0_dp,0.0_dp)
+  complex(dp), parameter :: cmplx_i=(0.0_dp,1.0_dp)
+  complex(dp), parameter :: cmplx_0=(0.0_dp,0.0_dp)
+
+  !**** INTERFACES ********************************!
+
+  interface psp_coo2csc
+     module procedure psp_coo2csc
+  end interface psp_coo2csc
+
+  interface psp_csc2coo
+     module procedure psp_csc2coo
+  end interface psp_csc2coo
+
+  interface psp_copy_spm2st
+     module procedure psp_copy_dspm2st
+     module procedure psp_copy_zspm2st
+  end interface psp_copy_spm2st
+
+  interface psp_copy_m
+     module procedure psp_copy_dm
+     module procedure psp_copy_zm
+  end interface psp_copy_m
+
+  interface psp_copy_v
+     module procedure psp_copy_dv
+     module procedure psp_copy_zv
+  end interface psp_copy_v
+
+  interface psp_idx_glb2loc
+     module procedure psp_idx_glb2loc
+  end interface psp_idx_glb2loc
+
+  interface psp_sst_gespmm
+     module procedure psp_sst_dgespmm
+     module procedure psp_sst_zgespmm
+  end interface psp_sst_gespmm
+
+  interface psp_sst_gemspm
+     module procedure psp_sst_dgemspm
+     module procedure psp_sst_zgemspm
+  end interface psp_sst_gemspm
+
+  interface psp_process_opM
+     module procedure psp_process_lopM
+     module procedure psp_process_iopM
+  end interface psp_process_opM
+
+  interface die
+     module procedure die
+  end interface die
+
+  public :: psp_coo2csc
+  public :: psp_csc2coo
+  public :: psp_copy_spm2st
+  public :: psp_copy_m
+  public :: psp_copy_v
+  public :: psp_idx_glb2loc
+  public :: psp_sst_gespmm
+  public :: psp_sst_gemspm
+  public :: psp_process_opM
+
+contains
+
+  subroutine psp_coo2csc(spMat)
+
+    !**** INOUT ***********************************!
+
+    type(psp_matrix_spm), intent(inout) :: spMat
+
+    !**** INTERNAL ********************************!
+
+    integer :: j, cnt, cnt2, num
+
+    if (spMat%str_type.EQ.'coo') then
+       ! Assuming that col_ind is increscent and row_ind is increscent in each column
+       spMat%str_type='csc'
+       allocate(spMat%col_ptr(spMat%loc_dim2+1))
+       spMat%col_ptr(1)=1
+       cnt=1
+       do j=1,spMat%loc_dim2
+          num=0
+          if (cnt<=spMat%nnz) then
+             cnt2=0
+             do while (spMat%col_ind(cnt+cnt2)==j)
+                cnt2=cnt2+1
+                num=num+1
+                if (cnt+cnt2>spMat%nnz) then
+                   exit
+                end if
+             end do
+          end if
+          spMat%col_ptr(j+1)=spMat%col_ptr(j)+num
+          cnt=cnt+num
+       end do
+       deallocate(spMat%col_ind)
+    end if
+
+  end subroutine psp_coo2csc
+
+  subroutine psp_csc2coo(spMat)
+
+    !**** INOUT ***********************************!
+
+    type(psp_matrix_spm), intent(inout) :: spMat
+
+    !**** INTERNAL ********************************!
+
+    integer :: j, k, nst, jlo, jhi, klo, khi
+
+    if (spMat%str_type.EQ.'csc') then
+       spMat%str_type='coo'
+       allocate(spMat%col_ind(spMat%nnz))
+       nst=0
+       if (spMat%col_ptr(1)==0) then
+          jlo=0
+          jhi=spMat%loc_dim2-1
+          do j=jlo,jhi
+             klo=spMat%col_ptr(j+1)
+             khi=spMat%col_ptr(j+2)-1
+             do k=klo,khi
+                nst=nst+1
+                spMat%col_ind(nst)=j
+             end do
+          end do
+       else
+          jlo=1
+          jhi=spMat%loc_dim2
+          do j=jlo,jhi
+             klo=spMat%col_ptr(j)
+             khi=spMat%col_ptr(j+1)-1
+             do k=klo,khi
+                nst=nst+1
+                spMat%col_ind(nst)=j
+             end do
+          end do
+       end if
+
+       deallocate(spMat%col_ptr)
+    end if
+
+  end subroutine psp_csc2coo
+
+  subroutine psp_copy_dspm2st(M,N,A,IA,JA,B_idx1,B_idx2,B_val,B_dim1,B_dim2,IB,JB,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)
+    ! other entries of B are set to be zero
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, IA, JA, IB, JB, B_dim1, B_dim2
+    real(dp), intent(in) :: beta
+    type(psp_matrix_spm), intent(in) :: A
+
+    !**** INOUT ***********************************!
+
+    integer, allocatable, intent(inout) :: B_idx1(:), B_idx2(:)
+    real(dp), allocatable, intent(inout) :: B_val(:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, j, nnz_loc, mk, L, totalMissed, numMissed, row, numOnes
+    integer, allocatable :: tmp_idx1(:)
+    real(dp), allocatable :: tmp_val(:)
+
+    ! check sparse format
+    if (A%str_type=='coo')  call die('psp_copyspm2st only works for csc format')
+    nnz_loc=A%col_ptr(JA+N)-A%col_ptr(JA)
+    if (IA==1 .and. M==A%loc_dim1) then
+       if (allocated(B_idx1)) deallocate(B_idx1)
+       if (allocated(B_val)) deallocate(B_val)
+       if (allocated(B_idx2)) deallocate(B_idx2)      ! TODO: any efficient method to avoid this?
+       allocate(B_idx1(nnz_loc))
+       allocate(B_val(nnz_loc))
+       allocate(B_idx2(B_dim2+1))
+       mk=1
+       numOnes=A%col_ptr(JA)-A%col_ptr(1)
+       do i=JA,JA+N-1
+          L=A%col_ptr(i+1)-A%col_ptr(i)
+          do j=mk,mk+L-1
+             B_idx1(j)=A%row_ind(A%col_ptr(i)+j-mk)-(IA-IB)
+             B_val(j)=A%dval(A%col_ptr(i)+j-mk);
+          end do
+          B_idx2(i-JA+1)=A%col_ptr(i)-numOnes
+          mk=mk+L
+       end do
+       B_idx2(B_dim2+1)=A%col_ptr(JA+N)-numOnes
+    else ! In this case, the code is less efficient
+       allocate(tmp_idx1(nnz_loc))
+       allocate(tmp_val(nnz_loc))
+       if (allocated(B_idx2)) deallocate(B_idx2)      ! TODO: any efficient method to avoid this?
+       allocate(B_idx2(B_dim2+1))
+       ! no efficient row indexing, not efficient in memory, 
+       !but efficient in operation complexity
+       numOnes=JB-1
+       if(numOnes>0) B_idx2(1:numOnes)=1
+       mk=1
+       totalMissed=A%col_ptr(JA)-A%col_ptr(1)
+       do i=JA,JA+N-1
+          L=A%col_ptr(i+1)-A%col_ptr(i)
+          numMissed=0
+          do j=mk,mk+L-1
+             row=A%row_ind(A%col_ptr(i)+j-mk)
+             if (row<IA.or.row>IA+M-1) then
+                numMissed=numMissed+1
+             else
+                tmp_idx1(j-numMissed)=row-(IA-IB)
+                tmp_val(j-numMissed)=A%dval(A%col_ptr(i)+j-mk)
+             end if
+          end do
+          B_idx2(numOnes+i-JA+1)=A%col_ptr(i)-totalMissed
+          totalMissed=totalMissed+numMissed
+          mk=mk+L-numMissed
+       end do
+       do j=1,B_dim2-(JB+N-1)+1
+          B_idx2(j+N+JB-1)=A%col_ptr(JA+N)-totalMissed
+       end do
+       nnz_loc=B_idx2(B_dim2+1)-B_idx2(1)
+       if (allocated(B_idx1)) deallocate(B_idx1)
+       if (allocated(B_val)) deallocate(B_val)
+       allocate(B_idx1(nnz_loc))
+       allocate(B_val(nnz_loc))
+       B_idx1(1:nnz_loc)=tmp_idx1(1:nnz_loc)
+       B_val(1:nnz_loc)=tmp_val(1:nnz_loc)
+    end if
+
+  end subroutine psp_copy_dspm2st
+
+  subroutine psp_copy_zspm2st(M,N,A,IA,JA,B_idx1,B_idx2,B_val,B_dim1,B_dim2,IB,JB,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)
+    ! other entries of B are set to be zero
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, IA, JA, IB, JB, B_dim1, B_dim2
+    complex(dp), intent(in) :: beta
+    type(psp_matrix_spm), intent(in) :: A
+
+    !**** INOUT ***********************************!
+
+    integer, allocatable, intent(inout) :: B_idx1(:), B_idx2(:)
+    complex(dp), allocatable, intent(inout) :: B_val(:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, j, nnz_loc, mk, L, totalMissed, numMissed, row, numOnes
+    integer, allocatable :: tmp_idx1(:)
+    complex(dp), allocatable :: tmp_val(:)
+
+    ! check sparse format
+    if (A%str_type=='coo')  call die('psp_copyspm2st only works for csc format')
+    nnz_loc=A%col_ptr(JA+N)-A%col_ptr(JA)
+    if (IA==1 .and. M==A%loc_dim1) then
+       if (allocated(B_idx1)) deallocate(B_idx1)
+       if (allocated(B_val)) deallocate(B_val)
+       if (allocated(B_idx2)) deallocate(B_idx2)      ! TODO: any efficient method to avoid this?
+       allocate(B_idx1(nnz_loc))
+       allocate(B_val(nnz_loc))
+       allocate(B_idx2(B_dim2+1))
+       mk=1
+       numOnes=A%col_ptr(JA)-A%col_ptr(1)
+       do i=JA,JA+N-1
+          L=A%col_ptr(i+1)-A%col_ptr(i)
+          do j=mk,mk+L-1
+             B_idx1(j)=A%row_ind(A%col_ptr(i)+j-mk)-(IA-IB)
+             B_val(j)=A%zval(A%col_ptr(i)+j-mk);
+          end do
+          B_idx2(i-JA+1)=A%col_ptr(i)-numOnes
+          mk=mk+L
+       end do
+       B_idx2(B_dim2+1)=A%col_ptr(JA+N)-numOnes
+    else ! In this case, the code is less efficient
+       allocate(tmp_idx1(nnz_loc))
+       allocate(tmp_val(nnz_loc))
+       if (allocated(B_idx2)) deallocate(B_idx2)      ! TODO: any efficient method to avoid this?
+       allocate(B_idx2(B_dim2+1))
+       ! no efficient row indexing, not efficient in memory,
+       !but efficient in operation complexity
+       numOnes=JB-1
+       if(numOnes>0) B_idx2(1:numOnes)=1
+       mk=1
+       totalMissed=A%col_ptr(JA)-A%col_ptr(1)
+       do i=JA,JA+N-1
+          L=A%col_ptr(i+1)-A%col_ptr(i)
+          numMissed=0
+          do j=mk,mk+L-1
+             row=A%row_ind(A%col_ptr(i)+j-mk)
+             if (row<IA.or.row>IA+M-1) then
+                numMissed=numMissed+1
+             else
+                tmp_idx1(j-numMissed)=row-(IA-IB)
+                tmp_val(j-numMissed)=A%zval(A%col_ptr(i)+j-mk)
+             end if
+          end do
+          B_idx2(numOnes+i-JA+1)=A%col_ptr(i)-totalMissed
+          totalMissed=totalMissed+numMissed
+          mk=mk+L-numMissed
+       end do
+       do j=1,B_dim2-(JB+N-1)+1
+          B_idx2(j+N+JB-1)=A%col_ptr(JA+N)-totalMissed
+       end do
+       nnz_loc=B_idx2(B_dim2+1)-B_idx2(1)
+       if (allocated(B_idx1)) deallocate(B_idx1)
+       if (allocated(B_val)) deallocate(B_val)
+       allocate(B_idx1(nnz_loc))
+       allocate(B_val(nnz_loc))
+       B_idx1(1:nnz_loc)=tmp_idx1(1:nnz_loc)
+       B_val(1:nnz_loc)=tmp_val(1:nnz_loc)
+    end if
+
+  end subroutine psp_copy_zspm2st
+
+  subroutine psp_sst_dgespmm(M,N,K,opA,opB,alpha,row_ind,col_ptr,val,B,IB,JB,C,IC,JC,beta)
+    ! sequential sparse matrix (ST format) dense matrix multiplication
+    ! C(IC:IC+M-1,JC:JC+N-1) = alpha*opA(A)(1:M,1:K)*opB(B)(IB:IB+K-1,JB:JB+N-1) + beta*C(IC:IC+M-1,JC:JC+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, K, IB, JB, IC, JC
+    integer, intent(in) :: row_ind(:), col_ptr(:)
+    real(dp), intent(in) :: val(:), B(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
+    character(1), intent(in) :: opB ! form of op(B)
+
+    !**** INOUT ***********************************!
+
+    real(dp), intent(inout) :: C(:,:)
+
+    !**** LOCAL ***********************************!
+    integer :: i, idx_col, cnt
+    integer :: trA, trB, ot
+    real(dp), allocatable :: C_loc(:,:)
+
+    !**********************************************!
+    allocate(C_loc(M,N))
+    C_loc=0.0_dp
+
+    call psp_process_opM(opA,trA)
+    call psp_process_opM(opB,trB)
+    ! operation table
+    if (trA==0 .and. trB==0) then
+       ot=1
+    else if (trA==0 .and. trB>=1) then
+       ot=2
+    else if (trA>=1 .and. trB==0) then
+       ot=3
+    else if (trA>=1 .and. trB>=1) then
+       ot=4
+    else
+       call die('invalid implementation')
+    end if
+
+    select case (ot)
+    case (1)
+       do idx_col=1,K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             C_loc(row_ind(i),1:N)= alpha*val(i)*B(idx_col+IB-1,JB:JB+N-1) &
+                  + C_loc(row_ind(i),1:N)
+          end do
+       end do
+    case (2)
+       do idx_col=1,K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             do cnt = JB,JB+N-1
+                C_loc(row_ind(i),cnt-JB+1)= alpha*val(i)*B(cnt,idx_col+IB-1) &
+                     + C_loc(row_ind(i),cnt-JB+1)
+                !   C(row_ind(i)+IC-1,JC:JC+N-1)= alpha*val(i)*TRANSPOSE(B(JB:JB+N-1,idx_col+IB-1)) &
+                !+ beta*C(row_ind(i)+IC-1,JC:JC+N-1)
+             end do
+          end do
+       end do
+    case (3)
+       do idx_col=1,M!K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             C_loc(idx_col,1:N)= alpha*val(i)*B(row_ind(i)+IB-1,JB:JB+N-1) &
+                  + C_loc(idx_col,1:N)
+          end do
+       end do
+    case (4)
+       do idx_col=1,M!K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             do cnt = JB,JB+N-1
+                C_loc(idx_col,cnt-JB+1)= alpha*val(i)*B(cnt,row_ind(i)+IB-1) &
+                     + C_loc(idx_col,cnt-JB+1)
+                !C(idx_col+IC-1,JC:JC+N-1)= alpha*val(i)*TRANSPOSE(B(JB:JB+N-1,row_ind(i)+IB-1)) &
+                !+ beta*C(idx_col+IC-1,JC:JC+N-1)
+             end do
+          end do
+       end do
+    end select
+    do cnt=1,N
+       do i=1,M
+          C(i+IC-1,cnt+JC-1)=C_loc(i,cnt)+beta*C(i+IC-1,cnt+JC-1)
+       end do
+    end do
+
+    deallocate(C_loc)
+
+  end subroutine psp_sst_dgespmm
+
+  subroutine psp_sst_zgespmm(M,N,K,opA,opB,alpha,row_ind,col_ptr,val,B,IB,JB,C,IC,JC,beta)
+    ! sequential sparse matrix (ST format) dense matrix multiplication
+    ! C(IC:IC+M-1,JC:JC+N-1) = alpha*opA(A)(1:M,1:K)*opB(B)(IB:IB+K-1,JB:JB+N-1) + beta*C(IC:IC+M-1,JC:JC+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, K, IB, JB, IC, JC
+    integer, intent(in) :: row_ind(:), col_ptr(:)
+    complex(dp), intent(in) :: val(:), B(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
+    character(1), intent(in) :: opB ! form of op(B)
+
+    !**** INOUT ***********************************!
+
+    complex(dp), intent(inout) :: C(:,:)
+
+    !**** LOCAL ***********************************!
+    integer :: i, idx_col, cnt
+    integer :: trA, trB, ot
+    complex(dp), allocatable :: C_loc(:,:)
+
+    !**********************************************!
+    allocate(C_loc(M,N))
+    C_loc=0.0_dp
+
+    call psp_process_opM(opA,trA)
+    call psp_process_opM(opB,trB)
+    ! operation table
+    if (trA==0 .and. trB==0) then
+       ot=1
+    else if (trA==0 .and. trB>=1) then
+       ot=2
+    else if (trA>=1 .and. trB==0) then
+       ot=3
+    else if (trA>=1 .and. trB>=1) then
+       ot=4
+    else
+       call die('invalid implementation')
+    end if
+
+    select case (ot)
+    case (1)
+       do idx_col=1,K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=M) then
+                C_loc(row_ind(i),1:N)= alpha*val(i)*B(idx_col+IB-1,JB:JB+N-1) &
+                     + C_loc(row_ind(i),1:N)
+             end if
+          end do
+       end do
+    case (2)
+       do idx_col=1,K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=M) then
+                do cnt = JB,JB+N-1
+                   if (trB==1) then
+                      C_loc(row_ind(i),cnt-JB+1)= alpha*val(i)*CONJG(B(cnt,idx_col+IB-1)) &
+                           + C_loc(row_ind(i),cnt-JB+1)
+                   else
+
+                      C_loc(row_ind(i),cnt-JB+1)= alpha*val(i)*B(cnt,idx_col+IB-1) &
+                           + C_loc(row_ind(i),cnt-JB+1)
+                   end if
+                   !   C(row_ind(i)+IC-1,JC:JC+N-1)= alpha*val(i)*TRANSPOSE(B(JB:JB+N-1,idx_col+IB-1)) &
+                   !+ beta*C(row_ind(i)+IC-1,JC:JC+N-1)
+                end do
+             end if
+          end do
+       end do
+    case (3)
+       do idx_col=1,M!K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                if (trA==1) then
+                   C_loc(idx_col,1:N)= alpha*CONJG(val(i))*B(row_ind(i)+IB-1,JB:JB+N-1) &
+                        + C_loc(idx_col,1:N)
+                else
+                   C_loc(idx_col,1:N)= alpha*val(i)*B(row_ind(i)+IB-1,JB:JB+N-1) &
+                        + C_loc(idx_col,1:N)
+                end if
+             end if
+          end do
+       end do
+    case (4)
+       do idx_col=1,M!K
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                do cnt = JB,JB+N-1
+                   if (trA==2 .and. trB==1) then!if (trA==1 .and. trB==2) then
+                      C_loc(idx_col,cnt-JB+1)= alpha*val(i)*CONJG(B(cnt,row_ind(i)+IB-1)) &
+                           + C_loc(idx_col,cnt-JB+1)
+                   else if (trA==1 .and. trB==2) then
+                      C_loc(idx_col,cnt-JB+1)= alpha*CONJG(val(i))*B(cnt,row_ind(i)+IB-1) &
+                           + C_loc(idx_col,cnt-JB+1)
+                   else if (trA==2 .and. trB==2) then
+                      C_loc(idx_col,cnt-JB+1)= alpha*val(i)*B(cnt,row_ind(i)+IB-1) &
+                           + C_loc(idx_col,cnt-JB+1)
+                   else ! trA==1 .and. trB==1
+                      C_loc(idx_col,cnt-JB+1)= alpha*CONJG(val(i)*B(cnt,row_ind(i)+IB-1)) &
+                           + C_loc(idx_col,cnt-JB+1)
+                   end if
+                   !C(idx_col+IC-1,JC:JC+N-1)= alpha*val(i)*TRANSPOSE(B(JB:JB+N-1,row_ind(i)+IB-1)) &
+                   !+ beta*C(idx_col+IC-1,JC:JC+N-1)
+                end do
+             end if
+          end do
+       end do
+    end select
+    do cnt=1,N
+       do i=1,M
+          C(i+IC-1,cnt+JC-1)=C_loc(i,cnt)+beta*C(i+IC-1,cnt+JC-1)
+       end do
+    end do
+
+    deallocate(C_loc)
+
+  end subroutine psp_sst_zgespmm
+
+  subroutine psp_sst_dgemspm(M,N,K,opA,opB,alpha,A,IA,JA,row_ind,col_ptr,val,C,IC,JC,beta)
+    ! sequential sparse matrix (ST format) dense matrix multiplication
+    ! C(IC:IC+M-1,JC:JC+N-1) = alpha*opA(A)(IA:IA+M-1,JA:JA+K-1)*opB(B)(1:K,1:N) + beta*C(IC:IC+M-1,JC:JC+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, K, IA, JA, IC, JC
+    integer, intent(in) :: row_ind(:), col_ptr(:)
+    real(dp), intent(in) :: val(:), A(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
+    character(1), intent(in) :: opB ! form of op(B)
+
+    !**** INOUT ***********************************!
+
+    real(dp), intent(inout) :: C(:,:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, idx_col, cnt
+    integer :: trA, trB, ot
+    real(dp), allocatable :: C_loc(:,:)
+
+    !**********************************************!
+    allocate(C_loc(M,N))
+    C_loc=0.0_dp
+
+    call psp_process_opM(opA,trA)
+    call psp_process_opM(opB,trB)
+    ! operation table
+    if (trA==0 .and. trB==0) then
+       ot=1
+    else if (trA==0 .and. trB>=1) then
+       ot=2
+    else if (trA>=1 .and. trB==0) then
+       ot=3
+    else if (trA>=1 .and. trB>=1) then
+       ot=4
+    else
+       call die('invalid implementation')
+    end if
+
+    select case (ot)
+    case (1)
+       do idx_col=1,N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                C_loc(1:M,idx_col)= alpha*val(i)*A(IA:IA+M-1,row_ind(i)+JA-1) &
+                     + C_loc(1:M,idx_col)
+             end if
+          end do
+       end do
+    case (2)
+       do idx_col=1,K!N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=N) then
+                C_loc(1:M,row_ind(i))= alpha*val(i)*A(IA:IA+M-1,idx_col+JA-1) &
+                     + C_loc(1:M,row_ind(i))
+             end if
+          end do
+       end do
+    case (3)
+       do idx_col=1,N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                do cnt=IA,IA+M-1
+                   C_loc(cnt-IA+1,idx_col)= alpha*val(i)*A(row_ind(i)+JA-1,cnt) &
+                        + C_loc(cnt-IA+1,idx_col)
+                   !C(IC:IC+M-1,idx_col+JC-1)= alpha*val(i)*TRANSPOSE(A(row_ind(i)+JA-1,IA:IA+M-1)) &
+                   !+ beta*C(IC:IC+M-1,idx_col+JC-1)
+                end do
+             end if
+          end do
+       end do
+    case (4)
+       do idx_col=1,K!N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=N) then
+                do cnt=IA,IA+M-1
+                   C_loc(cnt-IA+1,row_ind(i))= alpha*val(i)*A(idx_col+JA-1,cnt) &
+                        + C_loc(cnt-IA+1,row_ind(i))
+                   !C(IC:IC+M-1,row_ind(i)+JC-1)= alpha*val(i)*TRANSPOSE(A(idx_col+JA-1,IA:IA+M-1)) &
+                   !+ beta*C(IC:IC+M-1,row_ind(i)+JC-1)
+                end do
+             end if
+          end do
+       end do
+    end select
+
+    do cnt=1,N
+       do i=1,M
+          C(i+IC-1,cnt+JC-1)=C_loc(i,cnt)+beta*C(i+IC-1,cnt+JC-1)
+       end do
+    end do
+
+  end subroutine psp_sst_dgemspm
+
+
+  subroutine psp_sst_zgemspm(M,N,K,opA,opB,alpha,A,IA,JA,row_ind,col_ptr,val,C,IC,JC,beta)
+    ! sequential sparse matrix (ST format) dense matrix multiplication
+    ! C(IC:IC+M-1,JC:JC+N-1) = alpha*opA(A)(IA:IA+M-1,JA:JA+K-1)*opB(B)(1:K,1:N) + beta*C(IC:IC+M-1,JC:JC+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, K, IA, JA, IC, JC
+    integer, intent(in) :: row_ind(:), col_ptr(:)
+    complex(dp), intent(in) :: val(:), A(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
+    character(1), intent(in) :: opB ! form of op(B)
+
+    !**** INOUT ***********************************!
+
+    complex(dp), intent(inout) :: C(:,:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, idx_col, cnt
+    integer :: trA, trB, ot
+    complex(dp), allocatable :: C_loc(:,:)
+
+    !**********************************************!
+    allocate(C_loc(M,N))
+    C_loc=cmplx_0
+
+    call psp_process_opM(opA,trA)
+    call psp_process_opM(opB,trB)
+    ! operation table
+    if (trA==0 .and. trB==0) then
+       ot=1
+    else if (trA==0 .and. trB>=1) then
+       ot=2
+    else if (trA>=1 .and. trB==0) then
+       ot=3
+    else if (trA>=1 .and. trB>=1) then
+       ot=4
+    else
+       call die('invalid implementation')
+    end if
+
+    select case (ot)
+    case (1)
+       do idx_col=1,N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                C_loc(1:M,idx_col)= alpha*val(i)*A(IA:IA+M-1,row_ind(i)+JA-1) &
+                     + C_loc(1:M,idx_col)
+             end if
+          end do
+       end do
+       !   do idx_col=1,N
+       !      do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+       !         C(IC:IC+M-1,idx_col+JC-1)= alpha*val(i)*A(IA:IA+M-1,row_ind(i)+JA-1) &
+       !!              + beta*C(IC:IC+M-1,idx_col+JC-1)
+       !      end do
+       !  end do
+    case (2)
+       do idx_col=1,K!N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=N) then
+                if (trB==1) then
+                   C_loc(1:M,row_ind(i))= alpha*CONJG(val(i))*A(IA:IA+M-1,idx_col+JA-1) &
+                        + C_loc(1:M,row_ind(i))
+                else
+                   C_loc(1:M,row_ind(i))= alpha*val(i)*A(IA:IA+M-1,idx_col+JA-1) &
+                        + C_loc(1:M,row_ind(i))
+                end if
+             end if
+          end do
+       end do
+       !    do idx_col=1,N
+       !       do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+       !          if (trB==1) then
+       !             C(IC:IC+M-1,row_ind(i)+JC-1)= alpha*CONJG(val(i))*A(IA:IA+M-1,idx_col+JA-1) &
+       !                  + beta*C(IC:IC+M-1,row_ind(i)+JC-1)
+       !          else
+       !             C(IC:IC+M-1,row_ind(i)+JC-1)= alpha*val(i)*A(IA:IA+M-1,idx_col+JA-1) &
+       !                  + beta*C(IC:IC+M-1,row_ind(i)+JC-1)
+       !          end if
+       !       end do
+       !    end do
+    case (3)
+       do idx_col=1,N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=K) then
+                do cnt=IA,IA+M-1
+                   if (trA==1) then
+                      C_loc(cnt-IA+1,idx_col)= alpha*val(i)*CONJG(A(row_ind(i)+JA-1,cnt)) &
+                           + C_loc(cnt-IA+1,idx_col)
+                   else
+                      C_loc(cnt-IA+1,idx_col)= alpha*val(i)*A(row_ind(i)+JA-1,cnt) &
+                           + C_loc(cnt-IA+1,idx_col)
+                   end if
+                   !C(IC:IC+M-1,idx_col+JC-1)= alpha*val(i)*TRANSPOSE(A(row_ind(i)+JA-1,IA:IA+M-1)) &
+                   !+ beta*C(IC:IC+M-1,idx_col+JC-1)
+                end do
+             end if
+          end do
+       end do
+       !    do idx_col=1,N
+       !       do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+       !          do cnt=IA,IA+M-1
+       !             if (trA==1) then
+       !                C(cnt-IA+IC,idx_col+JC-1)= alpha*val(i)*CONJG(A(row_ind(i)+JA-1,cnt)) &
+       !                     + beta*C(cnt-IA+IC,idx_col+JC-1)
+       !             else
+       !!               C(cnt-IA+IC,idx_col+JC-1)= alpha*val(i)*A(row_ind(i)+JA-1,cnt) &
+       !                    + beta*C(cnt-IA+IC,idx_col+JC-1)
+       !            end if
+       !C(IC:IC+M-1,idx_col+JC-1)= alpha*val(i)*TRANSPOSE(A(row_ind(i)+JA-1,IA:IA+M-1)) &
+       !+ beta*C(IC:IC+M-1,idx_col+JC-1)
+       !        end do
+       !     end do
+       !  end do
+    case (4)
+       do idx_col=1,K!N
+          do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+             if (row_ind(i)<=N) then
+                do cnt=IA,IA+M-1
+                   if (trA==1 .and. trB==2) then
+                      C_loc(cnt-IA+1,row_ind(i))= alpha*val(i)*CONJG(A(idx_col+JA-1,cnt)) &
+                           + C_loc(cnt-IA+1,row_ind(i))
+                   else if (trA==2 .and. trB==1) then
+                      C_loc(cnt-IA+1,row_ind(i))= alpha*CONJG(val(i))*A(idx_col+JA-1,cnt) &
+                           + C_loc(cnt-IA+1,row_ind(i))
+                   else if (trA==1 .and. trB==1) then
+                      C_loc(cnt-IA+1,row_ind(i))= alpha*CONJG(val(i)*A(idx_col+JA-1,cnt)) &
+                           + C_loc(cnt-IA+1,row_ind(i))
+                   else
+                      C_loc(cnt-IA+1,row_ind(i))= alpha*val(i)*A(idx_col+JA-1,cnt) &
+                           + C_loc(cnt-IA+1,row_ind(i))
+                   end if
+                   !C(IC:IC+M-1,row_ind(i)+JC-1)= alpha*val(i)*TRANSPOSE(A(idx_col+JA-1,IA:IA+M-1)) &
+                   !+ beta*C(IC:IC+M-1,row_ind(i)+JC-1)
+                end do
+             end if
+          end do
+       end do
+       !     do idx_col=1,N
+       !        do i=col_ptr(idx_col),col_ptr(idx_col+1)-1
+       !           do cnt=IA,IA+M-1
+       !              if (trA==1 .and. trB==2) then
+       !                 C(cnt-IA+IC,row_ind(i)+JC-1)= alpha*val(i)*CONJG(A(idx_col+JA-1,cnt)) &
+       !                      + beta*C(cnt-IA+IC,row_ind(i)+JC-1)
+       !              else if (trA==2 .and. trB==1) then
+       !!                 C(cnt-IA+IC,row_ind(i)+JC-1)= alpha*CONJG(val(i))*A(idx_col+JA-1,cnt) &
+       !                     + beta*C(cnt-IA+IC,row_ind(i)+JC-1)
+       !             else if (trA==1 .and. trB==1) then
+       !                C(cnt-IA+IC,row_ind(i)+JC-1)= alpha*val(i)*A(idx_col+JA-1,cnt) &
+       !                     + beta*C(cnt-IA+IC,row_ind(i)+JC-1)
+       !!             else ! trA==1 .and. trB==1
+       !               C(cnt-IA+IC,row_ind(i)+JC-1)= alpha*CONJG(val(i)*A(idx_col+JA-1,cnt)) &
+       !                    + beta*C(cnt-IA+IC,row_ind(i)+JC-1)
+       !            end if
+       !C(IC:IC+M-1,row_ind(i)+JC-1)= alpha*val(i)*TRANSPOSE(A(idx_col+JA-1,IA:IA+M-1)) &
+       !+ beta*C(IC:IC+M-1,row_ind(i)+JC-1)
+       !        end do
+       !    end do
+       ! end do
+    end select
+
+    do cnt=1,N
+       do i=1,M
+          C(i+IC-1,cnt+JC-1)=C_loc(i,cnt)+beta*C(i+IC-1,cnt+JC-1)
+       end do
+    end do
+
+  end subroutine psp_sst_zgemspm
+
+
+
+  subroutine psp_copy_dm(M,N,A,IA,JA,B,IB,JB,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, IA, JA, IB, JB
+    real(dp), intent(in) :: A(:,:), beta
+
+    !**** INOUT ***********************************!
+
+    real(dp), intent(inout) :: B(:,:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, j
+
+    do j=1,N
+       do i=1,M
+          B(IB+i-1,JB+j-1)=A(IA+i-1,JA+j-1)+beta*B(IB+i-1,JB+j-1)
+       enddo
+    enddo
+
+  end subroutine psp_copy_dm
+
+  subroutine psp_copy_zm(M,N,A,IA,JA,B,IB,JB,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, N, IA, JA, IB, JB
+    complex(dp), intent(in) :: A(:,:), beta
+
+    !**** INOUT ***********************************!
+
+    complex(dp), intent(inout) :: B(:,:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i, j
+
+    do j=1,N
+       do i=1,M
+          B(IB+i-1,JB+j-1)=A(IA+i-1,JA+j-1)+beta*B(IB+i-1,JB+j-1)
+       enddo
+    enddo
+
+  end subroutine psp_copy_zm
+
+  subroutine psp_copy_dv(M,A,IA,B,IB,beta)
+    ! B(IB:IB+M-1) = A(IA:IA+M-1)+beta*B(IB:IB+M-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, IA, IB
+    real(dp), intent(in) :: A(:), beta
+
+    !**** INOUT ***********************************!
+
+    real(dp), intent(inout) :: B(:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i
+
+    do i=1,M
+       B(IB+i-1)=A(IA+i-1)+beta*B(IB+i-1)
+    enddo
+
+  end subroutine psp_copy_dv
+
+  subroutine psp_copy_zv(M,A,IA,B,IB,beta)
+    ! B(IB:IB+M-1) = A(IA:IA+M-1)+beta*B(IB:IB+M-1)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: M, IA, IB
+    complex(dp), intent(in) :: A(:), beta
+
+    !**** INOUT ***********************************!
+
+    complex(dp), intent(inout) :: B(:)
+
+    !**** LOCAL ***********************************!
+
+    integer :: i
+
+    do i=1,M
+       B(IB+i-1)=A(IA+i-1)+beta*B(IB+i-1)
+    enddo
+
+  end subroutine psp_copy_zv
+
+  subroutine psp_idx_glb2loc(glb,bs,npproc,loc)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: glb, bs, npproc
+    !**** INOUT ***********************************!
+
+    integer, intent(inout) :: loc
+
+    !**** LOCAL ***********************************!
+
+    integer :: num_per_cycle, idx_cycle, idx_in_blk
+
+    num_per_cycle = bs*npproc
+    idx_cycle = ceiling(1.0_dp*glb/num_per_cycle) !glb is in the idx_cycle'th cycle
+    idx_in_blk = mod(glb-1,num_per_cycle)+1
+    idx_in_blk = mod(idx_in_blk-1,bs)+1 !glb is in the idx_in_blk'th position of the idx_cycle'th cycle
+    loc = (idx_cycle-1)*bs + idx_in_blk
+
+  end subroutine psp_idx_glb2loc
+
+  subroutine psp_process_lopM(opM,trM)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(1), intent(in) :: opM
+
+    !**** INOUT ***********************************!
+
+    logical, intent(inout) :: trM
+
+    !**********************************************!
+
+    if ((opM .eq. 'T') .or. &
+         (opM .eq. 't') .or. &
+         (opM .eq. 'C') .or. &
+         (opM .eq. 'c')) then
+       trM=.true.
+    else if ((opM .eq. 'N') .or. &
+         (opM .eq. 'n')) then
+       trM=.false.
+    else
+       call die('process_lopM: invalid opM')
+    end if
+
+  end subroutine psp_process_lopM
+
+  subroutine psp_process_iopM(opM,tcM)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(1), intent(in) :: opM
+
+    !**** INOUT ***********************************!
+
+    integer, intent(inout) :: tcM
+
+    !**********************************************!
+
+    if ((opM .eq. 'T') .or. &
+         (opM .eq. 't')) then
+       tcM=2
+    else if ((opM .eq. 'C') .or. &
+         (opM .eq. 'c')) then
+       tcM=1
+    else if ((opM .eq. 'N') .or. &
+         (opM .eq. 'n')) then
+       tcM=0
+    else
+       call die('process_iopM: invalid opM')
+    end if
+
+  end subroutine psp_process_iopM
+
+  subroutine die(message)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in), optional :: message
+
+    !**** INTERNAL ********************************!
+
+    logical, save :: log_start=.false.
+
+    integer :: log_unit
+
+    !**********************************************!
+
+    if (log_start) then
+       open(newunit=log_unit,file='MatrixSwitch.log',position='append')
+    else
+       open(newunit=log_unit,file='MatrixSwitch.log',status='replace')
+       log_start=.true.
+    end if
+    write(log_unit,'(a)'), 'FATAL ERROR in matrix_switch!'
+    write(log_unit,'(a)'), message
+    close(log_unit)
+    stop
+
+  end subroutine die
+
+
+END MODULE pspUtility
