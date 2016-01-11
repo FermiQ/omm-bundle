@@ -96,8 +96,12 @@ contains
     m_name%dval = val
     m_name%row_ind = idx1
     if (fmt.EQ.'coo') then
+       if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
+       allocate(m_name%col_ind(m_name%nnz))
        m_name%col_ind = idx2
     else
+       if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
+       allocate(m_name%col_ind(m_name%loc_dim2+1))
        m_name%col_ptr = idx2
     end if
 
@@ -143,8 +147,12 @@ contains
     m_name%zval = val
     m_name%row_ind = idx1
     if (fmt.EQ.'coo') then
+       if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
+       allocate(m_name%col_ind(m_name%nnz))
        m_name%col_ind = idx2
     else
+       if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
+       allocate(m_name%col_ind(m_name%loc_dim2+1))
        m_name%col_ptr = idx2
     end if
 
