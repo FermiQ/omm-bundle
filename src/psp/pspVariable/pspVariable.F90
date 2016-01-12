@@ -93,8 +93,14 @@ contains
     m_name%is_serial=.false.
     m_name%is_real=.true.
 
+    if (allocated(m_name%dval)) deallocate(m_name%dval)
+    allocate(m_name%dval(m_name%nnz))
     m_name%dval = val
+
+    if (allocated(m_name%row_ind)) deallocate(m_name%row_ind)
+    allocate(m_name%row_ind(m_name%nnz))
     m_name%row_ind = idx1
+
     if (fmt.EQ.'coo') then
        if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
        allocate(m_name%col_ind(m_name%nnz))
@@ -144,8 +150,15 @@ contains
     m_name%is_serial=.false.
     m_name%is_real=.true.
 
+
+    if (allocated(m_name%zval)) deallocate(m_name%zval)
+    allocate(m_name%zval(m_name%nnz))
     m_name%zval = val
+
+    if (allocated(m_name%row_ind)) deallocate(m_name%row_ind)
+    allocate(m_name%row_ind(m_name%nnz))
     m_name%row_ind = idx1
+
     if (fmt.EQ.'coo') then
        if (allocated(m_name%col_ind)) deallocate(m_name%col_ind)
        allocate(m_name%col_ind(m_name%nnz))

@@ -118,22 +118,30 @@ program pdgemmScaling
      DD=0.0_dp
 
      ! generate random matrices
-     call itime(timeArray)     ! Get the current time
-     i = rand ( timeArray(1)+timeArray(2)+timeArray(3) )
-     do idxr=1,m
-        do idxc=1,k
-           he=rand()
-           call pdelset(H,idxr,idxc,desc_H,he)
-           call pdelset(Ht,idxc,idxr,desc_Ht,he)
-        end do
-     end do
-     do idxr=1,k
-        do idxc=1,n
-           se=rand()
-           call pdelset(S,idxr,idxc,desc_S,se)
-           call pdelset(St,idxc,idxr,desc_St,se)
-        end do
-     end do
+     call init_random_seed()
+     !call random_seed()
+     call RANDOM_NUMBER(H)
+     call RANDOM_NUMBER(Ht)
+
+     call RANDOM_NUMBER(S)
+     call RANDOM_NUMBER(St)
+
+     !    call itime(timeArray)     ! Get the current time
+     !    i = rand ( timeArray(1)+timeArray(2)+timeArray(3) )
+     !    do idxr=1,m
+     !       do idxc=1,k
+     !          he=rand()
+     !          call pdelset(H,idxr,idxc,desc_H,he)
+     !          call pdelset(Ht,idxc,idxr,desc_Ht,he)
+     !       end do
+     !    end do
+     !    do idxr=1,k
+     !       do idxc=1,n
+     !          se=rand()
+     !          call pdelset(S,idxr,idxc,desc_S,se)
+     !          call pdelset(St,idxc,idxr,desc_St,se)
+     !       end do
+     !    end do  
   end if
 
   !***********************************
@@ -162,7 +170,7 @@ program pdgemmScaling
   if (MPI_rank==0) print *, 'process grid', nprow, npcol
   if (MPI_rank==0) print *, 'block size', bs_def_row, bs_def_col
 
-   !************************************************************************!
+  !************************************************************************!
   if (mpi_rank==0) print *,  'Begin n n'
   t0 = MPI_Wtime()
   do i=1,niter
@@ -219,7 +227,7 @@ program pdgemmScaling
   if (mpi_rank==0) print *, 'time psp_gemspm = n n ', dtime, 'error of psp_gemspm: n n ', err
   if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', 0.0_dp
 
-   !************************************************************************!
+  !************************************************************************!
   if (mpi_rank==0) print *,  'Begin n t'
   D=0.0_dp
   t0=MPI_Wtime()

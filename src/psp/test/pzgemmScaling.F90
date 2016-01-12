@@ -30,6 +30,7 @@ program pzgemmScaling
 
   complex(dp) :: he, se
   real(dp) :: her,ser
+  real(dp) :: rpt, cpt
   complex(dp), allocatable :: H(:,:), S(:,:), D(:,:), DD(:,:), Ht(:,:), St(:,:), Dt(:,:)
   real(dp) :: dtime, t0, t1, mm_err, err
   integer*4 timeArray(3)    ! Holds the hour, minute, and second
@@ -54,7 +55,7 @@ program pzgemmScaling
 
   ! set up parameters for parallel computing test
   niter=1
-  nprow=4!INT(sqrt(DBLE(mpi_size)))
+  nprow=INT(sqrt(DBLE(mpi_size)))
   npcol=mpi_size/nprow
   order='r' ! important TODO: check how to adapt to different orders
   bs_def_row=10
@@ -122,22 +123,44 @@ program pzgemmScaling
      DD=cmplx_0
 
      ! generate random matrices
-     call itime(timeArray)     ! Get the current time
-     i = rand ( timeArray(1)+timeArray(2)+timeArray(3) )
-     do idxr=1,m
-        do idxc=1,k
-           he=CMPLX(rand(),rand())
-           call pzelset(H,idxr,idxc,desc_H,he)
-           call pzelset(Ht,idxc,idxr,desc_Ht,he)
+     if (.true.) then
+        call init_random_seed()
+        do idxr=1,m
+           do idxc=1,k
+              call RANDOM_NUMBER(rpt)
+              call RANDOM_NUMBER(cpt)
+              he=CMPLX(rpt,cpt)
+              call pzelset(H,idxr,idxc,desc_H,he)
+              call pzelset(Ht,idxc,idxr,desc_Ht,he)
+           end do
         end do
-     end do
-     do idxr=1,k
-        do idxc=1,n
-           se=CMPLX(rand(),rand())
-           call pzelset(S,idxr,idxc,desc_S,se)
-           call pzelset(St,idxc,idxr,desc_St,se)
+        do idxr=1,k
+           do idxc=1,n
+              call RANDOM_NUMBER(rpt)
+              call RANDOM_NUMBER(cpt)
+              se=CMPLX(rpt,cpt)
+              call pzelset(S,idxr,idxc,desc_S,se)
+              call pzelset(St,idxc,idxr,desc_St,se)
+           end do
         end do
-     end do
+        !    else
+        !       call itime(timeArray)     ! Get the current time
+        !       i = rand ( timeArray(1)+timeArray(2)+timeArray(3) )
+        !       do idxr=1,m
+        !          do idxc=1,k
+        !             he=CMPLX(rand(),rand())
+        !             call pzelset(H,idxr,idxc,desc_H,he)
+        !             call pzelset(Ht,idxc,idxr,desc_Ht,he)
+        !          end do
+        !       end do
+        !       do idxr=1,k
+        !          do idxc=1,n
+        !             se=CMPLX(rand(),rand())
+        !             call pzelset(S,idxr,idxc,desc_S,se)
+        !             call pzelset(St,idxc,idxr,desc_St,se)
+        !          end do
+        !       end do
+     end if
   end if
 
   !***********************************

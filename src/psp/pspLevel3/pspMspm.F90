@@ -283,7 +283,7 @@ contains
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
-          allocate(B_loc_idx2(width+1))
+          allocate(B_loc_idx2(B_loc_dim(2)+1))
        end if
        call MPI_Bcast(B_loc_idx2, B_loc_dim(2)+1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
        nnz_loc=B_loc_idx2(B_loc_dim(2)+1)-B_loc_idx2(1)
@@ -418,7 +418,7 @@ contains
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
-          allocate(B_loc_idx2(width+1))
+          allocate(B_loc_idx2(B_loc_dim(2)+1))
        end if
        call MPI_Bcast(B_loc_idx2, B_loc_dim(2)+1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
        nnz_loc=B_loc_idx2(B_loc_dim(2)+1)-B_loc_idx2(1)
@@ -795,7 +795,7 @@ contains
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
-          allocate(B_loc_idx2(width+1))
+          allocate(B_loc_idx2(B_loc_dim(2)+1))
        end if
        call MPI_Bcast(B_loc_idx2, B_loc_dim(2)+1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
        nnz_loc=B_loc_idx2(B_loc_dim(2)+1)-B_loc_idx2(1)
@@ -930,7 +930,7 @@ contains
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
-          allocate(B_loc_idx2(width+1))
+          allocate(B_loc_idx2(B_loc_dim(2)+1))
        end if
        call MPI_Bcast(B_loc_idx2, B_loc_dim(2)+1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
        nnz_loc=B_loc_idx2(B_loc_dim(2)+1)-B_loc_idx2(1)
