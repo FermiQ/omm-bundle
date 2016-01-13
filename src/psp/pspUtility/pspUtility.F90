@@ -986,8 +986,13 @@ contains
   subroutine init_random_seed()
     use iso_fortran_env, only: int64
     implicit none
+
+#ifdef MPI
+include 'mpif.h'
+#endif
+
     integer, allocatable :: seed(:)
-    integer :: i, n, un, istat, dt(8), pid
+    integer :: i, n, un, istat, dt(8), pid, mpi_err
     integer(int64) :: t
 
     call random_seed(size = n)
@@ -1012,7 +1017,7 @@ contains
                + dt(6) * 60 * 1000 + dt(7) * 1000 &
                + dt(8)
        end if
-       pid = getpid()
+       call mpi_comm_rank(mpi_comm_world,pid,mpi_err)
        t = ieor(t, int(pid, kind(t)))
        do i = 1, n
           seed(i) = lcg(t)
