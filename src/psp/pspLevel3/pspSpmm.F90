@@ -270,12 +270,16 @@ contains
        else
           if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
           if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+          if (allocated(A_loc_val)) deallocate(A_loc_val)
           allocate(A_loc_idx2(width+1))
           allocate(A_loc_idx1(1))
+          allocate(A_loc_val(1))
        end if
 
        ! boardcast in row
-       call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       end if
        L=size(A_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=width+1) then
@@ -293,7 +297,6 @@ contains
        end if
        call MPI_Bcast(A_loc_idx1, nnz_loc, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
        call MPI_Bcast(A_loc_val, nnz_loc, MPI_DOUBLE, idx_pcol, psp_mpi_comm_row,mpi_err)
-
 
        idx_prow = mod(idx_k_row-1,nprow) ! identify the processor owing B(kth block,:), the cart coordinate
        if (iprow==idx_prow) then
@@ -539,12 +542,16 @@ contains
        else
           if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
           if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+          if (allocated(A_loc_val)) deallocate(A_loc_val)
           allocate(A_loc_idx2(width+1))
           allocate(A_loc_idx1(1))
+          allocate(A_loc_val(1))
        end if
 
        ! boardcast in row
-       call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       end if
        L=size(A_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=width+1) then
@@ -776,12 +783,16 @@ contains
        else
           if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
           if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+          if (allocated(A_loc_val)) deallocate(A_loc_val)
           allocate(A_loc_idx2(width+1))
           allocate(A_loc_idx1(1))
+          allocate(A_loc_val(1))
        end if
 
        ! boardcast in row
-       call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       end if
        L=size(A_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=width+1) then
@@ -1045,12 +1056,16 @@ contains
        else
           if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
           if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+          if (allocated(A_loc_val)) deallocate(A_loc_val)
           allocate(A_loc_idx2(width+1))
           allocate(A_loc_idx1(1))
+          allocate(A_loc_val(1))
        end if
 
        ! boardcast in row
-       call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_pcol, psp_mpi_comm_row,mpi_err)
+       end if
        L=size(A_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=width+1) then

@@ -273,12 +273,16 @@ contains
        else
           if (allocated(B_loc_idx1)) deallocate(B_loc_idx1)
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
+          if (allocated(B_loc_val)) deallocate(B_loc_val)
           allocate(B_loc_idx2(B_loc_dim(2)+1))
           allocate(B_loc_idx1(1))
+          allocate(B_loc_val(1))
        end if
 
        ! boardcast in column
-       call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       end if
        L=size(B_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
@@ -408,12 +412,16 @@ contains
        else
           if (allocated(B_loc_idx1)) deallocate(B_loc_idx1)
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
+          if (allocated(B_loc_val)) deallocate(B_loc_val)
           allocate(B_loc_idx2(B_loc_dim(2)+1))
           allocate(B_loc_idx1(1))
+          allocate(B_loc_val(1))
        end if
 
        ! boardcast in column
-       call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       end if
        L=size(B_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
@@ -785,12 +793,16 @@ contains
        else
           if (allocated(B_loc_idx1)) deallocate(B_loc_idx1)
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
+          if (allocated(B_loc_val)) deallocate(B_loc_val)
           allocate(B_loc_idx2(B_loc_dim(2)+1))
           allocate(B_loc_idx1(1))
+          allocate(B_loc_val(1))
        end if
 
        ! boardcast in column
-       call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       end if
        L=size(B_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
@@ -920,12 +932,16 @@ contains
        else
           if (allocated(B_loc_idx1)) deallocate(B_loc_idx1)
           if (allocated(B_loc_idx2)) deallocate(B_loc_idx2)
+          if (allocated(B_loc_val)) deallocate(B_loc_val)
           allocate(B_loc_idx2(B_loc_dim(2)+1))
           allocate(B_loc_idx1(1))
+          allocate(B_loc_val(1))
        end if
 
        ! boardcast in column
-       call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       if (psp_update_rank>1) then
+          call MPI_Bcast(width, 1, MPI_INT, idx_prow, psp_mpi_comm_col,mpi_err)
+       end if
        L=size(B_loc_idx2)
        ! data to be boardcast have the same size in every processor
        if (L/=B_loc_dim(2)+1) then
