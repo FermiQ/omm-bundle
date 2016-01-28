@@ -237,8 +237,8 @@ contains
     B_loc=0.0_dp
     C_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
-    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
-    C_loc=0.0_dp
+    !    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
+    !    C_loc=0.0_dp
 
     !**** Test input *****************************!
 
@@ -262,7 +262,7 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol) ! identify the processor owning A(:,kth block), the cart coordinate
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
@@ -276,7 +276,7 @@ contains
        idx_prow = mod(idx_k_row-1,nprow) ! identify the processor owing B(kth block,:), the cart coordinate
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           end if
@@ -286,12 +286,24 @@ contains
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE, idx_prow, psp_mpi_comm_col,mpi_err)
 
        ! compute local update of C
-       call dgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,1.0_dp,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
-            1.0_dp,C_loc,C_loc_dim(1))
-       !C_loc=MATMUL(A_loc,B_loc)+C_loc
+       if (kloop==1) then
+          !C=MATMUL(A_loc,B_loc)+beta*C
+          call dgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,1.0_dp,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+               beta,C,C_loc_dim(1))
+       else
+          !C=MATMUL(A_loc,B_loc)+C
+          call dgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,1.0_dp,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+               1.0_dp,C,C_loc_dim(1))
+       end if
     enddo
-    !C=beta*C+C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
+
+    !       ! compute local update of C
+    !       call dgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,1.0_dp,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+    !            1.0_dp,C_loc,C_loc_dim(1))
+    !       !C_loc=MATMUL(A_loc,B_loc)+C_loc
+    !    enddo
+    !    !C=beta*C+C_loc
+    !    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(B_loc)) deallocate(B_loc)
@@ -389,7 +401,7 @@ contains
        idx_prow = mod(idx_k_row-1,nprow)
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           endif
@@ -412,7 +424,7 @@ contains
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           !C=beta*C+C_loc
           call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,beta)
        end if
@@ -514,7 +526,7 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol)
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
@@ -535,7 +547,7 @@ contains
 
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           !C=beta*C+C_loc
           call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,beta)
        end if
@@ -724,8 +736,8 @@ contains
     B_loc=cmplx_0
     C_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
-    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
-    C_loc=cmplx_0
+    !    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
+    !    C_loc=cmplx_0
 
     !**** Test input *****************************!
 
@@ -747,7 +759,7 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol) ! identify the processor owning A(:,kth block), the cart coordinate
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
@@ -761,7 +773,7 @@ contains
        idx_prow = mod(idx_k_row-1,nprow) ! identify the processor owing B(kth block,:), the cart coordinate
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           end if
@@ -771,12 +783,23 @@ contains
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE_COMPLEX,  idx_prow, psp_mpi_comm_col,mpi_err)
 
        ! compute local update of C
-       call zgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,cmplx_1,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
-            cmplx_1,C_loc,C_loc_dim(1))
-       !C_loc=MATMUL(A_loc,B_loc)+C_loc
+       if (kloop==1) then
+          !C=MATMUL(A_loc,B_loc)+beta*C
+          call zgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,cmplx_1,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+               beta,C,C_loc_dim(1))
+       else
+          !C=MATMUL(A_loc,B_loc)+C
+          call zgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,cmplx_1,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+               cmplx_1,C,C_loc_dim(1))
+       end if
     enddo
-    !C=beta*C+C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
+    !       ! compute local update of C
+    !       call zgemm('n','n',C_loc_dim(1),C_loc_dim(2),width,cmplx_1,A_loc,A_loc_dim(1),B_loc,psp_update_rank, &
+    !            cmplx_1,C_loc,C_loc_dim(1))
+    !       !C_loc=MATMUL(A_loc,B_loc)+C_loc
+    !    enddo
+    !    !C=beta*C+C_loc
+    !    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(B_loc)) deallocate(B_loc)
@@ -874,7 +897,7 @@ contains
        idx_prow = mod(idx_k_row-1,nprow)
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           endif
@@ -897,7 +920,7 @@ contains
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           !C=beta*C+C_loc
           call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,beta)
        end if
@@ -999,7 +1022,7 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol)
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
@@ -1020,7 +1043,7 @@ contains
 
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
+          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           !C=beta*C+C_loc
           call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,beta)
        end if
