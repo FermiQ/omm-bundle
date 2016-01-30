@@ -1,8 +1,8 @@
 !==================================================================================================!
-! example9 : k points, spin unpolarized                                                            !
+! example12 : k points, spin unpolarized                                                           !
 !                                                                                                  !
-! This example is the same as example3, but demonstrates the use of the wrappers and sparse        !
-! matrices.                                                                                        !
+! This example is the same as example9, but demonstrates the use of the wrappers and sparse        !
+! matrices in a CSC format                                                                         !
 !                                                                                                  !
 ! Sample output can be found in example3.out and example3_libOMM.log                               !
 !                                                                                                  !
@@ -18,7 +18,8 @@
 !   not available in the current version of sparse libomm,                                         !
 !   TODO: level1 pspBLAS                                                                           !
 !==================================================================================================!
-program example9
+program example12
+  use MatrixSwitch
 
   implicit none
 #ifdef MPI
@@ -52,6 +53,7 @@ program example9
   complex(dp) :: cmplx_he, cmplx_se
 
   complex(dp), allocatable :: H(:,:,:), S(:,:,:), D_min(:,:,:), ED_min(:,:,:), C_min(:,:,:), T(:,:)
+  type(matrix) :: Hsp, Ssp
 
   !**********************************************!
 
@@ -70,6 +72,7 @@ program example9
   bs_def=16
   call blacs_get(-1,0,icontxt)
   call blacs_gridinit(icontxt,order,nprow,npcol)
+  call ms_scalapack_setup(mpi_size,nprow,order,bs_def,icontxt=icontxt)
 #else
   mpi_rank=0
 #endif
@@ -116,101 +119,110 @@ program example9
 
   do imd=1,2
 
-    do iscf=1,5
+     do iscf=1,5
 
-      if (mpi_rank==0) then
-        print('(a)'), '//////////////////////////'
-        print('(a,1x,i1,a,1x,i1,a)'), '/ MD STEP', imd, ' - SCF STEP', iscf, ' /'
-        print('(a)'), '//////////////////////////'
-        print('()')
-      end if
+        if (mpi_rank==0) then
+           print('(a)'), '//////////////////////////'
+           print('(a,1x,i1,a,1x,i1,a)'), '/ MD STEP', imd, ' - SCF STEP', iscf, ' /'
+           print('(a)'), '//////////////////////////'
+           print('()')
+        end if
 
-      write(file_name,'(a,i1,a,i1,a)') 'data/example3_', imd, '_', iscf, '.dat'
-      open(10,file=file_name)
-      H=cmplx_0
-      if (iscf==1) S=cmplx_0
-      do i=1,m*m
-        read(10,'(2(1x,i5),16(1x,f21.15))',iostat=iostat) k, l, he(1:2), se(1:2), &
-                                                                he(3:4), se(3:4), &
-                                                                he(5:6), se(5:6), &
-                                                                he(7:8), se(7:8)
-        if (iostat/=0) exit
-        do j=1,nk
-          cmplx_se=cmplx(se(2*j-1),se(2*j),dp)
-          cmplx_he=cmplx(he(2*j-1),he(2*j),dp)-eta*cmplx_se
+        write(file_name,'(a,i1,a,i1,a)') 'data/example3_', imd, '_', iscf, '.dat'
+        open(10,file=file_name)
+        H=cmplx_0
+        if (iscf==1) S=cmplx_0
+        do i=1,m*m
+           read(10,'(2(1x,i5),16(1x,f21.15))',iostat=iostat) k, l, he(1:2), se(1:2), &
+                he(3:4), se(3:4), &
+                he(5:6), se(5:6), &
+                he(7:8), se(7:8)
+           if (iostat/=0) exit
+           do j=1,nk
+              cmplx_se=cmplx(se(2*j-1),se(2*j),dp)
+              cmplx_he=cmplx(he(2*j-1),he(2*j),dp)-eta*cmplx_se
 #ifdef MPI
-        call pzelset(H(1,1,j),k,l,desc_H,cmplx_he)
-        if (iscf==1) call pzelset(S(1,1,j),k,l,desc_S,cmplx_se)
+              call pzelset(H(1,1,j),k,l,desc_H,cmplx_he)
+              if (iscf==1) call pzelset(S(1,1,j),k,l,desc_S,cmplx_se)
 #else
-          H(k,l,j)=cmplx_he
-          if (iscf==1) S(k,l,j)=cmplx_se
+              H(k,l,j)=cmplx_he
+              if (iscf==1) S(k,l,j)=cmplx_se
 #endif
+           end do
         end do
-      end do
-      close(10)
+        close(10)
 
-      if (iscf==1) then
-        new_S=.true.
-      else
-        new_S=.false.
-      end if
-      do i=1,nk
-        if (mpi_rank==0) print('(a,1x,i1,a,1x,i1,a)'), 'k point', i, ' of', nk, '...'
-        if ((imd>0) .and. (iscf==1) .and. (i>1)) then
+        if (iscf==1) then
+           new_S=.true.
+        else
+           new_S=.false.
+        end if
+        do i=1,nk
+           if (mpi_rank==0) print('(a,1x,i1,a,1x,i1,a)'), 'k point', i, ' of', nk, '...'
+           if ((imd>0) .and. (iscf==1) .and. (i>1)) then
 #ifdef MPI
-          C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),1:C_min_dim(2),i-1)
-          call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+              ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
+              call m_register_pdsp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
+              call m_register_pdsp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
+              C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),1:C_min_dim(2),i-1)
+              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.true.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
                    i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-          C_min(1:n,1:m,i)=C_min(1:n,1:m,i-1)
-          call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.true.,.false.,T,&
+              C_min(1:n,1:m,i)=C_min(1:n,1:m,i-1)
+              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.true.,.false.,T,&
                    0.0_dp,flavour,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
-        else
+           else
 #ifdef MPI
-          call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+              call m_register_pdsp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
+              call m_register_pdsp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
+              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
                    i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-          call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.false.,.false.,T,&
+              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.false.,.false.,T,&
                    0.0_dp,flavour,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
+           end if
+        end do
+
+        if (mpi_rank==0) then
+           print('()')
+           print('(a,f21.15)'), 'e_min : ', 0.25_dp*sum(e_min(:))
         end if
-      end do
 
-      if (mpi_rank==0) then
-        print('()')
-        print('(a,f21.15)'), 'e_min : ', 0.25_dp*sum(e_min(:))
-      end if
+        do i=1,nk
+           if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'D_11  : ', real(D_min(1,1,i),dp), ' , ', aimag(D_min(1,1,i)), &
+                ' (k point', i, ')'
+        end do
+        if (mpi_rank==0) print('()')
 
-      do i=1,nk
-        if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'D_11  : ', real(D_min(1,1,i),dp), ' , ', aimag(D_min(1,1,i)), &
-                             ' (k point', i, ')'
-      end do
-      if (mpi_rank==0) print('()')
+     end do
 
-    end do
-
-    do i=1,nk
-      if ((imd==2) .and. (i==nk)) then
-        dealloc=.true.
-      else
-        dealloc=.false.
-      end if
+     do i=1,nk
+        if ((imd==2) .and. (i==nk)) then
+           dealloc=.true.
+        else
+           dealloc=.false.
+        end if
 #ifdef MPI
-      call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
-               desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,i,&
-               -1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
+        ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
+        call m_register_pdsp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
+        call m_register_pdsp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
+
+        call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
+             desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,i,&
+             -1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-      call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),.false.,e_min(i),ED_min(1,1,i),.true.,eta,C_min(1,1,i),.false.,.false.,T,&
-               0.0_dp,flavour,nk,i,-1.0_dp,.true.,dealloc,mpi_rank)
+        call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),.false.,e_min(i),ED_min(1,1,i),.true.,eta,C_min(1,1,i),.false.,.false.,T,&
+             0.0_dp,flavour,nk,i,-1.0_dp,.true.,dealloc,mpi_rank)
 #endif
-    
-      if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'ED_11  : ', real(ED_min(1,1,i),dp), ' , ', aimag(ED_min(1,1,i)), &
-                           ' (k point', i, ')'
-    end do
-    if (mpi_rank==0) print('()')
+
+        if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'ED_11  : ', real(ED_min(1,1,i),dp), ' , ', aimag(ED_min(1,1,i)), &
+             ' (k point', i, ')'
+     end do
+     if (mpi_rank==0) print('()')
 
   end do
 
@@ -223,9 +235,11 @@ program example9
   deallocate(se)
   deallocate(he)
   deallocate(e_min)
+  call m_deallocate(Hsp)
+  call m_deallocate(Ssp)
 
 #ifdef MPI
   call mpi_finalize(mpi_err)
 #endif
 
-end program example9
+end program example12

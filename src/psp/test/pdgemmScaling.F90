@@ -125,23 +125,6 @@ program pdgemmScaling
 
      call RANDOM_NUMBER(S)
      call RANDOM_NUMBER(St)
-
-     !    call itime(timeArray)     ! Get the current time
-     !    i = rand ( timeArray(1)+timeArray(2)+timeArray(3) )
-     !    do idxr=1,m
-     !       do idxc=1,k
-     !          he=rand()
-     !          call pdelset(H,idxr,idxc,desc_H,he)
-     !          call pdelset(Ht,idxc,idxr,desc_Ht,he)
-     !       end do
-     !    end do
-     !    do idxr=1,k
-     !       do idxc=1,n
-     !          se=rand()
-     !          call pdelset(S,idxr,idxc,desc_S,se)
-     !          call pdelset(St,idxc,idxr,desc_St,se)
-     !       end do
-     !    end do  
   end if
 
   !***********************************
@@ -179,7 +162,7 @@ program pdgemmScaling
   t1 = MPI_Wtime()
   dtime=(t1-t0)/DBLE(niter)
   if (mpi_rank==0) print *, 'time of Scalapack = n n ', dtime
-  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -192,7 +175,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gemm = n n ', dtime, 'error of psp_gemm: n n ', err
-  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', err
 
   ! format conversion
   call psp_coo2csc(Hsp)
@@ -208,7 +191,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gespmm = n n ', dtime, 'error of psp_gespmm: n n ', err
-  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', err
 
   ! format conversion
   call psp_coo2csc(Ssp)
@@ -225,7 +208,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time psp_gemspm = n n ', dtime, 'error of psp_gemspm: n n ', err
-  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   nn   time  ', dtime, '  err  ', err
 
   !************************************************************************!
   if (mpi_rank==0) print *,  'Begin n t'
@@ -237,7 +220,7 @@ program pdgemmScaling
   t1 = MPI_Wtime()
   dtime=(t1-t0)/DBLE(niter)
   if (mpi_rank==0) print *, 'time of Scalapack = n t ', dtime
-  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', err
 
 
   DD=0.0_dp
@@ -251,7 +234,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gemm = n t ', dtime, 'error of psp_gemm: n t ', err
-  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', err
 
 
   DD=0.0_dp
@@ -265,7 +248,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gespmm = n t ', dtime, 'error of psp_gespmm: n t ', err
-  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -278,7 +261,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time psp_gemspm = n t ', dtime, 'error of psp_gemspm: n t ', err
-  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   nt   time  ', dtime, '  err  ', err
 
 
   !************************************************************************!
@@ -291,7 +274,7 @@ program pdgemmScaling
   t1 = MPI_Wtime()
   dtime=(t1-t0)/DBLE(niter)
   if (mpi_rank==0) print *, 'time of Scalapack = t n ', dtime
-  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -304,7 +287,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gemm = t n ', dtime, 'error of psp_gemm: t n ', err
-  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -317,7 +300,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gespmm = t n ', dtime, 'error of psp_gespmm: t n ', err
-  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   !call m_set(Dms,'general',0.0_dp,0.0_dp) ! Dms%zval(i,j)=0.0_dp
@@ -331,7 +314,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time psp_gemspm = t n ', dtime, 'error of psp_gemspm: t n ', err
-  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   tn   time  ', dtime, '  err  ', err
 
 
   !************************************************************************!
@@ -344,7 +327,7 @@ program pdgemmScaling
   t1 = MPI_Wtime()
   dtime=(t1-t0)/DBLE(niter)
   if (mpi_rank==0) print *, 'time of Scalapack = t t ', dtime
-  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(11,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -357,7 +340,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gemm = t t ', dtime, 'error of psp_gemm: t t ', err
-  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(13,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   t0 = MPI_Wtime()
@@ -370,7 +353,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time of psp_gespmm = t t ', dtime, 'error of psp_gespmm: t t ', err
-  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(14,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', err
 
   DD=0.0_dp
   !call m_set(Dms,'general',0.0_dp,0.0_dp) ! Dms%zval(i,j)=0.0_dp
@@ -384,7 +367,7 @@ program pdgemmScaling
   err=0.0_dp
   call MPI_REDUCE(mm_err, err, 1, MPI_DOUBLE, MPI_SUM, 0, mpi_comm_world, mpi_err)
   if (mpi_rank==0) print *, 'time psp_gemspm = t t ', dtime, 'error of psp_gemspm: t t ', err
-  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', 0.0_dp
+  if (mpi_rank==0)  write(15,5) 'n  ', mpi_size, ' type   tt   time  ', dtime, '  err  ', err
 
   close(11)
   close(13)

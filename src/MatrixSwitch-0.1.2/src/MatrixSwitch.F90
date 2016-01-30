@@ -1921,7 +1921,9 @@ contains
     integer :: dim(2)
 
     !**********************************************!
-
+    if (m_name%is_initialized .EQV. .true.) then
+       call m_deallocate(m_name)
+    end if
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
@@ -1969,7 +1971,9 @@ contains
     integer :: dim(2)
 
     !**********************************************!
-
+    if (m_name%is_initialized .EQV. .true.) then
+       call m_deallocate(m_name)
+    end if
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
@@ -2030,7 +2034,9 @@ contains
 
     !**********************************************!
     call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
-
+    if (m_name%is_initialized .EQV. .true.) then
+       call m_deallocate(m_name)
+    end if
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
@@ -2087,7 +2093,9 @@ contains
 
     !**********************************************!
     call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
-
+    if (m_name%is_initialized .EQV. .true.) then
+       call m_deallocate(m_name)
+    end if
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)

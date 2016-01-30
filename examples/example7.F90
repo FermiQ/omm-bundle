@@ -127,9 +127,9 @@ program example7
         new_S=.false.
       end if
 #ifdef MPI
-      call omm_pddbc_spm(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,new_S,e_min,D_min_dim,D_min,desc_D_min,.false.,eta,C_min_dim,&
-               C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,&
-               bs_def,icontxt)
+      call omm_pddbc_lap2spm(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,new_S,e_min,D_min_dim,D_min,desc_D_min,.false.,eta,&
+               C_min_dim,C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,.false.,mpi_rank,&
+               mpi_size,nprow,order,bs_def,icontxt)
 #else
       call omm_sdden_ref(m,n,H,.true.,S,new_S,e_min,D_min,.false.,eta,C_min,.false.,.false.,T,0.0_dp,0,1,1,-1.0_dp,.true.,.false.,&
                mpi_rank)
@@ -152,9 +152,9 @@ program example7
       dealloc=.false.
     end if
 #ifdef MPI
-    call omm_pddbc_spm(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,.false.,e_min,ED_min_dim,ED_min,desc_ED_min,.true.,eta,C_min_dim,&
-             C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,&
-             bs_def,icontxt)
+    call omm_pddbc_lap2spm(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,.false.,e_min,ED_min_dim,ED_min,desc_ED_min,.true.,eta,&
+             C_min_dim,C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,dealloc,mpi_rank,&
+             mpi_size,nprow,order,bs_def,icontxt)
 #else
     call omm_sdden_ref(m,n,H,.true.,S,.false.,e_min,ED_min,.true.,eta,C_min,.false.,.false.,T,0.0_dp,0,1,1,-1.0_dp,.true.,dealloc,&
              mpi_rank)

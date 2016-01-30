@@ -1746,14 +1746,14 @@ contains
 
 
 
-  subroutine psp_copy_dm(M,N,A,IA,JA,B,IB,JB,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+  subroutine psp_copy_dm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in) :: M, N, IA, JA, IB, JB
-    real(dp), intent(in) :: A(:,:), beta
+    real(dp), intent(in) :: A(:,:), alpha, beta
 
     !**** INOUT ***********************************!
 
@@ -1768,30 +1768,48 @@ contains
     IA_1=IA-1
     JA_1=JA-1
 
-    if (beta/=0.0_dp) then
-       do j=1,N
-          do i=1,M
-             B(IB_1+i,JB_1+j)=A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+    if (alpha/=0.0_dp) then
+       if (beta/=0.0_dp) then
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+             enddo
           enddo
-       enddo
+       else
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
+             enddo
+          enddo
+       end if
     else
-       do j=1,N
-          do i=1,M
-             B(IB_1+i,JB_1+j)=A(IA_1+i,JA_1+j)
+       if (beta/=0.0_dp) then
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=beta*B(IB_1+i,JB_1+j)
+             enddo
           enddo
-       enddo
+       else
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=0.0_dp
+             enddo
+          enddo
+       end if
     end if
+
+
 
   end subroutine psp_copy_dm
 
-  subroutine psp_copy_zm(M,N,A,IA,JA,B,IB,JB,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+  subroutine psp_copy_zm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in) :: M, N, IA, JA, IB, JB
-    complex(dp), intent(in) :: A(:,:), beta
+    complex(dp), intent(in) :: A(:,:), alpha, beta
 
     !**** INOUT ***********************************!
 
@@ -1806,18 +1824,34 @@ contains
     IA_1=IA-1
     JA_1=JA-1
 
-    if (beta/=cmplx_0) then
-       do j=1,N
-          do i=1,M
-             B(IB_1+i,JB_1+j)=A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+    if (alpha/=cmplx_0) then
+       if (beta/=cmplx_0) then
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+             enddo
           enddo
-       enddo
+       else
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
+             enddo
+          enddo
+       end if
     else
-       do j=1,N
-          do i=1,M
-             B(IB_1+i,JB_1+j)=A(IA_1+i,JA_1+j)
+       if (beta/=cmplx_0) then
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=beta*B(IB_1+i,JB_1+j)
+             enddo
           enddo
-       enddo
+       else
+          do j=1,N
+             do i=1,M
+                B(IB_1+i,JB_1+j)=cmplx_0
+             enddo
+          enddo
+       end if
     end if
 
   end subroutine psp_copy_zm

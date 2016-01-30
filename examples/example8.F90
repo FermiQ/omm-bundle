@@ -145,7 +145,8 @@ program example8
       end if
       if (mpi_rank==0) print('(a)'), 'up spin...'
 #ifdef MPI
-      call omm_pddbc_spm(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_up,D_min_dim,D_min_up,desc_D_min,.false.,eta,&
+      call omm_pddbc_lap2spm(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_up,D_min_dim,D_min_up,&
+               desc_D_min,.false.,eta,&
                C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,mpi_rank,&
                mpi_size,nprow,order,bs_def,icontxt)
 #else
@@ -154,7 +155,8 @@ program example8
 #endif
       if (mpi_rank==0) print('(a)'), 'down spin...'
 #ifdef MPI
-      call omm_pddbc_spm(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_down,D_min_dim,D_min_down,desc_D_min,&
+      call omm_pddbc_lap2spm(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_down,D_min_dim,&
+               D_min_down,desc_D_min,&
                .false.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,T,desc_T,1.0_dp,0,2,2,-1.0_dp,.true.,&
                .false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
@@ -175,7 +177,8 @@ program example8
     end do
 
 #ifdef MPI
-    call omm_pddbc_spm(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_up,ED_min_dim,ED_min_up,desc_ED_min,.true.,eta,&
+    call omm_pddbc_lap2spm(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_up,ED_min_dim,ED_min_up,&
+             desc_ED_min,.true.,eta,&
              C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,mpi_rank,&
              mpi_size,nprow,order,bs_def,icontxt)
 #else
@@ -188,7 +191,8 @@ program example8
       dealloc=.false.
     end if
 #ifdef MPI
-    call omm_pddbc_spm(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_down,ED_min_dim,ED_min_down,desc_ED_min,&
+    call omm_pddbc_lap2spm(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_down,ED_min_dim,&
+             ED_min_down,desc_ED_min,&
              .true.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,2,-1.0_dp,.true.,&
              dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else

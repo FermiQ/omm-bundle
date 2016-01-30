@@ -83,31 +83,35 @@ contains
     integer :: trA, trB, ot
 
     !**********************************************!
-    call psp_process_opM(opA,trA)
-    call psp_process_opM(opB,trB)
-    ! operation table
-    if (trA==0 .and. trB==0) then
-       ot=1
-    else if (trA==0 .and. trB>=1) then
-       ot=2
-    else if (trA>=1 .and. trB==0) then
-       ot=3
-    else if (trA>=1 .and. trB>=1) then
-       ot=4
-    else
-       call die('mm_dmultiply: invalid implementation')
-    end if
+    if (alpha/=0.0_dp) then
+       call psp_process_opM(opA,trA)
+       call psp_process_opM(opB,trB)
+       ! operation table
+       if (trA==0 .and. trB==0) then
+          ot=1
+       else if (trA==0 .and. trB>=1) then
+          ot=2
+       else if (trA>=1 .and. trB==0) then
+          ot=3
+       else if (trA>=1 .and. trB>=1) then
+          ot=4
+       else
+          call die('mm_dmultiply: invalid implementation')
+       end if
 
-    select case (ot)
-    case (1)
-       call psp_gespmm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (2)
-       call psp_gespmm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (3)
-       call psp_gespmm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (4)
-       call psp_gespmm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
-    end select
+       select case (ot)
+       case (1)
+          call psp_gespmm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (2)
+          call psp_gespmm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (3)
+          call psp_gespmm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (4)
+          call psp_gespmm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
+       end select
+    else
+       if (beta/=0.0_dp) C=beta*C
+    end if
 
   end subroutine psp_dgespmm
 
@@ -136,31 +140,35 @@ contains
     integer :: trA, trB, ot
 
     !**********************************************!
-    call psp_process_opM(opA,trA)
-    call psp_process_opM(opB,trB)
-    ! operation table
-    if (trA==0 .and. trB==0) then
-       ot=1
-    else if (trA==0 .and. trB>=1) then
-       ot=2
-    else if (trA>=1 .and. trB==0) then
-       ot=3
-    else if (trA>=1 .and. trB>=1) then
-       ot=4
-    else
-       call die('mm_dmultiply: invalid implementation')
-    end if
+    if (alpha/=cmplx_0) then
+       call psp_process_opM(opA,trA)
+       call psp_process_opM(opB,trB)
+       ! operation table
+       if (trA==0 .and. trB==0) then
+          ot=1
+       else if (trA==0 .and. trB>=1) then
+          ot=2
+       else if (trA>=1 .and. trB==0) then
+          ot=3
+       else if (trA>=1 .and. trB>=1) then
+          ot=4
+       else
+          call die('mm_dmultiply: invalid implementation')
+       end if
 
-    select case (ot)
-    case (1)
-       call psp_gespmm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (2)
-       call psp_gespmm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (3)
-       call psp_gespmm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
-    case (4)
-       call psp_gespmm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
-    end select
+       select case (ot)
+       case (1)
+          call psp_gespmm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (2)
+          call psp_gespmm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (3)
+          call psp_gespmm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
+       case (4)
+          call psp_gespmm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
+       end select
+    else
+       if (beta/=cmplx_0) C=beta*C
+    end if
 
   end subroutine psp_zgespmm
 
@@ -233,22 +241,14 @@ contains
     ! allocate local matrices
     A_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     A_loc_dim(2)=psp_update_rank
-    !allocate(A_loc(A_loc_dim(1),A_loc_dim(2)))
     B_loc_dim(1)=psp_update_rank
     B_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
     allocate(B_loc(B_loc_dim(1),B_loc_dim(2)))
     B_loc=0.0_dp
     C_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
-    !    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
-    !    C_loc=0.0_dp
-
-    !**** Test input *****************************!
-
-    !**** Quick return if possible ***************!
-    ! if M==0 or N==0
-
-    ! If Alpha or K is zero
+    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
+    C_loc=0.0_dp
 
     !**** Start the operation ********************!
 
@@ -262,9 +262,7 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol) ! identify the processor owning A(:,kth block), the cart coordinate
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
-          ! copy the sparse local submatrix 
-          ! A_loc=A_loc(1:A_loc_dim(1),1:width)=A(1:A_loc_dim(1),loc_st:loc_st+width-1)
+          ! copy the sparse local submatrix
           call psp_copy_spm2st(A_loc_dim(1),width,A,1,loc_st,A_loc_idx1,A_loc_idx2, &
                A_loc_val,A_loc_dim(1),width,1,1,0.0_dp)
        else
@@ -301,36 +299,19 @@ contains
        idx_prow = mod(idx_k_row-1,nprow) ! identify the processor owing B(kth block,:), the cart coordinate
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,0.0_dp)
+          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE, idx_prow, psp_mpi_comm_col,mpi_err)
 
        ! compute local update of C
-       if (kloop==1) then
-          !C_loc=MATMUL(A_loc,B_loc)+C_loc
-          do i=A_loc_idx2(1),A_loc_idx2(2)-1
-             C(A_loc_idx1(i),1:C_loc_dim(2))=A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+beta*C(A_loc_idx1(i),1:C_loc_dim(2))
-          end do
-          !call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-          !     1.0_dp,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C,1,1,beta)
-       else
-          !         call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-          !              1.0_dp,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C,1,1,1.0_dp)
-          do i=A_loc_idx2(1),A_loc_idx2(2)-1
-             C(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+C(A_loc_idx1(i),1:C_loc_dim(2))
-          end do
-       end if
+       do i=A_loc_idx2(1),A_loc_idx2(2)-1
+          C_loc(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+C_loc(A_loc_idx1(i),1:C_loc_dim(2))
+       end do
     enddo
 
-    !       ! compute local update of C
-    !       !C_loc=MATMUL(A_loc,B_loc)+C_loc
-    !       call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-    !            1.0_dp,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C_loc,1,1,1.0_dp)
-    !    enddo
-    !    !C=beta*C+C_loc
-    !    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
+    !C=beta*C+C_loc
+    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(B_loc)) deallocate(B_loc)
     if (allocated(C_loc)) deallocate(C_loc)
@@ -429,11 +410,10 @@ contains
        idx_prow = mod(idx_k_row-1,nprow)
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           endif
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,0.0_dp)
+          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in column
@@ -447,13 +427,11 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol ) ! identify the processor owing C(:,kth block,), the cart coordinate
        ! boardcast in row
        call MPI_REDUCE(C_loc, CC_loc, C_loc_dim(1)*C_loc_dim(2), MPI_DOUBLE, MPI_SUM, idx_pcol, psp_mpi_comm_row, mpi_err)
-       ! Use CC_loc because cannot reduce to the same C_loc.
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           !C=beta*C+C_loc
-          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,beta)
+          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
     if (allocated(B_loc)) deallocate(B_loc)
@@ -598,9 +576,8 @@ contains
 
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,beta)
+          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 
@@ -763,22 +740,14 @@ contains
     ! allocate local matrices
     A_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     A_loc_dim(2)=psp_update_rank
-    !allocate(A_loc(A_loc_dim(1),A_loc_dim(2)))
     B_loc_dim(1)=psp_update_rank
     B_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
     allocate(B_loc(B_loc_dim(1),B_loc_dim(2)))
     B_loc=cmplx_0
     C_loc_dim(1)=numroc(M,psp_bs_def_row,iprow,0,nprow)
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
-    !    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
-    !    C_loc=cmplx_0
-
-    !**** Test input *****************************!
-
-    !**** Quick return if possible ***************!
-    ! if M==0 or N==0
-
-    ! If Alpha or K is zero
+    allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
+    C_loc=cmplx_0
 
     !**** Start the operation ********************!
 
@@ -792,7 +761,6 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol) ! identify the processor owning A(:,kth block), the cart coordinate
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           ! copy the sparse local submatrix
           ! A_loc=A_loc(1:A_loc_dim(1),1:width)=A(1:A_loc_dim(1),loc_st:loc_st+width-1)
           call psp_copy_spm2st(A_loc_dim(1),width,A,1,loc_st,A_loc_idx1,A_loc_idx2, &
@@ -832,42 +800,18 @@ contains
        idx_prow = mod(idx_k_row-1,nprow) ! identify the processor owing B(kth block,:), the cart coordinate
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_0)
+          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE_COMPLEX, idx_prow, psp_mpi_comm_col,mpi_err)
 
-       if (kloop==1) then
-          !C_loc=MATMUL(A_loc,B_loc)+C_loc
-          do i=A_loc_idx2(1),A_loc_idx2(2)-1
-             C(A_loc_idx1(i),1:C_loc_dim(2))=A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+beta*C(A_loc_idx1(i),1:C_loc_dim(2))
-          end do
-       else
-          do i=A_loc_idx2(1),A_loc_idx2(2)-1
-             C(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+C(A_loc_idx1(i),1:C_loc_dim(2))
-          end do
-       end if
-
-       ! compute local update of C
-       !if (kloop==1) then
-       !C_loc=MATMUL(A_loc,B_loc)+C_loc
-
-       !  call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-       !       cmplx_1,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C,1,1,beta)
-       !else
-       !  call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-       !       cmplx_1,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C,1,1,cmplx_1)
-       !end if
+       do i=A_loc_idx2(1),A_loc_idx2(2)-1
+          C_loc(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(1,1:C_loc_dim(2))+C_loc(A_loc_idx1(i),1:C_loc_dim(2))
+       end do
     enddo
 
-    !       ! compute local update of C
-    !       !C_loc=MATMUL(A_loc,B_loc)+C_loc
-    !       call psp_sst_gespmm(C_loc_dim(1),C_loc_dim(2),width, opA,opB, &
-    !            cmplx_1,A_loc_idx1,A_loc_idx2,A_loc_val,B_loc,1,1,C_loc,1,1,cmplx_1)
-    !    enddo
-    !    !C=beta*C+C_loc
-    !    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,beta)
+    !C=beta*C+C_loc
+    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(B_loc)) deallocate(B_loc)
     if (allocated(C_loc)) deallocate(C_loc)
@@ -966,11 +910,10 @@ contains
        idx_prow = mod(idx_k_row-1,nprow)
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           endif
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_0)
+          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in column
@@ -988,9 +931,8 @@ contains
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           !C=beta*C+C_loc
-          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,beta)
+          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
     if (allocated(B_loc)) deallocate(B_loc)
@@ -1088,7 +1030,6 @@ contains
        idx_pcol = mod(idx_k_col-1,npcol)
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_col,npcol,loc_ed)
           ! copy the sparse local submatrix
           ! A_loc=A_loc(1:A_loc_dim(1),1:width)=A(1:A_loc_dim(1),loc_st:loc_st+width-1)
           call psp_copy_spm2st(A_loc_dim(1),width,A,1,loc_st,A_loc_idx1,A_loc_idx2, &
@@ -1135,9 +1076,8 @@ contains
 
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
-          !call psp_idx_glb2loc(glb_ed,psp_bs_def_row,nprow,loc_ed)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,beta)
+          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 
