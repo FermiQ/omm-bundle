@@ -1,8 +1,0 @@
-LIBPATH   = ../src/
-MSLIBPATH = ../src/MatrixSwitch-0.1.2/src/
-MSLIB     = ../src/MatrixSwitch-0.1.2/src/MatrixSwitch.a
-PSPINCLUDE= ../src/psp/include/
-PSPLIB    = ../src/psp/include/pspBLAS.a
-BLASLIB   = -lblas
-LAPLIB    = -llapack
-SLAPLIB   = -lscalapack
