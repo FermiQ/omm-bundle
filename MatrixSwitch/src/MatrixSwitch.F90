@@ -370,19 +370,6 @@ contains
              ot=3
           end if
        end if
-    else if ((A%str_type .eq. 'coo') .and. &
-         (.not. A%is_serial) .and. &
-         (B%str_type .eq. 'dbc') .and. &
-         (.not. B%is_serial) .and. &
-         (C%str_type .eq. 'dbc') .and. &
-         (.not. C%is_serial)) then
-       if (.not. present(label)) then
-          ot=4
-       else
-          if (label .eq. 'psp') then
-             ot=4
-          end if
-       end if
     else if ((A%str_type .eq. 'csc') .and. &
          (.not. A%is_serial) .and. &
          (B%str_type .eq. 'dbc') .and. &
@@ -394,19 +381,6 @@ contains
        else
           if (label .eq. 'psp') then
              ot=4
-          end if
-       end if
-    else if ((A%str_type .eq. 'dbc') .and. &
-         (.not. A%is_serial) .and. &
-         (B%str_type .eq. 'coo') .and. &
-         (.not. B%is_serial) .and. &
-         (C%str_type .eq. 'dbc') .and. &
-         (.not. C%is_serial)) then
-       if (.not. present(label)) then
-          ot=5
-       else
-          if (label .eq. 'psp') then
-             ot=5
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
