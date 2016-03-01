@@ -159,7 +159,7 @@ program example9
         if ((imd>0) .and. (iscf==1) .and. (i>1)) then
 #ifdef MPI
           C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),1:C_min_dim(2),i-1)
-          call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+          call omm_pzdbc2pzcsc_psp(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.true.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
                    i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
@@ -169,7 +169,7 @@ program example9
 #endif
         else
 #ifdef MPI
-          call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+          call omm_pzdbc2pzcsc_psp(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
                    i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
@@ -199,7 +199,7 @@ program example9
         dealloc=.false.
       end if
 #ifdef MPI
-      call omm_pzdbc_lap2spm(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
+      call omm_pzdbc2pzcsc_psp(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
                desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,i,&
                -1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
