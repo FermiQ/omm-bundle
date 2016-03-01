@@ -1,5 +1,7 @@
 module MatrixSwitch
+#ifdef PSP
   use pspBLAS
+#endif
 
   implicit none
 
@@ -39,8 +41,6 @@ module MatrixSwitch
      logical :: is_square ! is the matrix square?
      logical :: is_sparse ! is the matrix sparse?
 
-     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
-
      integer :: dim1 ! (global) row dimension size of the matrix
      integer :: dim2 ! (global) column dimension size of the matrix
      integer, pointer :: iaux1(:) => null() ! auxiliary information for certain storage formats
@@ -49,6 +49,10 @@ module MatrixSwitch
      real(dp), pointer :: dval(:,:) => null() ! matrix elements for a real matrix
 
      complex(dp), pointer :: zval(:,:) => null() ! matrix elements for a complex matrix
+
+#ifdef PSP
+     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
+#endif
   end type matrix
 
   !**** INTERFACES ********************************!
@@ -108,17 +112,18 @@ module MatrixSwitch
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
   end interface m_register_pdbc
+#endif
 
-  interface m_register_pdsp_thre
-     module procedure m_register_pddsp_thre
-     module procedure m_register_pzdsp_thre
-  end interface m_register_pdsp_thre
+#ifdef PSP
+  interface m_register_psp_thre
+     module procedure m_register_pdsp_thre
+     module procedure m_register_pzsp_thre
+  end interface m_register_psp_thre
 
-
-  interface m_register_pdsp_st
-     module procedure m_register_pddsp_st
-     module procedure m_register_pzdsp_st
-  end interface m_register_pdsp_st
+  interface m_register_psp_st
+     module procedure m_register_pdsp_st
+     module procedure m_register_pzsp_st
+  end interface m_register_psp_st
 #endif
 
   !************************************************!
@@ -137,16 +142,18 @@ module MatrixSwitch
   public :: m_deallocate
 #ifdef MPI
   public :: m_register_pdbc
-  public :: m_register_pdsp_thre
-  public :: m_register_pdsp_st
   public :: ms_scalapack_setup
   public :: ms_lap_icontxt
+#endif
+#ifdef PSP
+  public :: m_register_psp_thre
+  public :: m_register_psp_st
 #endif
 
 contains
 
   !================================================!
-  ! allocate a dense matrix                        !
+  ! allocate matrix                                !
   !================================================!
   subroutine m_allocate(m_name,i,j,label)
     implicit none
@@ -170,7 +177,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     m_name%dim1=i
     m_name%dim2=j
     if (i==j) then
@@ -208,9 +214,11 @@ contains
     ! storage type
     if ((m_name%str_type .eq. 'den') .and. &
          (m_name%is_serial)) then
+       m_name%is_sparse=.false.
        st=1
     else if ((m_name%str_type .eq. 'dbc') .and. &
          (.not. m_name%is_serial)) then
+       m_name%is_sparse=.false.
        st=2
     else
        call die('m_allocate: invalid label')
@@ -249,14 +257,15 @@ contains
 
     !**********************************************!
 
-    if (m_name%is_sparse) then
-       call psp_deallocate_spm(m_name%spm)
-    end if
-
     if (associated(m_name%iaux1)) nullify(m_name%iaux1)
     if (associated(m_name%iaux2)) nullify(m_name%iaux2)
     if (associated(m_name%dval)) nullify(m_name%dval)
     if (associated(m_name%zval)) nullify(m_name%zval)
+
+#ifdef PSP
+    if ((m_name%str_type .eq. 'coo') .or. &
+        (m_name%str_type .eq. 'csc')) call psp_deallocate_spm(m_name%spm)
+#endif
 
     m_name%is_initialized=.false.
 
@@ -331,42 +340,90 @@ contains
     end if
 
     ! operation table
-    if ((.not. A%is_sparse) .and. (.not. B%is_sparse)) then
-       if ((A%str_type .eq. 'den') .and. &
-            (A%is_serial) .and. &
-            (B%str_type .eq. 'den') .and. &
-            (B%is_serial) .and. &
-            (C%str_type .eq. 'den') .and. &
-            (C%is_serial)) then
-          if (.not. present(label)) then
-             ot=1
-          else
-             if (label .eq. 'ref') then
-                ot=1
-             else if (label .eq. 'lap') then
-                ot=2
-             end if
-          end if
-       else if ((A%str_type .eq. 'dbc') .and. &
-            (.not. A%is_serial) .and. &
-            (B%str_type .eq. 'dbc') .and. &
-            (.not. B%is_serial) .and. &
-            (C%str_type .eq. 'dbc') .and. &
-            (.not. C%is_serial)) then
-          if (.not. present(label)) then
-             ot=3
-          else
-             if (label .eq. 'lap') then
-                ot=3
-             end if
-          end if
+    if ((A%str_type .eq. 'den') .and. &
+         (A%is_serial) .and. &
+         (B%str_type .eq. 'den') .and. &
+         (B%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=1
        else
-          call die('mm_dmultiply: invalid implementation')
+          if (label .eq. 'ref') then
+             ot=1
+          else if (label .eq. 'lap') then
+             ot=2
+          end if
        end if
-    else if (A%is_sparse .and. B%is_sparse) then
-       call die('mm_dmultiply: sparse matrix sparse matrix multiplication is not available')
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
+    else if ((A%str_type .eq. 'coo') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'coo') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          end if
+       end if
     else
-       ot=4
+       call die('mm_dmultiply: invalid implementation')
     end if
 
     select case (ot)
@@ -395,19 +452,26 @@ contains
        call die('mm_dmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#if defined(MPI) && defined(SLAP)
+#ifdef PSP
        if (trA) then
           i=A%dim1
        else
           i=A%dim2
        end if
-       if (A%is_sparse) then
-          call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
-       else
-          call psp_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
-       end if
+       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with ScaLAPACK')
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (5)
+#ifdef PSP
+       if (trA) then
+          i=A%dim1
+       else
+          i=A%dim2
+       end if
+       call psp_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
 #endif
     end select
 
@@ -474,42 +538,90 @@ contains
     end if
 
     ! operation table
-    if ((.not. A%is_sparse) .and. (.not. B%is_sparse)) then
-       if ((A%str_type .eq. 'den') .and. &
-            (A%is_serial) .and. &
-            (B%str_type .eq. 'den') .and. &
-            (B%is_serial) .and. &
-            (C%str_type .eq. 'den') .and. &
-            (C%is_serial)) then
-          if (.not. present(label)) then
-             ot=1
-          else
-             if (label .eq. 'ref') then
-                ot=1
-             else if (label .eq. 'lap') then
-                ot=2
-             end if
-          end if
-       else if ((A%str_type .eq. 'dbc') .and. &
-            (.not. A%is_serial) .and. &
-            (B%str_type .eq. 'dbc') .and. &
-            (.not. B%is_serial) .and. &
-            (C%str_type .eq. 'dbc') .and. &
-            (.not. C%is_serial)) then
-          if (.not. present(label)) then
-             ot=3
-          else
-             if (label .eq. 'lap') then
-                ot=3
-             end if
-          end if
+    if ((A%str_type .eq. 'den') .and. &
+         (A%is_serial) .and. &
+         (B%str_type .eq. 'den') .and. &
+         (B%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=1
        else
-          call die('mm_zmultiply: invalid implementation')
+          if (label .eq. 'ref') then
+             ot=1
+          else if (label .eq. 'lap') then
+             ot=2
+          end if
        end if
-    else if (A%is_sparse .and. B%is_sparse) then
-       call die('mm_zmultiply: sparse matrix sparse matrix multiplication is not available')
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
+    else if ((A%str_type .eq. 'coo') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'coo') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          end if
+       end if
     else
-       ot=4
+       call die('mm_zmultiply: invalid implementation')
     end if
 
     select case (ot)
@@ -538,19 +650,26 @@ contains
        call die('mm_zmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#if defined(MPI) && defined(SLAP)
+#ifdef PSP
        if (tcA>0) then
           i=A%dim1
        else
           i=A%dim2
        end if
-       if (A%is_sparse) then
-          call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
-       else
-          call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
-       end if
+       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with ScaLAPACK')
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (5)
+#ifdef PSP
+       if (tcA>0) then
+          i=A%dim1
+       else
+          i=A%dim2
+       end if
+       call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
 #endif
     end select
 
@@ -631,6 +750,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -720,6 +841,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -802,6 +925,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -882,6 +1007,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -981,6 +1108,8 @@ contains
           ot=3
        else
           if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
              ot=3
           end if
        end if
@@ -1086,6 +1215,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=3
+          else if (label .eq. 'psp') then
+             ot=3
           end if
        end if
     else
@@ -1175,6 +1306,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=1
+          else if (label .eq. 'psp') then
+             ot=1
           end if
        end if
     else
@@ -1239,6 +1372,8 @@ contains
           ot=1
        else
           if (label .eq. 'lap') then
+             ot=1
+          else if (label .eq. 'psp') then
              ot=1
           end if
        end if
@@ -1313,6 +1448,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1386,6 +1523,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -1469,6 +1608,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1546,6 +1687,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -1629,6 +1772,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1707,6 +1852,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1746,7 +1893,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     dim=shape(A)
     m_name%dim1=dim(1)
     m_name%dim2=dim(2)
@@ -1758,6 +1904,7 @@ contains
     m_name%str_type='den'
     m_name%is_serial=.true.
     m_name%is_real=.true.
+    m_name%is_sparse=.false.
 
     m_name%dval => A
 
@@ -1782,7 +1929,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     dim=shape(A)
     m_name%dim1=dim(1)
     m_name%dim2=dim(2)
@@ -1794,6 +1940,7 @@ contains
     m_name%str_type='den'
     m_name%is_serial=.true.
     m_name%is_real=.false.
+    m_name%is_sparse=.false.
 
     m_name%zval => A
 
@@ -1824,7 +1971,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
@@ -1840,6 +1986,7 @@ contains
     m_name%str_type='dbc'
     m_name%is_serial=.false.
     m_name%is_real=.true.
+    m_name%is_sparse=.false.
 
     m_name%dval => A
 
@@ -1868,7 +2015,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     allocate(m_name%iaux1(9))
     m_name%iaux1=desc
     m_name%dim1=desc(3)
@@ -1885,6 +2031,7 @@ contains
     m_name%str_type='dbc'
     m_name%is_serial=.false.
     m_name%is_real=.false.
+    m_name%is_sparse=.false.
 
     m_name%zval => A
 
@@ -1897,8 +2044,8 @@ contains
   ! register matrix by thresholding                      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef MPI
-  subroutine m_register_pddsp_thre(m_name,A,desc,spm_storage,thre)
+#ifdef PSP
+  subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
     !**** INPUT ***********************************!
@@ -1944,11 +2091,11 @@ contains
 
     call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
-  end subroutine m_register_pddsp_thre
+  end subroutine m_register_pdsp_thre
 #endif
 
-#ifdef MPI
-  subroutine m_register_pzdsp_thre(m_name,A,desc,spm_storage,thre)
+#ifdef PSP
+  subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
     !**** INPUT ***********************************!
@@ -1995,15 +2142,15 @@ contains
 
     call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
-  end subroutine m_register_pzdsp_thre
+  end subroutine m_register_pzsp_thre
 #endif
 
   !======================================================!
   ! register matrix using the Sparse Triplet format      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef MPI
-  subroutine m_register_pddsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+#ifdef PSP
+  subroutine m_register_pdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2058,11 +2205,11 @@ contains
 
     call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
-  end subroutine m_register_pddsp_st
+  end subroutine m_register_pdsp_st
 #endif
 
-#ifdef MPI
-  subroutine m_register_pzdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+#ifdef PSP
+  subroutine m_register_pzsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2117,7 +2264,7 @@ contains
 
     call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
-  end subroutine m_register_pzdsp_st
+  end subroutine m_register_pzsp_st
 #endif
 
   !================================================!
@@ -2607,14 +2754,15 @@ contains
 
     if (present(icontxt)) then
        ms_lap_icontxt=icontxt
-       ! initialized grid information in pspBLAS
-       call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
     else
        call blacs_get(-1,0,ms_lap_icontxt)
        call blacs_gridinit(ms_lap_icontxt,ms_lap_order,ms_lap_nprow,ms_lap_npcol)
-       ! initialized grid information in pspBLAS
-       call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
     end if
+
+#ifdef PSP
+    ! initialized grid information in pspBLAS
+    call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
+#endif
 
   end subroutine ms_scalapack_setup
 #endif
