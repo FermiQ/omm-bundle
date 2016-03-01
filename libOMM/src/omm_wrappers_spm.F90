@@ -99,8 +99,8 @@ subroutine omm_pddbc_lap2spm(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,desc
      call m_register_pdbc(H,H_vals,desc_H)
      if (S_present) call m_register_pdbc(S,S_vals,desc_S)
   else
-     call m_register_pdsp_thre(H,H_vals,desc_H,'csc',0.0_dp)
-     if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'csc',0.0_dp)
+     call m_register_psp_thre(H,H_vals,desc_H,'csc',0.0_dp)
+     if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'csc',0.0_dp)
   end if
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)
@@ -227,8 +227,8 @@ subroutine omm_pzdbc_lap2spm(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,desc
      call m_register_pdbc(H,H_vals,desc_H)
      if (S_present) call m_register_pdbc(S,S_vals,desc_S)
   else
-     call m_register_pdsp_thre(H,H_vals,desc_H,'csc',0.0_dp)
-     if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'csc',0.0_dp)
+     call m_register_psp_thre(H,H_vals,desc_H,'csc',0.0_dp)
+     if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'csc',0.0_dp)
   end if
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)

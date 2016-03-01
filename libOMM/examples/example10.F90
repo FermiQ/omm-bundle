@@ -131,8 +131,8 @@ program example10
         end if
 
         ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
-        call m_register_pdsp_thre(Hsp,H,desc_H,'csc',0.0_dp)
-        call m_register_pdsp_thre(Ssp,S,desc_S,'csc',0.0_dp)
+        call m_register_psp_thre(Hsp,H,desc_H,'csc',0.0_dp)
+        call m_register_psp_thre(Ssp,S,desc_S,'csc',0.0_dp)
 
 
 #ifdef MPI

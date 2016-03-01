@@ -743,8 +743,8 @@ subroutine omm_pddbc2pdcoo_psp(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,de
     ms_scalapack_running=.true.
   end if
 
-  call m_register_pdsp_thre(H,H_vals,desc_H,'coo',0.0_dp)
-  if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'coo',0.0_dp)
+  call m_register_psp_thre(H,H_vals,desc_H,'coo',0.0_dp)
+  if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'coo',0.0_dp)
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)
   if (T_present) call m_register_pdbc(T,T_vals,desc_T)
@@ -866,8 +866,8 @@ subroutine omm_pzdbc2pzcoo_psp(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,de
     ms_scalapack_running=.true.
   end if
 
-  call m_register_pdsp_thre(H,H_vals,desc_H,'coo',0.0_dp)
-  if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'coo',0.0_dp)
+  call m_register_psp_thre(H,H_vals,desc_H,'coo',0.0_dp)
+  if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'coo',0.0_dp)
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)
   if (T_present) call m_register_pdbc(T,T_vals,desc_T)
@@ -989,8 +989,8 @@ subroutine omm_pddbc2pdcsc_psp(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,de
     ms_scalapack_running=.true.
   end if
 
-  call m_register_pdsp_thre(H,H_vals,desc_H,'csc',0.0_dp)
-  if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'csc',0.0_dp)
+  call m_register_psp_thre(H,H_vals,desc_H,'csc',0.0_dp)
+  if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'csc',0.0_dp)
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)
   if (T_present) call m_register_pdbc(T,T_vals,desc_T)
@@ -1112,8 +1112,8 @@ subroutine omm_pzdbc2pzcsc_psp(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,de
     ms_scalapack_running=.true.
   end if
 
-  call m_register_pdsp_thre(H,H_vals,desc_H,'csc',0.0_dp)
-  if (S_present) call m_register_pdsp_thre(S,S_vals,desc_S,'csc',0.0_dp)
+  call m_register_psp_thre(H,H_vals,desc_H,'csc',0.0_dp)
+  if (S_present) call m_register_psp_thre(S,S_vals,desc_S,'csc',0.0_dp)
   call m_register_pdbc(D_min,D_min_vals,desc_D_min)
   call m_register_pdbc(C_min,C_min_vals,desc_C_min)
   if (T_present) call m_register_pdbc(T,T_vals,desc_T)
