@@ -21,6 +21,7 @@ module MatrixSwitch
   character(1), save :: ms_lap_order
 
   integer, save :: ms_mpi_size
+  integer, save :: ms_mpi_rank
   integer, save :: ms_lap_nprow
   integer, save :: ms_lap_npcol
   integer, save :: ms_lap_bs_def
@@ -381,6 +382,8 @@ contains
        else
           if (label .eq. 'psp') then
              ot=4
+          else if (label .eq. 't1D') then
+             ot=6
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -394,6 +397,8 @@ contains
        else
           if (label .eq. 'psp') then
              ot=5
+          else if (label .eq. 't1D') then
+             ot=7
           end if
        end if
     else
@@ -447,6 +452,18 @@ contains
 #else
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
+    case (6)
+#ifdef PSP
+       call mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (7)
+#ifdef PSP
+       call mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif       
     end select
 
   end subroutine mm_dmultiply
@@ -2408,6 +2425,142 @@ contains
 
   end subroutine mm_multiply_szdenref
 
+#ifdef PSP
+  subroutine mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trA
+    logical, intent(in) :: trB
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=B%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+             C%dval(:,m)=C%dval(:,m)+alpha*A%dval(:,i)*dval_recv(l)
+          end do
+       end do
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pddbcpdcscref
+
+  subroutine mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trA
+    logical, intent(in) :: trB
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=A%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
+             C%dval(m,:)=C%dval(m,:)+alpha*dval_recv(l)*B%dval(row_ind_recv(l),:)
+          end do
+       end do
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pdcscpddbcref
+#endif
+
   subroutine m_add_sddenref(A,trA,C,alpha,beta)
     implicit none
 
@@ -2686,13 +2839,14 @@ contains
   ! implementation: ScaLAPACK                      !
   !================================================!
 #ifdef MPI
-  subroutine ms_scalapack_setup(mpi_size,nprow,order,bs_def,bs_list,icontxt)
+  subroutine ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,bs_list,icontxt)
     implicit none
 
     !**** INPUT ***********************************!
 
     character(1), intent(in) :: order ! ordering of processor grid: 'r/R' or other for row-major, 'c/C' for column-major
 
+    integer, intent(in) :: mpi_rank ! rank of local MPI process
     integer, intent(in) :: mpi_size ! total number of MPI processes for the processor grid
     integer, intent(in) :: nprow ! number of rows in the processor grid
     integer, intent(in) :: bs_def ! default block size
@@ -2712,6 +2866,7 @@ contains
     !**********************************************!
 
     ms_mpi_size=mpi_size
+    ms_mpi_rank=mpi_rank
     ms_lap_nprow=nprow
     ms_lap_npcol=mpi_size/nprow
     ms_lap_order=order

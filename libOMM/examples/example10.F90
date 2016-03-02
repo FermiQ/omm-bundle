@@ -56,7 +56,7 @@ program example10
   bs_def=16
   call blacs_get(-1,0,icontxt)
   call blacs_gridinit(icontxt,order,nprow,npcol)
-  call ms_scalapack_setup(mpi_size,nprow,order,bs_def,icontxt=icontxt)
+  call ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,icontxt=icontxt)
 #else
   mpi_rank=0
 #endif
