@@ -559,19 +559,6 @@ contains
              ot=3
           end if
        end if
-    else if ((A%str_type .eq. 'coo') .and. &
-         (.not. A%is_serial) .and. &
-         (B%str_type .eq. 'dbc') .and. &
-         (.not. B%is_serial) .and. &
-         (C%str_type .eq. 'dbc') .and. &
-         (.not. C%is_serial)) then
-       if (.not. present(label)) then
-          ot=4
-       else
-          if (label .eq. 'psp') then
-             ot=4
-          end if
-       end if
     else if ((A%str_type .eq. 'csc') .and. &
          (.not. A%is_serial) .and. &
          (B%str_type .eq. 'dbc') .and. &
@@ -583,19 +570,8 @@ contains
        else
           if (label .eq. 'psp') then
              ot=4
-          end if
-       end if
-    else if ((A%str_type .eq. 'dbc') .and. &
-         (.not. A%is_serial) .and. &
-         (B%str_type .eq. 'coo') .and. &
-         (.not. B%is_serial) .and. &
-         (C%str_type .eq. 'dbc') .and. &
-         (.not. C%is_serial)) then
-       if (.not. present(label)) then
-          ot=5
-       else
-          if (label .eq. 'psp') then
-             ot=5
+          else if (label .eq. 't1D') then
+             ot=6
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -609,6 +585,8 @@ contains
        else
           if (label .eq. 'psp') then
              ot=5
+          else if (label .eq. 't1D') then
+             ot=7
           end if
        end if
     else
@@ -649,7 +627,7 @@ contains
        end if
        call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with pspBLAS')
+       call die('mm_zmultiply: compile with pspBLAS')
 #endif
     case (5)
 #ifdef PSP
@@ -660,8 +638,20 @@ contains
        end if
        call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with pspBLAS')
+       call die('mm_zmultiply: compile with pspBLAS')
 #endif
+    case (6)
+#ifdef PSP
+       call mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif
+    case (7)
+#ifdef PSP
+       call mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif       
     end select
 
   end subroutine mm_zmultiply
@@ -2559,6 +2549,140 @@ contains
     end do
 
   end subroutine mm_multiply_pdcscpddbcref
+
+  subroutine mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcA
+    integer, intent(in) :: tcB
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=B%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+             C%zval(:,m)=C%zval(:,m)+alpha*A%zval(:,i)*conjg(zval_recv(l))
+          end do
+       end do
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzdbcpzcscref
+
+  subroutine mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcA
+    integer, intent(in) :: tcB
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=A%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
+             C%zval(m,:)=C%zval(m,:)+alpha*conjg(zval_recv(l))*B%zval(row_ind_recv(l),:)
+          end do
+       end do
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzcscpzdbcref
 #endif
 
   subroutine m_add_sddenref(A,trA,C,alpha,beta)
