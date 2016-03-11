@@ -46,6 +46,8 @@ module MatrixSwitch
      integer :: dim2 ! (global) column dimension size of the matrix
      integer, pointer :: iaux1(:) => null() ! auxiliary information for certain storage formats
      integer, pointer :: iaux2(:) => null() ! auxiliary information for certain storage formats
+     integer, pointer :: iaux3(:) => null() ! auxiliary information for certain storage formats
+     integer, pointer :: iaux4(:) => null() ! auxiliary information for certain storage formats
 
      real(dp), pointer :: dval(:,:) => null() ! matrix elements for a real matrix
 
@@ -141,6 +143,8 @@ module MatrixSwitch
   public :: m_register_sden
   public :: m_allocate
   public :: m_deallocate
+  public :: m_copy
+  public :: m_convert
 #ifdef MPI
   public :: m_register_pdbc
   public :: ms_scalapack_setup
@@ -213,16 +217,29 @@ contains
     end if
 
     ! storage type
-    if ((m_name%str_type .eq. 'den') .and. &
-         (m_name%is_serial)) then
-       m_name%is_sparse=.false.
-       st=1
-    else if ((m_name%str_type .eq. 'dbc') .and. &
-         (.not. m_name%is_serial)) then
-       m_name%is_sparse=.false.
-       st=2
+    if (m_name%is_serial) then
+       if (m_name%str_type .eq. 'den') then
+          m_name%is_sparse=.false.
+          st=1
+       else if (m_name%str_type .eq. 'coo') then
+          m_name%is_sparse=.true.
+          st=3
+       else if (m_name%str_type .eq. 'csc') then
+          m_name%is_sparse=.true.
+          st=3
+       else if (m_name%str_type .eq. 'csr') then
+          m_name%is_sparse=.true.
+          st=3
+       else
+          call die('m_allocate: invalid label')
+       end if
     else
-       call die('m_allocate: invalid label')
+       if (m_name%str_type .eq. 'dbc') then
+          m_name%is_sparse=.false.
+          st=2
+       else
+          call die('m_allocate: invalid label')
+       end if
     end if
 
     select case (st)
@@ -240,6 +257,9 @@ contains
 #else
        call die('m_allocate: compile with ScaLAPACK')
 #endif
+    case (3)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
     end select
 
     m_name%is_initialized=.true.
@@ -260,6 +280,8 @@ contains
 
     if (associated(m_name%iaux1)) nullify(m_name%iaux1)
     if (associated(m_name%iaux2)) nullify(m_name%iaux2)
+    if (associated(m_name%iaux3)) nullify(m_name%iaux3)
+    if (associated(m_name%iaux4)) nullify(m_name%iaux4)
     if (associated(m_name%dval)) nullify(m_name%dval)
     if (associated(m_name%zval)) nullify(m_name%zval)
 
@@ -271,6 +293,460 @@ contains
     m_name%is_initialized=.false.
 
   end subroutine m_deallocate
+
+  !================================================!
+  ! copy matrix                                    !
+  !================================================!
+  subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+
+    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+
+    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+
+    type(matrix), intent(inout) :: A ! matrix to copy from
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name ! matrix to copy onto
+
+    !**** INTERNAL ********************************!
+
+    character(1) :: c1, c2
+
+    integer :: st, i, j, k
+
+    real(dp) :: abs_threshold, soft_threshold
+
+    !**********************************************!
+
+    m_name%dim1=A%dim1
+    m_name%dim2=A%dim2
+    m_name%is_square=A%is_square
+
+    if (present(label)) then
+       read(label,'(a1,a1,a3)') c1, c2, m_name%str_type
+       if (c1 .eq. 's') then
+          m_name%is_serial=.true.
+       else if (c1 .eq. 'p') then
+          m_name%is_serial=.false.
+#ifndef MPI
+          call die('m_copy: compile with MPI')
+#endif
+       else
+          call die('m_copy: invalid label')
+       end if
+       if (c2 .eq. 'd') then
+          m_name%is_real=.true.
+       else if (c2 .eq. 'z') then
+          m_name%is_real=.false.
+       else
+          call die('m_copy: invalid label')
+       end if
+    else
+       m_name%is_serial=A%is_serial
+       m_name%is_real=A%is_real
+       m_name%str_type=A%str_type
+    end if
+
+    if (m_name%is_real .neqv. A%is_real) call die('m_copy: invalid label')
+
+    ! storage type
+    if ((m_name%str_type .eq. 'den') .and. &
+         (m_name%is_serial) .and. &
+         (A%str_type .eq. 'den') .and. &
+         (A%is_serial)) then
+       m_name%is_sparse=.false.
+       st=1
+    else if ((m_name%str_type .eq. 'dbc') .and. &
+             (.not. m_name%is_serial) .and. &
+             (A%str_type .eq. 'dbc') .and. &
+             (.not. A%is_serial)) then
+       m_name%is_sparse=.false.
+       st=2
+    else if ((m_name%str_type .eq. 'coo') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'coo') .and. &
+           (A%is_serial)) then
+          st=3
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=4
+       else
+          call die('m_copy: invalid label')
+       end if
+    else if ((m_name%str_type .eq. 'csc') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csc') .and. &
+           (A%is_serial)) then
+          st=5
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=6
+       else
+          call die('m_copy: invalid label')
+       end if
+    else if ((m_name%str_type .eq. 'csr') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csr') .and. &
+           (A%is_serial)) then
+          st=7
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=8
+       else
+          call die('m_copy: invalid label')
+       end if
+    else
+       call die('m_copy: invalid label')
+    end if
+
+    if (present(threshold)) then
+       abs_threshold=abs(threshold)
+       if (present(threshold_is_soft)) then
+          if (threshold_is_soft) then
+             soft_threshold=abs_threshold
+          else
+             soft_threshold=0.0_dp
+          end if
+       else
+          soft_threshold=0.0_dp
+       end if
+    else
+       abs_threshold=0.0_dp
+       soft_threshold=0.0_dp
+    end if
+
+    select case (st)
+    case (1)
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          if (present(threshold)) then
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      m_name%dval(i,j)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   else
+                      m_name%dval(i,j)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             m_name%dval=A%dval
+          end if
+       else
+          allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          if (present(threshold)) then
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      m_name%zval(i,j)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   else
+                      m_name%zval(i,j)=cmplx_0
+                   end if
+                end do
+             end do
+          else
+             m_name%zval=A%zval
+          end if
+       end if
+    case (2)
+       allocate(m_name%iaux1(9))
+       allocate(m_name%iaux2(2))
+       m_name%iaux1=A%iaux1
+       m_name%iaux2=A%iaux2
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),m_name%iaux2(2)))
+          if (present(threshold)) then
+             do i=1,m_name%iaux2(1)
+                do j=1,m_name%iaux2(2)
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      m_name%dval(i,j)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   else
+                      m_name%dval(i,j)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             m_name%dval=A%dval
+          end if
+       else
+          allocate(m_name%zval(m_name%iaux2(1),m_name%iaux2(2)))
+          if (present(threshold)) then
+             do i=1,m_name%iaux2(1)
+                do j=1,m_name%iaux2(2)
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      m_name%zval(i,j)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   else
+                      m_name%zval(i,j)=cmplx_0
+                   end if
+                end do
+             end do
+          else
+             m_name%zval=A%zval
+          end if
+       end if
+    case (3)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (4)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%dval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%iaux4(k)=i
+                      m_name%dval(k,1)=A%dval(j,i)-soft_threshold*A%dval(j,i)/abs(A%dval(j,i))
+                   end if
+                end do
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%zval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%iaux4(k)=i
+                      m_name%zval(k,1)=A%zval(j,i)-soft_threshold*A%zval(j,i)/abs(A%zval(j,i))
+                   end if
+                end do
+             end do
+          end if
+       end if
+    case (5)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%dim2+1))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (6)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%dim2+1))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux4(1)=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%dval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%dval(k,1)=A%dval(j,i)-soft_threshold*A%dval(j,i)/abs(A%dval(j,i))
+                   end if
+                end do
+                m_name%iaux4(i+1)=k
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%dim2+1))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux4(1)=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%zval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%zval(k,1)=A%zval(j,i)-soft_threshold*A%zval(j,i)/abs(A%zval(j,i))
+                   end if
+                end do
+                m_name%iaux4(i)=k+1
+             end do
+          end if
+       end if
+    case (7)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%dim1+1))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (8)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%dim1+1))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux3(1)=0
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux4(k)=j
+                      m_name%dval(k,1)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   end if
+                end do
+                m_name%iaux3(i+1)=k
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%dim1+1))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux3(1)=0
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux4(k)=j
+                      m_name%zval(k,1)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   end if
+                end do
+                m_name%iaux3(i)=k+1
+             end do
+          end if
+       end if
+    end select
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy
+
+  !================================================!
+  ! wrapper for in-place matrix type conversion    !
+  !================================================!
+  subroutine m_convert(m_name,label,threshold,threshold_is_soft)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+
+    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+
+    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name ! matrix to convert
+
+    !**** INTERNAL ********************************!
+
+    type(matrix) :: temp_matrix
+
+    !**********************************************!
+
+    if (present(label)) then
+       if (present(threshold)) then
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,label,threshold,threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,label,threshold)
+          end if
+       else
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,label,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,label)
+          end if
+       end if
+    else
+       if (present(threshold)) then
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,threshold=threshold,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,threshold=threshold)
+          end if
+       else
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name)
+          end if
+       end if
+    end if
+    call m_deallocate(m_name)
+    call m_copy(m_name,temp_matrix)
+    call m_deallocate(temp_matrix)
+
+  end subroutine m_convert
 
   !================================================!
   ! matrix-matrix multiplication                   !
@@ -1548,7 +2024,12 @@ contains
 
     !**** INTERNAL ********************************!
 
-    integer :: ot
+    logical :: el_present
+
+    integer :: ot, k
+    integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
+
+    real(dp), allocatable :: dval_temp(:,:)
 
 #ifdef CONV
     complex(dp) :: cmplx_alpha
@@ -1593,6 +2074,17 @@ contains
              ot=2
           end if
        end if
+    else if ((C%str_type .eq. 'coo') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'ref') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
     else
        call die('m_dset_element: invalid implementation')
     end if
@@ -1606,6 +2098,39 @@ contains
 #else
        call die('m_dset_element: compile with ScaLAPACK')
 #endif
+    case (3)
+       el_present=.false.
+       do k=1,C%iaux2(1)
+          if ((C%iaux3(k)==i) .and. &
+               (C%iaux4(k)==j)) then
+             C%dval(k,1)=alpha
+             el_present=.true.
+          end if
+       end do
+       if (.not. el_present) then
+          allocate(iaux3_temp(C%iaux2(1)))
+          allocate(iaux4_temp(C%iaux2(1)))
+          allocate(dval_temp(C%iaux2(1),1))
+          iaux3_temp=C%iaux3
+          iaux4_temp=C%iaux4
+          dval_temp=C%dval
+          deallocate(C%dval)
+          deallocate(C%iaux4)
+          deallocate(C%iaux3)
+          C%iaux2(1)=C%iaux2(1)+1
+          allocate(C%iaux3(C%iaux2(1)))
+          allocate(C%iaux4(C%iaux2(1)))
+          allocate(C%dval(C%iaux2(1),1))
+          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+          C%dval(1:C%iaux2(1)-1,1)=dval_temp(1:C%iaux2(1)-1,1)
+          deallocate(dval_temp)
+          deallocate(iaux4_temp)
+          deallocate(iaux3_temp)
+          C%iaux3(C%iaux2(1))=i
+          C%iaux4(C%iaux2(1))=j
+          C%dval(C%iaux2(1),1)=alpha
+       end if
     end select
 
   end subroutine m_dset_element
@@ -1628,11 +2153,16 @@ contains
 
     !**** INTERNAL ********************************!
 
-    integer :: ot
+    logical :: el_present
+
+    integer :: ot, k
+    integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
 
 #ifdef CONV
     real(dp) :: real_alpha
 #endif
+
+    complex(dp), allocatable :: zval_temp(:,:)
 
     !**********************************************!
 
@@ -1673,6 +2203,17 @@ contains
              ot=2
           end if
        end if
+    else if ((C%str_type .eq. 'coo') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'ref') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
     else
        call die('m_zset_element: invalid implementation')
     end if
@@ -1686,6 +2227,39 @@ contains
 #else
        call die('m_zset_element: compile with ScaLAPACK')
 #endif
+    case (3)
+       el_present=.false.
+       do k=1,C%iaux2(1)
+          if ((C%iaux3(k)==i) .and. &
+               (C%iaux4(k)==j)) then
+             C%zval(k,1)=alpha
+             el_present=.true.
+          end if
+       end do
+       if (.not. el_present) then
+          allocate(iaux3_temp(C%iaux2(1)))
+          allocate(iaux4_temp(C%iaux2(1)))
+          allocate(zval_temp(C%iaux2(1),1))
+          iaux3_temp=C%iaux3
+          iaux4_temp=C%iaux4
+          zval_temp=C%zval
+          deallocate(C%zval)
+          deallocate(C%iaux4)
+          deallocate(C%iaux3)
+          C%iaux2(1)=C%iaux2(1)+1
+          allocate(C%iaux3(C%iaux2(1)))
+          allocate(C%iaux4(C%iaux2(1)))
+          allocate(C%zval(C%iaux2(1),1))
+          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+          C%zval(1:C%iaux2(1)-1,1)=zval_temp(1:C%iaux2(1)-1,1)
+          deallocate(zval_temp)
+          deallocate(iaux4_temp)
+          deallocate(iaux3_temp)
+          C%iaux3(C%iaux2(1))=i
+          C%iaux4(C%iaux2(1))=j
+          C%zval(C%iaux2(1),1)=alpha
+       end if
     end select
 
   end subroutine m_zset_element

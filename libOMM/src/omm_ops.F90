@@ -60,6 +60,41 @@ subroutine calc_AW(A,C,AW,AC,m_operation)
 end subroutine calc_AW
 
 !================================================!
+! calculate operator matrix in WF basis          !
+!================================================!
+subroutine calc_HW_callback(H,C,HW,HC,m_operation)
+  implicit none
+
+  !**** INPUT ***********************************!
+
+  character(3), intent(in) :: m_operation
+
+  type(matrix), intent(in) :: C ! WF coeffs. matrix
+
+  !**** CALLBACK ********************************!
+
+  interface
+    subroutine H(C,HC)
+      use MatrixSwitch
+      implicit none
+      type(matrix), intent(in) :: C ! WF coeffs. matrix
+      type(matrix), intent(inout) :: HC ! work matrix
+    end subroutine H
+  end interface
+
+  !**** INOUT ***********************************!
+
+  type(matrix), intent(inout) :: HC ! work matrix
+  type(matrix), intent(inout) :: HW ! operator matrix in WF basis
+
+  !**********************************************!
+
+  call H(C,HC)
+  call mm_multiply(HC,'n',C,'c',HW,1.0_dp,0.0_dp,m_operation)
+
+end subroutine calc_HW_callback
+
+!================================================!
 ! calculate operator matrix in AO basis          !
 !================================================!
 subroutine calc_A(AW,C1,A,CAW,m_operation)
@@ -242,6 +277,8 @@ subroutine m_dfactorize(C,label)
       else
         if (label .eq. 'lap') then
           ot=2
+        else if (label .eq. 'psp') then
+          ot=2
         end if
       end if
   else
@@ -302,6 +339,8 @@ subroutine m_zfactorize(C,label)
         ot=2
       else
         if (label .eq. 'lap') then
+          ot=2
+        else if (label .eq. 'psp') then
           ot=2
         end if
       end if
@@ -406,6 +445,8 @@ subroutine m_dreduce(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=2
+        else if (label .eq. 'psp') then
+          ot=2
         end if
       end if
   else
@@ -504,6 +545,8 @@ subroutine m_zreduce(A,C,label)
         ot=2
       else
         if (label .eq. 'lap') then
+          ot=2
+        else if (label .eq. 'psp') then
           ot=2
         end if
       end if
@@ -627,6 +670,8 @@ subroutine m_dtransform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=2
+        else if (label .eq. 'psp') then
+          ot=2
         end if
       end if
   else
@@ -686,6 +731,8 @@ subroutine m_ztransform(A,C,label)
         ot=2
       else
         if (label .eq. 'lap') then
+          ot=2
+        else if (label .eq. 'psp') then
           ot=2
         end if
       end if
@@ -778,6 +825,8 @@ subroutine m_dback_transform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=2
+        else if (label .eq. 'psp') then
+          ot=2
         end if
       end if
   else
@@ -837,6 +886,8 @@ subroutine m_zback_transform(A,C,label)
         ot=2
       else
         if (label .eq. 'lap') then
+          ot=2
+        else if (label .eq. 'psp') then
           ot=2
         end if
       end if
@@ -936,6 +987,8 @@ subroutine m_dinverse(C,label)
         ot=2
       else
         if (label .eq. 'lap') then
+          ot=2
+        else if (label .eq. 'psp') then
           ot=2
         end if
       end if
@@ -1041,6 +1094,8 @@ subroutine m_zinverse(C,label)
       else
         if (label .eq. 'lap') then
           ot=2
+        else if (label .eq. 'psp') then
+          ot=2
         end if
       end if
   else
@@ -1095,6 +1150,120 @@ subroutine m_zinverse(C,label)
   end select
 
 end subroutine m_zinverse
+
+!================================================!
+! plane-wave preconditioner                      !
+!================================================!
+subroutine calc_PW_precon(T,scale_T,P)
+  implicit none
+
+  !**** INPUT ***********************************!
+
+  real(dp), intent(in) :: scale_T ! kinetic energy scale for the preconditioning
+
+  !**** INOUT ***********************************!
+
+  type(matrix), intent(inout) :: T ! kinetic energy matrix
+  type(matrix), intent(inout) :: P ! preconditioner matrix
+
+  !**********************************************!
+
+  if (T%is_real) then
+    call dcalc_PW_precon(T,scale_T,P)
+  else
+    call zcalc_PW_precon(T,scale_T,P)
+  end if
+
+end subroutine calc_PW_precon
+
+subroutine dcalc_PW_precon(T,scale_T,P)
+  use omm_params
+
+  implicit none
+
+  !**** INPUT ***********************************!
+
+  real(dp), intent(in) :: scale_T ! kinetic energy scale for the preconditioning
+
+  !**** INOUT ***********************************!
+
+  type(matrix), intent(inout) :: T ! kinetic energy matrix
+  type(matrix), intent(inout) :: P ! preconditioner matrix
+
+  !**** INTERNAL ********************************!
+
+  integer :: i, ot
+
+  real(dp) :: s
+
+  !**********************************************!
+
+  ! operation table
+  if (T%str_type .eq. 'csc') then
+    ot=1
+  else if (T%str_type .eq. 'csr') then
+    ot=1
+  else
+    call die('dcalc_PW_precon: invalid implementation')
+  end if
+
+  select case (ot)
+    case (1)
+#ifdef PSP
+      do i=1,T%spm%nnz
+        !P%spm%dval(i)=1.0_dp/(1.0_dp+T%spm%dval(i)/scale_T)
+        s=2.0_dp*T%spm%dval(i)/scale_T
+        P%spm%dval(i)=(27.0_dp+18.0_dp*s+12.0_dp*(s**2)+8.0_dp*(s**3))/&
+                      (27.0_dp+18.0_dp*s+12.0_dp*(s**2)+8.0_dp*(s**3)+16.0_dp*(s**4))
+      end do
+#else
+      call die('dcalc_PW_precon: compile with pspBLAS')
+#endif
+  end select
+
+end subroutine dcalc_PW_precon
+
+subroutine zcalc_PW_precon(T,scale_T,P)
+  use omm_params
+
+  implicit none
+
+  !**** INPUT ***********************************!
+
+  real(dp), intent(in) :: scale_T ! kinetic energy scale for the preconditioning
+
+  !**** INOUT ***********************************!
+
+  type(matrix), intent(inout) :: T ! kinetic energy matrix
+  type(matrix), intent(inout) :: P ! preconditioner matrix
+
+  !**** INTERNAL ********************************!
+
+  integer :: i, ot
+
+  !**********************************************!
+
+  ! operation table
+  if (T%str_type .eq. 'csc') then
+    ot=1
+  else if (T%str_type .eq. 'csr') then
+    ot=1
+  else
+    call die('zcalc_PW_precon: invalid implementation')
+  end if
+
+  select case (ot)
+    case (1)
+#ifdef PSP
+      do i=1,T%spm%nnz
+        P%spm%zval(i)=1.0_dp/(1.0_dp+abs(T%spm%zval(i))/scale_T)
+      end do
+#else
+      call die('zcalc_PW_precon: compile with pspBLAS')
+#endif
+  end select
+
+end subroutine zcalc_PW_precon
 
 subroutine die(message)
   implicit none

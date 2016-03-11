@@ -1,5 +1,5 @@
-subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flavour,np,ip,cg_tol,long_out,dealloc,&
-               m_storage,m_operation,mpi_rank)
+subroutine omm_callback(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flavour,np,ip,cg_tol,long_out,dealloc,&
+                        m_storage,m_operation,mpi_rank)
   use omm_ops
   use MatrixSwitch
   use omm_rand
@@ -36,9 +36,19 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
 
   real(dp), intent(out) :: e_min ! OMM functional energy (spin degeneracy *not* included)
 
+  !**** CALLBACK ********************************!
+
+  interface
+    subroutine H(C,HC)
+      use MatrixSwitch
+      implicit none
+      type(matrix), intent(in) :: C ! WF coeffs. matrix
+      type(matrix), intent(inout) :: HC ! work matrix
+    end subroutine H
+  end interface
+
   !**** INOUT ***********************************!
 
-  type(matrix), intent(inout) :: H ! Hamiltonian matrix in orbital basis (m x m)
   type(matrix), intent(inout) :: S ! overlap matrix (or its Cholesky-factorized upper triangular matrix) in orbital basis (m x m)
   type(matrix), intent(inout) :: D_min ! density (or energy-weighted density) matrix in orbital basis (m x m)
   type(matrix), intent(inout) :: C_min ! WF coeffs. in orbital basis (n x m)
@@ -113,19 +123,15 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
       use_Cholesky=.false.
       S_is_U=.false.
       use_precon=.false.
-    else if (flavour==1) then
-      use_Cholesky=.true.
-      S_is_U=.false.
-      use_precon=.false.
-    else if (flavour==2) then
-      use_Cholesky=.true.
-      S_is_U=.true.
-      use_precon=.false.
+    !else if (flavour==1) then
+    !  use_Cholesky=.true.
+    !  S_is_U=.false.
+    !  use_precon=.false.
+    !else if (flavour==2) then
+    !  use_Cholesky=.true.
+    !  S_is_U=.true.
+    !  use_precon=.false.
     else if (flavour==3) then
-      use_Cholesky=.false.
-      S_is_U=.false.
-      use_precon=.true.
-    else if (flavour==4) then
       use_Cholesky=.false.
       S_is_U=.false.
       use_precon=.true.
@@ -270,7 +276,6 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   end if
   if (use_precon) then
     if (.not. P(ip)%is_initialized) call m_allocate(P(ip),m,m,m_storage)
-    !if (.not. P(ip)%is_initialized) call m_register_psp_thre(P(ip),S%dval,S%iaux1,'csc',0.0_dp)
   end if
   if (.not. work2(ip)%is_initialized) call m_allocate(work2(ip),n,m,m_storage)
 
@@ -287,25 +292,21 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   if (.not. HG%is_initialized) call m_allocate(HG,n,m,m_storage)
   if (.not. work1%is_initialized) call m_allocate(work1,n,n,m_storage)
 
-  ! reduce the generalized problem to standard form using Cholesky factorization
-  if (use_Cholesky) then
-    if (new_S .and. (.not. S_is_U)) call m_factorize(S,m_operation)
-    call m_reduce(S,H,m_operation)
-  end if
+  !! reduce the generalized problem to standard form using Cholesky factorization
+  !if (use_Cholesky) then
+  !  if (new_S .and. (.not. S_is_U)) call m_factorize(S,m_operation)
+  !  call m_reduce(S,H,m_operation)
+  !end if
 
   ! calculate the preconditioning matrix P=(S+T/tau)^(-1)
   if (use_precon .and. new_S) then
-    if (flavour==3) then
-      if (T%is_initialized) then
-        call m_add(T,'n',P(ip),1.0_dp,0.0_dp,m_operation)
-        call m_add(S,'n',P(ip),1.0_dp,1.0_dp/scale_T,m_operation)
-      else
-        call m_add(S,'n',P(ip),1.0_dp,0.0_dp,m_operation)
-      end if
-        call m_inverse(P(ip),m_operation)
-    else if (flavour==4) then
-      call calc_PW_precon(T,scale_T,P(ip))
+    if (T%is_initialized) then
+      call m_add(T,'n',P(ip),1.0_dp,0.0_dp,m_operation)
+      call m_add(S,'n',P(ip),1.0_dp,1.0_dp/scale_T,m_operation)
+    else
+      call m_add(S,'n',P(ip),1.0_dp,0.0_dp,m_operation)
     end if
+    call m_inverse(P(ip),m_operation)
   end if
 
   ! if this is the first SCF step, then we need to initialize the WF coeffs. matrix with random
@@ -335,9 +336,9 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   ! first we calculate the energy and gradient for our initial guess, with the following steps:
   ! -calculate the hamiltonian in WF basis: HW=C^T*H*C
   if (use_Cholesky) then
-    call calc_AW(H,C_Chl(ip),HW(ip),HC,m_operation)
+    call calc_HW_callback(H,C_Chl(ip),HW(ip),HC,m_operation)
   else
-    call calc_AW(H,C_min,HW(ip),HC,m_operation)
+    call calc_HW_callback(H,C_min,HW(ip),HC,m_operation)
   end if
   ! -calculate the overlap matrix in WF basis: SW=C^T*S*C
   if (use_Cholesky) then
@@ -384,10 +385,10 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
     end if
   end if
   if (use_precon) then
-    call calc_AW(H,PG,HWdd(ip),HG,m_operation)
+    call calc_HW_callback(H,PG,HWdd(ip),HG,m_operation)
     call calc_AW(S,PG,SWdd,SG(ip),m_operation)
   else
-    call calc_AW(H,G,HWdd(ip),HG,m_operation)
+    call calc_HW_callback(H,G,HWdd(ip),HG,m_operation)
     if (use_Cholesky .or. no_S) then
       call mm_multiply(G,'n',G,'c',SWdd,1.0_dp,0.0_dp,m_operation)
     else
@@ -433,7 +434,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
         else
           call mm_multiply(SC(ip),'n',D,'c',SWd,1.0_dp,0.0_dp,m_operation)
         end if
-        call calc_AW(H,D,HWdd(ip),HG,m_operation)
+        call calc_HW_callback(H,D,HWdd(ip),HG,m_operation)
         if (use_Cholesky .or. no_S) then
           call mm_multiply(D,'n',D,'c',SWdd,1.0_dp,0.0_dp,m_operation)
         else
@@ -648,4 +649,4 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
 
   close(log_unit)
 
-end subroutine omm
+end subroutine omm_callback
