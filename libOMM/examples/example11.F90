@@ -58,7 +58,7 @@ program example11
   bs_def=16
   call blacs_get(-1,0,icontxt)
   call blacs_gridinit(icontxt,order,nprow,npcol)
-  call ms_scalapack_setup(mpi_size,nprow,order,bs_def,icontxt=icontxt)
+  call ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,icontxt=icontxt)
 #else
   mpi_rank=0
 #endif
@@ -148,9 +148,9 @@ program example11
         end if
 
         ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
-        call m_register_pdsp_thre(H_upsp,H_up,desc_H,'csc',0.0_dp)
-        call m_register_pdsp_thre(H_downsp,H_down,desc_H,'csc',0.0_dp)
-        call m_register_pdsp_thre(Ssp,S,desc_S,'csc',0.0_dp)
+        call m_register_psp_thre(H_upsp,H_up,desc_H,'csc',0.0_dp)
+        call m_register_psp_thre(H_downsp,H_down,desc_H,'csc',0.0_dp)
+        call m_register_psp_thre(Ssp,S,desc_S,'csc',0.0_dp)
 
         if (mpi_rank==0) print('(a)'), 'up spin...'
 #ifdef MPI

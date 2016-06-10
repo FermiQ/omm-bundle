@@ -4,7 +4,7 @@ include make.inc
 .SUFFIXES:
 .SUFFIXES: .x .f90 .F90
 
-all : example1.x example2.x example3.x example4.x example5.x example6.x example7.x example8.x example9.x example10.x example11.x example12.x example13.x
+all : example1.x example2.x example3.x example4.x example5.x example6.x example7.x example8.x example9.x
 
 example1.x : example1.F90
 

@@ -72,7 +72,7 @@ program example2
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
 
-  call ms_scalapack_setup(mpi_size,1,'c',32)
+  call ms_scalapack_setup(mpi_rank,mpi_size,1,'c',32)
 
   m_storage='pddbc'
   m_operation='lap'

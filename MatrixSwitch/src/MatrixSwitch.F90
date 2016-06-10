@@ -1,5 +1,7 @@
 module MatrixSwitch
+#ifdef PSP
   use pspBLAS
+#endif
 
   implicit none
 
@@ -19,6 +21,7 @@ module MatrixSwitch
   character(1), save :: ms_lap_order
 
   integer, save :: ms_mpi_size
+  integer, save :: ms_mpi_rank
   integer, save :: ms_lap_nprow
   integer, save :: ms_lap_npcol
   integer, save :: ms_lap_bs_def
@@ -39,16 +42,20 @@ module MatrixSwitch
      logical :: is_square ! is the matrix square?
      logical :: is_sparse ! is the matrix sparse?
 
-     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
-
      integer :: dim1 ! (global) row dimension size of the matrix
      integer :: dim2 ! (global) column dimension size of the matrix
      integer, pointer :: iaux1(:) => null() ! auxiliary information for certain storage formats
      integer, pointer :: iaux2(:) => null() ! auxiliary information for certain storage formats
+     integer, pointer :: iaux3(:) => null() ! auxiliary information for certain storage formats
+     integer, pointer :: iaux4(:) => null() ! auxiliary information for certain storage formats
 
      real(dp), pointer :: dval(:,:) => null() ! matrix elements for a real matrix
 
      complex(dp), pointer :: zval(:,:) => null() ! matrix elements for a complex matrix
+
+#ifdef PSP
+     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
+#endif
   end type matrix
 
   !**** INTERFACES ********************************!
@@ -108,17 +115,18 @@ module MatrixSwitch
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
   end interface m_register_pdbc
+#endif
 
-  interface m_register_pdsp_thre
-     module procedure m_register_pddsp_thre
-     module procedure m_register_pzdsp_thre
-  end interface m_register_pdsp_thre
+#ifdef PSP
+  interface m_register_psp_thre
+     module procedure m_register_pdsp_thre
+     module procedure m_register_pzsp_thre
+  end interface m_register_psp_thre
 
-
-  interface m_register_pdsp_st
-     module procedure m_register_pddsp_st
-     module procedure m_register_pzdsp_st
-  end interface m_register_pdsp_st
+  interface m_register_psp_st
+     module procedure m_register_pdsp_st
+     module procedure m_register_pzsp_st
+  end interface m_register_psp_st
 #endif
 
   !************************************************!
@@ -135,18 +143,22 @@ module MatrixSwitch
   public :: m_register_sden
   public :: m_allocate
   public :: m_deallocate
+  public :: m_copy
+  public :: m_convert
 #ifdef MPI
   public :: m_register_pdbc
-  public :: m_register_pdsp_thre
-  public :: m_register_pdsp_st
   public :: ms_scalapack_setup
   public :: ms_lap_icontxt
+#endif
+#ifdef PSP
+  public :: m_register_psp_thre
+  public :: m_register_psp_st
 #endif
 
 contains
 
   !================================================!
-  ! allocate a dense matrix                        !
+  ! allocate matrix                                !
   !================================================!
   subroutine m_allocate(m_name,i,j,label)
     implicit none
@@ -170,7 +182,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     m_name%dim1=i
     m_name%dim2=j
     if (i==j) then
@@ -206,14 +217,29 @@ contains
     end if
 
     ! storage type
-    if ((m_name%str_type .eq. 'den') .and. &
-         (m_name%is_serial)) then
-       st=1
-    else if ((m_name%str_type .eq. 'dbc') .and. &
-         (.not. m_name%is_serial)) then
-       st=2
+    if (m_name%is_serial) then
+       if (m_name%str_type .eq. 'den') then
+          m_name%is_sparse=.false.
+          st=1
+       else if (m_name%str_type .eq. 'coo') then
+          m_name%is_sparse=.true.
+          st=3
+       else if (m_name%str_type .eq. 'csc') then
+          m_name%is_sparse=.true.
+          st=3
+       else if (m_name%str_type .eq. 'csr') then
+          m_name%is_sparse=.true.
+          st=3
+       else
+          call die('m_allocate: invalid label')
+       end if
     else
-       call die('m_allocate: invalid label')
+       if (m_name%str_type .eq. 'dbc') then
+          m_name%is_sparse=.false.
+          st=2
+       else
+          call die('m_allocate: invalid label')
+       end if
     end if
 
     select case (st)
@@ -231,6 +257,9 @@ contains
 #else
        call die('m_allocate: compile with ScaLAPACK')
 #endif
+    case (3)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
     end select
 
     m_name%is_initialized=.true.
@@ -249,18 +278,475 @@ contains
 
     !**********************************************!
 
-    if (m_name%is_sparse) then
-       call psp_deallocate_spm(m_name%spm)
-    end if
-
     if (associated(m_name%iaux1)) nullify(m_name%iaux1)
     if (associated(m_name%iaux2)) nullify(m_name%iaux2)
+    if (associated(m_name%iaux3)) nullify(m_name%iaux3)
+    if (associated(m_name%iaux4)) nullify(m_name%iaux4)
     if (associated(m_name%dval)) nullify(m_name%dval)
     if (associated(m_name%zval)) nullify(m_name%zval)
+
+#ifdef PSP
+    if ((m_name%str_type .eq. 'coo') .or. &
+        (m_name%str_type .eq. 'csc')) call psp_deallocate_spm(m_name%spm)
+#endif
 
     m_name%is_initialized=.false.
 
   end subroutine m_deallocate
+
+  !================================================!
+  ! copy matrix                                    !
+  !================================================!
+  subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+
+    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+
+    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+
+    type(matrix), intent(inout) :: A ! matrix to copy from
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name ! matrix to copy onto
+
+    !**** INTERNAL ********************************!
+
+    character(1) :: c1, c2
+
+    integer :: st, i, j, k
+
+    real(dp) :: abs_threshold, soft_threshold
+
+    !**********************************************!
+
+    m_name%dim1=A%dim1
+    m_name%dim2=A%dim2
+    m_name%is_square=A%is_square
+
+    if (present(label)) then
+       read(label,'(a1,a1,a3)') c1, c2, m_name%str_type
+       if (c1 .eq. 's') then
+          m_name%is_serial=.true.
+       else if (c1 .eq. 'p') then
+          m_name%is_serial=.false.
+#ifndef MPI
+          call die('m_copy: compile with MPI')
+#endif
+       else
+          call die('m_copy: invalid label')
+       end if
+       if (c2 .eq. 'd') then
+          m_name%is_real=.true.
+       else if (c2 .eq. 'z') then
+          m_name%is_real=.false.
+       else
+          call die('m_copy: invalid label')
+       end if
+    else
+       m_name%is_serial=A%is_serial
+       m_name%is_real=A%is_real
+       m_name%str_type=A%str_type
+    end if
+
+    if (m_name%is_real .neqv. A%is_real) call die('m_copy: invalid label')
+
+    ! storage type
+    if ((m_name%str_type .eq. 'den') .and. &
+         (m_name%is_serial) .and. &
+         (A%str_type .eq. 'den') .and. &
+         (A%is_serial)) then
+       m_name%is_sparse=.false.
+       st=1
+    else if ((m_name%str_type .eq. 'dbc') .and. &
+             (.not. m_name%is_serial) .and. &
+             (A%str_type .eq. 'dbc') .and. &
+             (.not. A%is_serial)) then
+       m_name%is_sparse=.false.
+       st=2
+    else if ((m_name%str_type .eq. 'coo') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'coo') .and. &
+           (A%is_serial)) then
+          st=3
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=4
+       else
+          call die('m_copy: invalid label')
+       end if
+    else if ((m_name%str_type .eq. 'csc') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csc') .and. &
+           (A%is_serial)) then
+          st=5
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=6
+       else
+          call die('m_copy: invalid label')
+       end if
+    else if ((m_name%str_type .eq. 'csr') .and. &
+             (m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csr') .and. &
+           (A%is_serial)) then
+          st=7
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=8
+       else
+          call die('m_copy: invalid label')
+       end if
+    else
+       call die('m_copy: invalid label')
+    end if
+
+    if (present(threshold)) then
+       abs_threshold=abs(threshold)
+       if (present(threshold_is_soft)) then
+          if (threshold_is_soft) then
+             soft_threshold=abs_threshold
+          else
+             soft_threshold=0.0_dp
+          end if
+       else
+          soft_threshold=0.0_dp
+       end if
+    else
+       abs_threshold=0.0_dp
+       soft_threshold=0.0_dp
+    end if
+
+    select case (st)
+    case (1)
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          if (present(threshold)) then
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      m_name%dval(i,j)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   else
+                      m_name%dval(i,j)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             m_name%dval=A%dval
+          end if
+       else
+          allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          if (present(threshold)) then
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      m_name%zval(i,j)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   else
+                      m_name%zval(i,j)=cmplx_0
+                   end if
+                end do
+             end do
+          else
+             m_name%zval=A%zval
+          end if
+       end if
+    case (2)
+       allocate(m_name%iaux1(9))
+       allocate(m_name%iaux2(2))
+       m_name%iaux1=A%iaux1
+       m_name%iaux2=A%iaux2
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),m_name%iaux2(2)))
+          if (present(threshold)) then
+             do i=1,m_name%iaux2(1)
+                do j=1,m_name%iaux2(2)
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      m_name%dval(i,j)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   else
+                      m_name%dval(i,j)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             m_name%dval=A%dval
+          end if
+       else
+          allocate(m_name%zval(m_name%iaux2(1),m_name%iaux2(2)))
+          if (present(threshold)) then
+             do i=1,m_name%iaux2(1)
+                do j=1,m_name%iaux2(2)
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      m_name%zval(i,j)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   else
+                      m_name%zval(i,j)=cmplx_0
+                   end if
+                end do
+             end do
+          else
+             m_name%zval=A%zval
+          end if
+       end if
+    case (3)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (4)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%dval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%iaux4(k)=i
+                      m_name%dval(k,1)=A%dval(j,i)-soft_threshold*A%dval(j,i)/abs(A%dval(j,i))
+                   end if
+                end do
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%zval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%iaux4(k)=i
+                      m_name%zval(k,1)=A%zval(j,i)-soft_threshold*A%zval(j,i)/abs(A%zval(j,i))
+                   end if
+                end do
+             end do
+          end if
+       end if
+    case (5)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%dim2+1))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (6)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%dim2+1))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux4(1)=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%dval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%dval(k,1)=A%dval(j,i)-soft_threshold*A%dval(j,i)/abs(A%dval(j,i))
+                   end if
+                end do
+                m_name%iaux4(i+1)=k
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%iaux2(1)))
+             allocate(m_name%iaux4(m_name%dim2+1))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux4(1)=0
+             do i=1,m_name%dim2
+                do j=1,m_name%dim1
+                   if (abs(A%zval(j,i))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux3(k)=j
+                      m_name%zval(k,1)=A%zval(j,i)-soft_threshold*A%zval(j,i)/abs(A%zval(j,i))
+                   end if
+                end do
+                m_name%iaux4(i)=k+1
+             end do
+          end if
+       end if
+    case (7)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%dim1+1))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux3=A%iaux3
+       m_name%iaux4=A%iaux4
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+    case (8)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=0
+       if (m_name%is_real) then
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%dval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%dim1+1))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%dval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux3(1)=0
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%dval(i,j))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux4(k)=j
+                      m_name%dval(k,1)=A%dval(i,j)-soft_threshold*A%dval(i,j)/abs(A%dval(i,j))
+                   end if
+                end do
+                m_name%iaux3(i+1)=k
+             end do
+          end if
+       else
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                if (abs(A%zval(j,i))>abs_threshold) m_name%iaux2(1)=m_name%iaux2(1)+1
+             end do
+          end do
+          if (m_name%iaux2(1)>0) then
+             allocate(m_name%iaux3(m_name%dim1+1))
+             allocate(m_name%iaux4(m_name%iaux2(1)))
+             allocate(m_name%zval(m_name%iaux2(1),1))
+             k=0
+             m_name%iaux3(1)=0
+             do i=1,m_name%dim1
+                do j=1,m_name%dim2
+                   if (abs(A%zval(i,j))>abs_threshold) then
+                      k=k+1
+                      m_name%iaux4(k)=j
+                      m_name%zval(k,1)=A%zval(i,j)-soft_threshold*A%zval(i,j)/abs(A%zval(i,j))
+                   end if
+                end do
+                m_name%iaux3(i)=k+1
+             end do
+          end if
+       end if
+    end select
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy
+
+  !================================================!
+  ! wrapper for in-place matrix type conversion    !
+  !================================================!
+  subroutine m_convert(m_name,label,threshold,threshold_is_soft)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+
+    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+
+    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name ! matrix to convert
+
+    !**** INTERNAL ********************************!
+
+    type(matrix) :: temp_matrix
+
+    !**********************************************!
+
+    if (present(label)) then
+       if (present(threshold)) then
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,label,threshold,threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,label,threshold)
+          end if
+       else
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,label,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,label)
+          end if
+       end if
+    else
+       if (present(threshold)) then
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,threshold=threshold,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name,threshold=threshold)
+          end if
+       else
+          if (present(threshold_is_soft)) then
+             call m_copy(temp_matrix,m_name,threshold_is_soft=threshold_is_soft)
+          else
+             call m_copy(temp_matrix,m_name)
+          end if
+       end if
+    end if
+    call m_deallocate(m_name)
+    call m_copy(m_name,temp_matrix)
+    call m_deallocate(temp_matrix)
+
+  end subroutine m_convert
 
   !================================================!
   ! matrix-matrix multiplication                   !
@@ -331,42 +817,68 @@ contains
     end if
 
     ! operation table
-    if ((.not. A%is_sparse) .and. (.not. B%is_sparse)) then
-       if ((A%str_type .eq. 'den') .and. &
-            (A%is_serial) .and. &
-            (B%str_type .eq. 'den') .and. &
-            (B%is_serial) .and. &
-            (C%str_type .eq. 'den') .and. &
-            (C%is_serial)) then
-          if (.not. present(label)) then
-             ot=1
-          else
-             if (label .eq. 'ref') then
-                ot=1
-             else if (label .eq. 'lap') then
-                ot=2
-             end if
-          end if
-       else if ((A%str_type .eq. 'dbc') .and. &
-            (.not. A%is_serial) .and. &
-            (B%str_type .eq. 'dbc') .and. &
-            (.not. B%is_serial) .and. &
-            (C%str_type .eq. 'dbc') .and. &
-            (.not. C%is_serial)) then
-          if (.not. present(label)) then
-             ot=3
-          else
-             if (label .eq. 'lap') then
-                ot=3
-             end if
-          end if
+    if ((A%str_type .eq. 'den') .and. &
+         (A%is_serial) .and. &
+         (B%str_type .eq. 'den') .and. &
+         (B%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=1
        else
-          call die('mm_dmultiply: invalid implementation')
+          if (label .eq. 'ref') then
+             ot=1
+          else if (label .eq. 'lap') then
+             ot=2
+          end if
        end if
-    else if (A%is_sparse .and. B%is_sparse) then
-       call die('mm_dmultiply: sparse matrix sparse matrix multiplication is not available')
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          else if (label .eq. 't1D') then
+             ot=6
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          else if (label .eq. 't1D') then
+             ot=7
+          end if
+       end if
     else
-       ot=4
+       call die('mm_dmultiply: invalid implementation')
     end if
 
     select case (ot)
@@ -395,20 +907,39 @@ contains
        call die('mm_dmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#if defined(MPI) && defined(SLAP)
+#ifdef PSP
        if (trA) then
           i=A%dim1
        else
           i=A%dim2
        end if
-       if (A%is_sparse) then
-          call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
-       else
-          call psp_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
-       end if
+       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with ScaLAPACK')
+       call die('mm_dmultiply: compile with pspBLAS')
 #endif
+    case (5)
+#ifdef PSP
+       if (trA) then
+          i=A%dim1
+       else
+          i=A%dim2
+       end if
+       call psp_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (6)
+#ifdef PSP
+       call mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (7)
+#ifdef PSP
+       call mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif       
     end select
 
   end subroutine mm_dmultiply
@@ -474,42 +1005,68 @@ contains
     end if
 
     ! operation table
-    if ((.not. A%is_sparse) .and. (.not. B%is_sparse)) then
-       if ((A%str_type .eq. 'den') .and. &
-            (A%is_serial) .and. &
-            (B%str_type .eq. 'den') .and. &
-            (B%is_serial) .and. &
-            (C%str_type .eq. 'den') .and. &
-            (C%is_serial)) then
-          if (.not. present(label)) then
-             ot=1
-          else
-             if (label .eq. 'ref') then
-                ot=1
-             else if (label .eq. 'lap') then
-                ot=2
-             end if
-          end if
-       else if ((A%str_type .eq. 'dbc') .and. &
-            (.not. A%is_serial) .and. &
-            (B%str_type .eq. 'dbc') .and. &
-            (.not. B%is_serial) .and. &
-            (C%str_type .eq. 'dbc') .and. &
-            (.not. C%is_serial)) then
-          if (.not. present(label)) then
-             ot=3
-          else
-             if (label .eq. 'lap') then
-                ot=3
-             end if
-          end if
+    if ((A%str_type .eq. 'den') .and. &
+         (A%is_serial) .and. &
+         (B%str_type .eq. 'den') .and. &
+         (B%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=1
        else
-          call die('mm_zmultiply: invalid implementation')
+          if (label .eq. 'ref') then
+             ot=1
+          else if (label .eq. 'lap') then
+             ot=2
+          end if
        end if
-    else if (A%is_sparse .and. B%is_sparse) then
-       call die('mm_zmultiply: sparse matrix sparse matrix multiplication is not available')
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'psp') then
+             ot=4
+          else if (label .eq. 't1D') then
+             ot=6
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'psp') then
+             ot=5
+          else if (label .eq. 't1D') then
+             ot=7
+          end if
+       end if
     else
-       ot=4
+       call die('mm_zmultiply: invalid implementation')
     end if
 
     select case (ot)
@@ -538,20 +1095,39 @@ contains
        call die('mm_zmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#if defined(MPI) && defined(SLAP)
+#ifdef PSP
        if (tcA>0) then
           i=A%dim1
        else
           i=A%dim2
        end if
-       if (A%is_sparse) then
-          call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
-       else
-          call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
-       end if
+       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
 #else
-       call die('mm_dmultiply: compile with ScaLAPACK')
+       call die('mm_zmultiply: compile with pspBLAS')
 #endif
+    case (5)
+#ifdef PSP
+       if (tcA>0) then
+          i=A%dim1
+       else
+          i=A%dim2
+       end if
+       call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif
+    case (6)
+#ifdef PSP
+       call mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif
+    case (7)
+#ifdef PSP
+       call mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif       
     end select
 
   end subroutine mm_zmultiply
@@ -631,6 +1207,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -720,6 +1298,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -802,6 +1382,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -882,6 +1464,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -981,6 +1565,8 @@ contains
           ot=3
        else
           if (label .eq. 'lap') then
+             ot=3
+          else if (label .eq. 'psp') then
              ot=3
           end if
        end if
@@ -1086,6 +1672,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=3
+          else if (label .eq. 'psp') then
+             ot=3
           end if
        end if
     else
@@ -1175,6 +1763,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=1
+          else if (label .eq. 'psp') then
+             ot=1
           end if
        end if
     else
@@ -1239,6 +1829,8 @@ contains
           ot=1
        else
           if (label .eq. 'lap') then
+             ot=1
+          else if (label .eq. 'psp') then
              ot=1
           end if
        end if
@@ -1312,6 +1904,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -1387,6 +1981,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1428,7 +2024,12 @@ contains
 
     !**** INTERNAL ********************************!
 
-    integer :: ot
+    logical :: el_present
+
+    integer :: ot, k
+    integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
+
+    real(dp), allocatable :: dval_temp(:,:)
 
 #ifdef CONV
     complex(dp) :: cmplx_alpha
@@ -1469,6 +2070,19 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
+          end if
+       end if
+    else if ((C%str_type .eq. 'coo') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'ref') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
           end if
        end if
     else
@@ -1484,6 +2098,39 @@ contains
 #else
        call die('m_dset_element: compile with ScaLAPACK')
 #endif
+    case (3)
+       el_present=.false.
+       do k=1,C%iaux2(1)
+          if ((C%iaux3(k)==i) .and. &
+               (C%iaux4(k)==j)) then
+             C%dval(k,1)=alpha
+             el_present=.true.
+          end if
+       end do
+       if (.not. el_present) then
+          allocate(iaux3_temp(C%iaux2(1)))
+          allocate(iaux4_temp(C%iaux2(1)))
+          allocate(dval_temp(C%iaux2(1),1))
+          iaux3_temp=C%iaux3
+          iaux4_temp=C%iaux4
+          dval_temp=C%dval
+          deallocate(C%dval)
+          deallocate(C%iaux4)
+          deallocate(C%iaux3)
+          C%iaux2(1)=C%iaux2(1)+1
+          allocate(C%iaux3(C%iaux2(1)))
+          allocate(C%iaux4(C%iaux2(1)))
+          allocate(C%dval(C%iaux2(1),1))
+          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+          C%dval(1:C%iaux2(1)-1,1)=dval_temp(1:C%iaux2(1)-1,1)
+          deallocate(dval_temp)
+          deallocate(iaux4_temp)
+          deallocate(iaux3_temp)
+          C%iaux3(C%iaux2(1))=i
+          C%iaux4(C%iaux2(1))=j
+          C%dval(C%iaux2(1),1)=alpha
+       end if
     end select
 
   end subroutine m_dset_element
@@ -1506,11 +2153,16 @@ contains
 
     !**** INTERNAL ********************************!
 
-    integer :: ot
+    logical :: el_present
+
+    integer :: ot, k
+    integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
 
 #ifdef CONV
     real(dp) :: real_alpha
 #endif
+
+    complex(dp), allocatable :: zval_temp(:,:)
 
     !**********************************************!
 
@@ -1547,6 +2199,19 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
+          end if
+       end if
+    else if ((C%str_type .eq. 'coo') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'ref') then
+             ot=3
+          else if (label .eq. 'psp') then
+             ot=3
           end if
        end if
     else
@@ -1562,6 +2227,39 @@ contains
 #else
        call die('m_zset_element: compile with ScaLAPACK')
 #endif
+    case (3)
+       el_present=.false.
+       do k=1,C%iaux2(1)
+          if ((C%iaux3(k)==i) .and. &
+               (C%iaux4(k)==j)) then
+             C%zval(k,1)=alpha
+             el_present=.true.
+          end if
+       end do
+       if (.not. el_present) then
+          allocate(iaux3_temp(C%iaux2(1)))
+          allocate(iaux4_temp(C%iaux2(1)))
+          allocate(zval_temp(C%iaux2(1),1))
+          iaux3_temp=C%iaux3
+          iaux4_temp=C%iaux4
+          zval_temp=C%zval
+          deallocate(C%zval)
+          deallocate(C%iaux4)
+          deallocate(C%iaux3)
+          C%iaux2(1)=C%iaux2(1)+1
+          allocate(C%iaux3(C%iaux2(1)))
+          allocate(C%iaux4(C%iaux2(1)))
+          allocate(C%zval(C%iaux2(1),1))
+          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+          C%zval(1:C%iaux2(1)-1,1)=zval_temp(1:C%iaux2(1)-1,1)
+          deallocate(zval_temp)
+          deallocate(iaux4_temp)
+          deallocate(iaux3_temp)
+          C%iaux3(C%iaux2(1))=i
+          C%iaux4(C%iaux2(1))=j
+          C%zval(C%iaux2(1),1)=alpha
+       end if
     end select
 
   end subroutine m_zset_element
@@ -1628,6 +2326,8 @@ contains
           ot=2
        else
           if (label .eq. 'lap') then
+             ot=2
+          else if (label .eq. 'psp') then
              ot=2
           end if
        end if
@@ -1707,6 +2407,8 @@ contains
        else
           if (label .eq. 'lap') then
              ot=2
+          else if (label .eq. 'psp') then
+             ot=2
           end if
        end if
     else
@@ -1746,7 +2448,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     dim=shape(A)
     m_name%dim1=dim(1)
     m_name%dim2=dim(2)
@@ -1758,6 +2459,7 @@ contains
     m_name%str_type='den'
     m_name%is_serial=.true.
     m_name%is_real=.true.
+    m_name%is_sparse=.false.
 
     m_name%dval => A
 
@@ -1782,7 +2484,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     dim=shape(A)
     m_name%dim1=dim(1)
     m_name%dim2=dim(2)
@@ -1794,6 +2495,7 @@ contains
     m_name%str_type='den'
     m_name%is_serial=.true.
     m_name%is_real=.false.
+    m_name%is_sparse=.false.
 
     m_name%zval => A
 
@@ -1824,7 +2526,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
@@ -1840,6 +2541,7 @@ contains
     m_name%str_type='dbc'
     m_name%is_serial=.false.
     m_name%is_real=.true.
+    m_name%is_sparse=.false.
 
     m_name%dval => A
 
@@ -1868,7 +2570,6 @@ contains
 
     !**********************************************!
 
-    m_name%is_sparse=.false.
     allocate(m_name%iaux1(9))
     m_name%iaux1=desc
     m_name%dim1=desc(3)
@@ -1885,6 +2586,7 @@ contains
     m_name%str_type='dbc'
     m_name%is_serial=.false.
     m_name%is_real=.false.
+    m_name%is_sparse=.false.
 
     m_name%zval => A
 
@@ -1897,8 +2599,8 @@ contains
   ! register matrix by thresholding                      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef MPI
-  subroutine m_register_pddsp_thre(m_name,A,desc,spm_storage,thre)
+#ifdef PSP
+  subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
     !**** INPUT ***********************************!
@@ -1944,11 +2646,11 @@ contains
 
     call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
-  end subroutine m_register_pddsp_thre
+  end subroutine m_register_pdsp_thre
 #endif
 
-#ifdef MPI
-  subroutine m_register_pzdsp_thre(m_name,A,desc,spm_storage,thre)
+#ifdef PSP
+  subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
     !**** INPUT ***********************************!
@@ -1995,15 +2697,15 @@ contains
 
     call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
-  end subroutine m_register_pzdsp_thre
+  end subroutine m_register_pzsp_thre
 #endif
 
   !======================================================!
   ! register matrix using the Sparse Triplet format      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef MPI
-  subroutine m_register_pddsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+#ifdef PSP
+  subroutine m_register_pdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2058,11 +2760,11 @@ contains
 
     call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
-  end subroutine m_register_pddsp_st
+  end subroutine m_register_pdsp_st
 #endif
 
-#ifdef MPI
-  subroutine m_register_pzdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+#ifdef PSP
+  subroutine m_register_pzsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2117,7 +2819,7 @@ contains
 
     call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
-  end subroutine m_register_pzdsp_st
+  end subroutine m_register_pzsp_st
 #endif
 
   !================================================!
@@ -2286,6 +2988,276 @@ contains
     end if
 
   end subroutine mm_multiply_szdenref
+
+#ifdef PSP
+  subroutine mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trA
+    logical, intent(in) :: trB
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=B%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+             C%dval(:,m)=C%dval(:,m)+alpha*A%dval(:,i)*dval_recv(l)
+          end do
+       end do
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pddbcpdcscref
+
+  subroutine mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trA
+    logical, intent(in) :: trB
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=A%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
+             C%dval(m,:)=C%dval(m,:)+alpha*dval_recv(l)*B%dval(row_ind_recv(l),:)
+          end do
+       end do
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pdcscpddbcref
+
+  subroutine mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcA
+    integer, intent(in) :: tcB
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=B%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+             C%zval(:,m)=C%zval(:,m)+alpha*A%zval(:,i)*conjg(zval_recv(l))
+          end do
+       end do
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzdbcpzcscref
+
+  subroutine mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcA
+    integer, intent(in) :: tcB
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=A%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       do i=1,loc_dim_recv
+          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
+             l=col_ptr_recv(i)+j
+             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
+             C%zval(m,:)=C%zval(m,:)+alpha*conjg(zval_recv(l))*B%zval(row_ind_recv(l),:)
+          end do
+       end do
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzcscpzdbcref
+#endif
 
   subroutine m_add_sddenref(A,trA,C,alpha,beta)
     implicit none
@@ -2565,13 +3537,14 @@ contains
   ! implementation: ScaLAPACK                      !
   !================================================!
 #ifdef MPI
-  subroutine ms_scalapack_setup(mpi_size,nprow,order,bs_def,bs_list,icontxt)
+  subroutine ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,bs_list,icontxt)
     implicit none
 
     !**** INPUT ***********************************!
 
     character(1), intent(in) :: order ! ordering of processor grid: 'r/R' or other for row-major, 'c/C' for column-major
 
+    integer, intent(in) :: mpi_rank ! rank of local MPI process
     integer, intent(in) :: mpi_size ! total number of MPI processes for the processor grid
     integer, intent(in) :: nprow ! number of rows in the processor grid
     integer, intent(in) :: bs_def ! default block size
@@ -2591,6 +3564,7 @@ contains
     !**********************************************!
 
     ms_mpi_size=mpi_size
+    ms_mpi_rank=mpi_rank
     ms_lap_nprow=nprow
     ms_lap_npcol=mpi_size/nprow
     ms_lap_order=order
@@ -2607,14 +3581,15 @@ contains
 
     if (present(icontxt)) then
        ms_lap_icontxt=icontxt
-       ! initialized grid information in pspBLAS
-       call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
     else
        call blacs_get(-1,0,ms_lap_icontxt)
        call blacs_gridinit(ms_lap_icontxt,ms_lap_order,ms_lap_nprow,ms_lap_npcol)
-       ! initialized grid information in pspBLAS
-       call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
     end if
+
+#ifdef PSP
+    ! initialized grid information in pspBLAS
+    call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
+#endif
 
   end subroutine ms_scalapack_setup
 #endif
