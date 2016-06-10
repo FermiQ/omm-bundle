@@ -5,7 +5,7 @@ include make.inc
 
 all : $(LIBNAME)
 
-ALLOBJ = MatrixSwitch.o MatrixSwitch_wrapper.o
+ALLOBJ = chess_types.o MatrixSwitch.o MatrixSwitch_wrapper.o
 
 $(LIBNAME) : $(ALLOBJ)
 	$(ARCH) $(ARCHFLAGS) $@ $(ALLOBJ)

@@ -2,6 +2,9 @@ module MatrixSwitch
 #ifdef PSP
   use pspBLAS
 #endif
+#ifdef CHESS
+  use chess_types
+#endif
 
   implicit none
 
@@ -55,6 +58,9 @@ module MatrixSwitch
 
 #ifdef PSP
      type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
+#endif
+#ifdef CHESS
+     type(chess_sparse_matrix) :: csm ! a sparse matrix from the Chess library
 #endif
   end type matrix
 
