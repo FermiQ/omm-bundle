@@ -33,10 +33,13 @@ module MatrixSwitch_wrapper
   !**** PARAMS ************************************!
 
   integer, parameter :: dp=selected_real_kind(15,300)
+  integer, parameter :: max_key_length=10
 
   !**** VARIABLES *********************************!
 
-  character(10), allocatable :: lookup(:)
+  character(max_key_length), allocatable :: ms_keys(:)
+
+  integer :: ms_num_matrices
 
   type(matrix), allocatable :: ms_matrices(:)
 
@@ -138,17 +141,22 @@ contains
   !================================================!
   ! setup the MatrixSwitch wrapper                 !
   !================================================!
-  subroutine ms_wrapper_open(num_matrices)
+  subroutine ms_wrapper_open(num_matrices,keys)
     implicit none
 
     !**** INPUT ***********************************!
+
+    character(*), intent(in) :: keys(num_matrices) ! mapping keys
 
     integer, intent(in) :: num_matrices ! number of matrices to use
 
     !**********************************************!
 
     allocate(ms_matrices(num_matrices))
-    allocate(lookup(num_matrices))
+    allocate(ms_keys(num_matrices))
+
+    ms_num_matrices=num_matrices
+    ms_keys=keys
 
   end subroutine ms_wrapper_open
 
@@ -158,10 +166,46 @@ contains
   subroutine ms_wrapper_close()
     implicit none
 
-    if (allocated(lookup)) deallocate(lookup)
-    if (allocated(ms_matrices)) deallocate(ms_matrices)
+    !**** INTERNAL ********************************!
+
+    integer :: i
+
+    !**********************************************!
+
+    if (allocated(ms_keys)) deallocate(ms_keys)
+    if (allocated(ms_matrices)) then
+      do i=1,ms_num_matrices
+        call m_deallocate_orig(ms_matrices(i))
+      end do
+      deallocate(ms_matrices)
+    end if
 
   end subroutine ms_wrapper_close
+
+  !================================================!
+  ! map key to index of ms_matrices array          !
+  !================================================!
+  integer function lookup(key)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: key ! matrix key
+
+    !**** INTERNAL ********************************!
+
+    integer :: i
+
+    !**********************************************!
+
+    do i=1,ms_num_matrices
+      if (key .eq. ms_keys(i)) then
+        lookup=i
+        exit
+      end if
+    end do
+
+  end function
 
   !================================================!
   ! allocate matrix                                !
@@ -172,14 +216,14 @@ contains
     !**** INPUT ***********************************!
 
     character(5), intent(in), optional :: label ! storage format to use (see documentation)
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
-    integer, intent(in) :: m_name ! matrix to be allocated
     integer, intent(in) :: i ! (global) row dimension size of the matrix
     integer, intent(in) :: j ! (global) column dimension size of the matrix
 
     !**********************************************!
 
-    call m_allocate_orig(ms_matrices(m_name),i,j,label)
+    call m_allocate_orig(ms_matrices(lookup(m_name)),i,j,label)
 
   end subroutine m_allocate
 
@@ -191,11 +235,11 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: m_name ! matrix to be deallocated
+    character(*), intent(in) :: m_name ! matrix to be deallocated
 
     !**********************************************!
 
-    call m_deallocate_orig(ms_matrices(m_name))
+    call m_deallocate_orig(ms_matrices(lookup(m_name)))
 
   end subroutine m_deallocate
 
@@ -213,12 +257,12 @@ contains
 
     real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
 
-    integer, intent(in) :: A ! matrix to copy from
-    integer, intent(in) :: m_name ! matrix to copy onto
+    character(*), intent(in) :: A ! matrix to copy from
+    character(*), intent(in) :: m_name ! matrix to copy onto
 
     !**********************************************!
 
-    call m_copy_orig(ms_matrices(m_name),ms_matrices(A),label,threshold,threshold_is_soft)
+    call m_copy_orig(ms_matrices(lookup(m_name)),ms_matrices(lookup(A)),label,threshold,threshold_is_soft)
 
   end subroutine m_copy
 
@@ -236,11 +280,11 @@ contains
 
     real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
 
-    integer, intent(in) :: m_name ! matrix to convert
+    character(*), intent(in) :: m_name ! matrix to convert
 
     !**********************************************!
 
-    call m_convert_orig(ms_matrices(m_name),label,threshold,threshold_is_soft)
+    call m_convert_orig(ms_matrices(lookup(m_name)),label,threshold,threshold_is_soft)
 
   end subroutine m_convert
 
@@ -262,13 +306,13 @@ contains
     real(dp), intent(in) :: alpha ! scalar alpha
     real(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: B ! matrix B
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: B ! matrix B
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call mm_multiply_orig(ms_matrices(A),opA,ms_matrices(B),opB,ms_matrices(C),alpha,beta,label)
+    call mm_multiply_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(B)),opB,ms_matrices(lookup(C)),alpha,beta,label)
 
   end subroutine mm_dmultiply
 
@@ -284,13 +328,13 @@ contains
     complex(dp), intent(in) :: alpha ! scalar alpha
     complex(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: B ! matrix B
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: B ! matrix B
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call mm_multiply_orig(ms_matrices(A),opA,ms_matrices(B),opB,ms_matrices(C),alpha,beta,label)
+    call mm_multiply_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(B)),opB,ms_matrices(lookup(C)),alpha,beta,label)
 
   end subroutine mm_zmultiply
 
@@ -310,12 +354,12 @@ contains
     real(dp), intent(in) :: alpha ! scalar alpha
     real(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_add_orig(ms_matrices(A),opA,ms_matrices(C),alpha,beta,label)
+    call m_add_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(C)),alpha,beta,label)
 
   end subroutine m_dadd
 
@@ -330,12 +374,12 @@ contains
     complex(dp), intent(in) :: alpha ! scalar alpha
     complex(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_add_orig(ms_matrices(A),opA,ms_matrices(C),alpha,beta,label)
+    call m_add_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(C)),alpha,beta,label)
 
   end subroutine m_zadd
 
@@ -350,7 +394,7 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: A ! matrix A
+    character(*), intent(in) :: A ! matrix A
 
     !**** OUTPUT **********************************!
 
@@ -358,7 +402,7 @@ contains
 
     !**********************************************!
 
-    call m_trace_orig(ms_matrices(A),alpha,label)
+    call m_trace_orig(ms_matrices(lookup(A)),alpha,label)
 
   end subroutine m_dtrace
 
@@ -369,7 +413,7 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: A ! matrix A
+    character(*), intent(in) :: A ! matrix A
 
     !**** OUTPUT **********************************!
 
@@ -377,7 +421,7 @@ contains
 
     !**********************************************!
 
-    call m_trace_orig(ms_matrices(A),alpha,label)
+    call m_trace_orig(ms_matrices(lookup(A)),alpha,label)
 
   end subroutine m_ztrace
 
@@ -395,8 +439,8 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: B ! matrix B
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: B ! matrix B
 
     !**** OUTPUT **********************************!
 
@@ -404,7 +448,7 @@ contains
 
     !**********************************************!
 
-    call mm_trace_orig(ms_matrices(A),ms_matrices(B),alpha,label)
+    call mm_trace_orig(ms_matrices(lookup(A)),ms_matrices(lookup(B)),alpha,label)
 
   end subroutine mm_dtrace
 
@@ -418,8 +462,8 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: A ! matrix A
-    integer, intent(in) :: B ! matrix B
+    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: B ! matrix B
 
     !**** OUTPUT **********************************!
 
@@ -427,7 +471,7 @@ contains
 
     !**********************************************!
 
-    call mm_trace_orig(ms_matrices(A),ms_matrices(B),alpha,label)
+    call mm_trace_orig(ms_matrices(lookup(A)),ms_matrices(lookup(B)),alpha,label)
 
   end subroutine mm_ztrace
 
@@ -444,11 +488,11 @@ contains
 
     real(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_scale_orig(ms_matrices(C),beta,label)
+    call m_scale_orig(ms_matrices(lookup(C)),beta,label)
 
   end subroutine m_dscale
 
@@ -461,11 +505,11 @@ contains
 
     complex(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_scale_orig(ms_matrices(C),beta,label)
+    call m_scale_orig(ms_matrices(lookup(C)),beta,label)
 
   end subroutine m_zscale
 
@@ -485,11 +529,11 @@ contains
     real(dp), intent(in) :: alpha ! scalar alpha
     real(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_set_orig(ms_matrices(C),seC,alpha,beta,label)
+    call m_set_orig(ms_matrices(lookup(C)),seC,alpha,beta,label)
 
   end subroutine m_dset
 
@@ -504,11 +548,11 @@ contains
     complex(dp), intent(in) :: alpha ! scalar alpha
     complex(dp), intent(in) :: beta ! scalar beta
 
-    integer, intent(in) :: C ! matrix C
+    character(*), intent(in) :: C ! matrix C
 
     !**********************************************!
 
-    call m_set_orig(ms_matrices(C),seC,alpha,beta,label)
+    call m_set_orig(ms_matrices(lookup(C)),seC,alpha,beta,label)
 
   end subroutine m_zset
 
@@ -523,15 +567,16 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: C ! matrix C
     integer, intent(in) :: i ! row index of element
     integer, intent(in) :: j ! column index of element
 
     real(dp), intent(in) :: alpha ! scalar alpha
 
+    character(*), intent(in) :: C ! matrix C
+
     !**********************************************!
 
-    call m_set_element_orig(ms_matrices(C),i,j,alpha,label)
+    call m_set_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
 
   end subroutine m_dset_element
 
@@ -542,15 +587,16 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: C ! matrix C
     integer, intent(in) :: i ! row index of element
     integer, intent(in) :: j ! column index of element
 
     complex(dp), intent(in) :: alpha ! scalar alpha
 
+    character(*), intent(in) :: C ! matrix C
+
     !**********************************************!
 
-    call m_set_element_orig(ms_matrices(C),i,j,alpha,label)
+    call m_set_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
 
   end subroutine m_zset_element
 
@@ -565,9 +611,10 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: C ! matrix C
     integer, intent(in) :: i ! row index of element
     integer, intent(in) :: j ! column index of element
+
+    character(*), intent(in) :: C ! matrix C
 
     !**** OUTPUT **********************************!
 
@@ -575,7 +622,7 @@ contains
 
     !**********************************************!
 
-    call m_get_element_orig(ms_matrices(C),i,j,alpha,label)
+    call m_get_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
 
   end subroutine m_dget_element
 
@@ -586,9 +633,10 @@ contains
 
     character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
 
-    integer, intent(in) :: C ! matrix C
     integer, intent(in) :: i ! row index of element
     integer, intent(in) :: j ! column index of element
+
+    character(*), intent(in) :: C ! matrix C
 
     !**** OUTPUT **********************************!
 
@@ -596,7 +644,7 @@ contains
 
     !**********************************************!
 
-    call m_get_element_orig(ms_matrices(C),i,j,alpha,label)
+    call m_get_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
 
   end subroutine m_zget_element
 
@@ -608,13 +656,13 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: m_name ! matrix to be allocated
-
     real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_sden_orig(ms_matrices(m_name),A)
+    call m_register_sden_orig(ms_matrices(lookup(m_name)),A)
 
   end subroutine m_register_sdden
 
@@ -623,13 +671,13 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: m_name ! matrix to be allocated
-
     complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_sden_orig(ms_matrices(m_name),A)
+    call m_register_sden_orig(ms_matrices(lookup(m_name)),A)
 
   end subroutine m_register_szden
 
@@ -642,14 +690,15 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: m_name ! matrix to be allocated
     integer, intent(in), target :: desc(9) ! BLACS array descriptor
 
     real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
 
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
     !**********************************************!
 
-    call m_register_pdbc_orig(ms_matrices(m_name),A,desc)
+    call m_register_pdbc_orig(ms_matrices(lookup(m_name)),A,desc)
 
   end subroutine m_register_pddbc
 #endif
@@ -660,14 +709,15 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: m_name ! matrix to be allocated
     integer, intent(in) :: desc(9) ! BLACS array descriptor
 
     complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
 
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
     !**********************************************!
 
-    call m_register_pdbc_orig(ms_matrices(m_name),A,desc)
+    call m_register_pdbc_orig(ms_matrices(lookup(m_name)),A,desc)
 
   end subroutine m_register_pzdbc
 #endif
@@ -691,11 +741,11 @@ contains
     ! If thre=0, generate a sparse matrix with nonzero entries.
     ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
 
-    integer, intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(m_name),A,desc,spm_storage,thre)
+    call m_register_psp_thre_orig(ms_matrices(lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pdsp_thre
 #endif
@@ -715,11 +765,11 @@ contains
     ! If thre=0, generate a sparse matrix with nonzero entries.
     ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
 
-    integer, intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(m_name),A,desc,spm_storage,thre)
+    call m_register_psp_thre_orig(ms_matrices(lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pzsp_thre
 #endif
@@ -741,11 +791,11 @@ contains
     real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
     integer :: nprow, npcol
 
-    integer, intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(m_name),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_psp_st_orig(ms_matrices(lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pdsp_st
 #endif
@@ -763,11 +813,11 @@ contains
     complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
     integer :: nprow, npcol
 
-    integer, intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(m_name),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_psp_st_orig(ms_matrices(lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pzsp_st
 #endif
