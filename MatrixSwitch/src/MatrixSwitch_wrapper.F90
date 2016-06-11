@@ -1,6 +1,6 @@
 module MatrixSwitch_wrapper
+  use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &
-    matrix, &
     mm_multiply_orig => mm_multiply, &
     m_add_orig => m_add, &
     m_trace_orig => m_trace, &
@@ -33,15 +33,6 @@ module MatrixSwitch_wrapper
   !**** PARAMS ************************************!
 
   integer, parameter :: dp=selected_real_kind(15,300)
-  integer, parameter :: max_key_length=10
-
-  !**** VARIABLES *********************************!
-
-  character(max_key_length), allocatable :: ms_keys(:)
-
-  integer :: ms_num_matrices
-
-  type(matrix), allocatable :: ms_matrices(:)
 
   !**** INTERFACES ********************************!
 
@@ -113,6 +104,13 @@ module MatrixSwitch_wrapper
 
   public :: ms_wrapper_open
   public :: ms_wrapper_close
+  public :: ms_is_initialized
+  public :: ms_is_serial
+  public :: ms_is_real
+  public :: ms_is_square
+  public :: ms_is_sparse
+  public :: ms_dim1
+  public :: ms_dim2
   public :: mm_multiply
   public :: m_add
   public :: m_trace
@@ -183,29 +181,98 @@ contains
   end subroutine ms_wrapper_close
 
   !================================================!
-  ! map key to index of ms_matrices array          !
+  ! functions to unpack the matrix data type       !
   !================================================!
-  integer function lookup(key)
+  logical function ms_is_initialized(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: key ! matrix key
-
-    !**** INTERNAL ********************************!
-
-    integer :: i
+    character(*), intent(in) :: m_name ! matrix to unpack
 
     !**********************************************!
 
-    do i=1,ms_num_matrices
-      if (key .eq. ms_keys(i)) then
-        lookup=i
-        exit
-      end if
-    end do
+    ms_is_initialized=ms_matrices(ms_lookup(m_name))%is_initialized
 
-  end function
+  end function ms_is_initialized
+
+  logical function ms_is_serial(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_is_serial=ms_matrices(ms_lookup(m_name))%is_serial
+
+  end function ms_is_serial
+
+  logical function ms_is_real(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_is_real=ms_matrices(ms_lookup(m_name))%is_real
+
+  end function ms_is_real
+
+  logical function ms_is_square(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_is_square=ms_matrices(ms_lookup(m_name))%is_square
+
+  end function ms_is_square
+
+  logical function ms_is_sparse(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_is_sparse=ms_matrices(ms_lookup(m_name))%is_sparse
+
+  end function ms_is_sparse
+
+  integer function ms_dim1(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_dim1=ms_matrices(ms_lookup(m_name))%dim1
+
+  end function ms_dim1
+
+  integer function ms_dim2(m_name)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(*), intent(in) :: m_name ! matrix to unpack
+
+    !**********************************************!
+
+    ms_dim2=ms_matrices(ms_lookup(m_name))%dim2
+
+  end function ms_dim2
 
   !================================================!
   ! allocate matrix                                !
@@ -223,7 +290,7 @@ contains
 
     !**********************************************!
 
-    call m_allocate_orig(ms_matrices(lookup(m_name)),i,j,label)
+    call m_allocate_orig(ms_matrices(ms_lookup(m_name)),i,j,label)
 
   end subroutine m_allocate
 
@@ -239,7 +306,7 @@ contains
 
     !**********************************************!
 
-    call m_deallocate_orig(ms_matrices(lookup(m_name)))
+    call m_deallocate_orig(ms_matrices(ms_lookup(m_name)))
 
   end subroutine m_deallocate
 
@@ -262,7 +329,7 @@ contains
 
     !**********************************************!
 
-    call m_copy_orig(ms_matrices(lookup(m_name)),ms_matrices(lookup(A)),label,threshold,threshold_is_soft)
+    call m_copy_orig(ms_matrices(ms_lookup(m_name)),ms_matrices(ms_lookup(A)),label,threshold,threshold_is_soft)
 
   end subroutine m_copy
 
@@ -284,7 +351,7 @@ contains
 
     !**********************************************!
 
-    call m_convert_orig(ms_matrices(lookup(m_name)),label,threshold,threshold_is_soft)
+    call m_convert_orig(ms_matrices(ms_lookup(m_name)),label,threshold,threshold_is_soft)
 
   end subroutine m_convert
 
@@ -312,7 +379,7 @@ contains
 
     !**********************************************!
 
-    call mm_multiply_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(B)),opB,ms_matrices(lookup(C)),alpha,beta,label)
+    call mm_multiply_orig(ms_matrices(ms_lookup(A)),opA,ms_matrices(ms_lookup(B)),opB,ms_matrices(ms_lookup(C)),alpha,beta,label)
 
   end subroutine mm_dmultiply
 
@@ -334,7 +401,7 @@ contains
 
     !**********************************************!
 
-    call mm_multiply_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(B)),opB,ms_matrices(lookup(C)),alpha,beta,label)
+    call mm_multiply_orig(ms_matrices(ms_lookup(A)),opA,ms_matrices(ms_lookup(B)),opB,ms_matrices(ms_lookup(C)),alpha,beta,label)
 
   end subroutine mm_zmultiply
 
@@ -359,7 +426,7 @@ contains
 
     !**********************************************!
 
-    call m_add_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(C)),alpha,beta,label)
+    call m_add_orig(ms_matrices(ms_lookup(A)),opA,ms_matrices(ms_lookup(C)),alpha,beta,label)
 
   end subroutine m_dadd
 
@@ -379,7 +446,7 @@ contains
 
     !**********************************************!
 
-    call m_add_orig(ms_matrices(lookup(A)),opA,ms_matrices(lookup(C)),alpha,beta,label)
+    call m_add_orig(ms_matrices(ms_lookup(A)),opA,ms_matrices(ms_lookup(C)),alpha,beta,label)
 
   end subroutine m_zadd
 
@@ -402,7 +469,7 @@ contains
 
     !**********************************************!
 
-    call m_trace_orig(ms_matrices(lookup(A)),alpha,label)
+    call m_trace_orig(ms_matrices(ms_lookup(A)),alpha,label)
 
   end subroutine m_dtrace
 
@@ -421,7 +488,7 @@ contains
 
     !**********************************************!
 
-    call m_trace_orig(ms_matrices(lookup(A)),alpha,label)
+    call m_trace_orig(ms_matrices(ms_lookup(A)),alpha,label)
 
   end subroutine m_ztrace
 
@@ -448,7 +515,7 @@ contains
 
     !**********************************************!
 
-    call mm_trace_orig(ms_matrices(lookup(A)),ms_matrices(lookup(B)),alpha,label)
+    call mm_trace_orig(ms_matrices(ms_lookup(A)),ms_matrices(ms_lookup(B)),alpha,label)
 
   end subroutine mm_dtrace
 
@@ -471,7 +538,7 @@ contains
 
     !**********************************************!
 
-    call mm_trace_orig(ms_matrices(lookup(A)),ms_matrices(lookup(B)),alpha,label)
+    call mm_trace_orig(ms_matrices(ms_lookup(A)),ms_matrices(ms_lookup(B)),alpha,label)
 
   end subroutine mm_ztrace
 
@@ -492,7 +559,7 @@ contains
 
     !**********************************************!
 
-    call m_scale_orig(ms_matrices(lookup(C)),beta,label)
+    call m_scale_orig(ms_matrices(ms_lookup(C)),beta,label)
 
   end subroutine m_dscale
 
@@ -509,7 +576,7 @@ contains
 
     !**********************************************!
 
-    call m_scale_orig(ms_matrices(lookup(C)),beta,label)
+    call m_scale_orig(ms_matrices(ms_lookup(C)),beta,label)
 
   end subroutine m_zscale
 
@@ -533,7 +600,7 @@ contains
 
     !**********************************************!
 
-    call m_set_orig(ms_matrices(lookup(C)),seC,alpha,beta,label)
+    call m_set_orig(ms_matrices(ms_lookup(C)),seC,alpha,beta,label)
 
   end subroutine m_dset
 
@@ -552,7 +619,7 @@ contains
 
     !**********************************************!
 
-    call m_set_orig(ms_matrices(lookup(C)),seC,alpha,beta,label)
+    call m_set_orig(ms_matrices(ms_lookup(C)),seC,alpha,beta,label)
 
   end subroutine m_zset
 
@@ -576,7 +643,7 @@ contains
 
     !**********************************************!
 
-    call m_set_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
+    call m_set_element_orig(ms_matrices(ms_lookup(C)),i,j,alpha,label)
 
   end subroutine m_dset_element
 
@@ -596,7 +663,7 @@ contains
 
     !**********************************************!
 
-    call m_set_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
+    call m_set_element_orig(ms_matrices(ms_lookup(C)),i,j,alpha,label)
 
   end subroutine m_zset_element
 
@@ -622,7 +689,7 @@ contains
 
     !**********************************************!
 
-    call m_get_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
+    call m_get_element_orig(ms_matrices(ms_lookup(C)),i,j,alpha,label)
 
   end subroutine m_dget_element
 
@@ -644,7 +711,7 @@ contains
 
     !**********************************************!
 
-    call m_get_element_orig(ms_matrices(lookup(C)),i,j,alpha,label)
+    call m_get_element_orig(ms_matrices(ms_lookup(C)),i,j,alpha,label)
 
   end subroutine m_zget_element
 
@@ -662,7 +729,7 @@ contains
 
     !**********************************************!
 
-    call m_register_sden_orig(ms_matrices(lookup(m_name)),A)
+    call m_register_sden_orig(ms_matrices(ms_lookup(m_name)),A)
 
   end subroutine m_register_sdden
 
@@ -677,7 +744,7 @@ contains
 
     !**********************************************!
 
-    call m_register_sden_orig(ms_matrices(lookup(m_name)),A)
+    call m_register_sden_orig(ms_matrices(ms_lookup(m_name)),A)
 
   end subroutine m_register_szden
 
@@ -698,7 +765,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pdbc_orig(ms_matrices(lookup(m_name)),A,desc)
+    call m_register_pdbc_orig(ms_matrices(ms_lookup(m_name)),A,desc)
 
   end subroutine m_register_pddbc
 #endif
@@ -717,7 +784,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pdbc_orig(ms_matrices(lookup(m_name)),A,desc)
+    call m_register_pdbc_orig(ms_matrices(ms_lookup(m_name)),A,desc)
 
   end subroutine m_register_pzdbc
 #endif
@@ -745,7 +812,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(lookup(m_name)),A,desc,spm_storage,thre)
+    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pdsp_thre
 #endif
@@ -769,7 +836,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(lookup(m_name)),A,desc,spm_storage,thre)
+    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pzsp_thre
 #endif
@@ -795,7 +862,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pdsp_st
 #endif
@@ -817,7 +884,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pzsp_st
 #endif
