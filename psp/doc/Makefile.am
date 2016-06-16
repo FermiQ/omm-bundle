@@ -4,14 +4,14 @@
 
 # Markdown sources
 psp_mddocs = \
-  configuring-libpsp.md \
-  contributing-to-libpsp.md \
+  configuring-psp.md \
+  contributing-to-psp.md \
   hacking-the-build-system.md
 
 # HTML documents
 psp_htmldocs = \
-  configuring-libpsp.html \
-  contributing-to-libpsp.html \
+  configuring-psp.html \
+  contributing-to-psp.html \
   hacking-the-build-system.html
 
                     ########################################
