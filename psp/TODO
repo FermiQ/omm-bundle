@@ -1,0 +1,4 @@
+Todo list for Psp
+=================
+
+[ ] Properly enclose MPI statements within #ifdef MPI ... #endif blocks.
