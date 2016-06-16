@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2015 Yann Pouillon
 #
-# This file is part of the Libpspxc software package. For license information,
+# This file is part of the Psp software package. For license information,
 # please see the COPYING file in the top-level directory of the Libpspxc source
 # distribution.
 #
