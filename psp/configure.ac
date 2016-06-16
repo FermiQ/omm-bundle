@@ -69,14 +69,14 @@ psp_cfg_extdeps="linalg mpi"
 psp_debug_enable_def="yes"
 
 # MPI
-psp_mpi_enable_def="auto"
+psp_mpi_enable_def="yes"
 
 # Linear algebra
 # Note: default libraries must be empty because some compilers have
 #       built-in support.
 psp_linalg_enable_def="yes"
 psp_linalg_incs_def=""
-psp_linalg_libs_def=""
+psp_linalg_libs_def="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
 
                     # ------------------------------------ #
 
@@ -416,7 +416,7 @@ fi
                     # ------------------------------------ #
 
 # Write down YAML configuration now (allows full report with deferred errors)
-AC_OUTPUT([config/data/psp-config.yml])
+AC_OUTPUT([config/data/psp-config.yaml])
 
 # Report configuration
 AC_MSG_NOTICE([])
@@ -447,6 +447,7 @@ AC_MSG_NOTICE([])
 #
 
 AC_CONFIG_FILES([
+  config/data/psp.pc
   Makefile
   doc/Makefile
   src/Makefile

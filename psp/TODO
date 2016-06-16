@@ -2,3 +2,4 @@ Todo list for Psp
 =================
 
 [ ] Properly enclose MPI statements within #ifdef MPI ... #endif blocks.
+[ ] Prune the numerous unused variables form the source code.

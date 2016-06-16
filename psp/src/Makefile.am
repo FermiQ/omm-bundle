@@ -62,4 +62,7 @@ clean-local:
 	rm -f *.mod *.MOD *.obj
 
 # Explicit dependencies
--include $(srcdir)/dependencies.mf
+include $(srcdir)/dependencies.mf
+
+# Files to mark explicitly for distribution
+EXTRA_DIST = dependencies.mf

@@ -24,7 +24,7 @@ pkgconfig_DATA = config/data/psp.pc
 # Files to explicitly distribute in the source package
 EXTRA_DIST = \
   config/data/psp.pc.in \
-  config/data/psp-config.yml.in
+  config/data/psp-config.yaml.in
 
 # Custom targets
 distclean-local:
