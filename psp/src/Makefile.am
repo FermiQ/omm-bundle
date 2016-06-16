@@ -31,16 +31,16 @@ psp_srcs = \
 # Fortran modules
 # TODO: support both lower-case and upper-case file names
 psp_f03_mods = \
-  pspLevel3.$(MODEXT) \
-  pspGemm.$(MODEXT) \
-  pspSpmm.$(MODEXT) \
-  pspMspm.$(MODEXT) \
-  pspMPI.$(MODEXT) \
-  pspLevel2.$(MODEXT) \
-  pspBLAS.$(MODEXT) \
-  pspUtility.$(MODEXT) \
-  pspVariable.$(MODEXT) \
-  pspLevel1.$(MODEXT)
+  psplevel3.$(MODEXT) \
+  pspgemm.$(MODEXT) \
+  pspspmm.$(MODEXT) \
+  pspmspm.$(MODEXT) \
+  pspmpi.$(MODEXT) \
+  psplevel2.$(MODEXT) \
+  pspblas.$(MODEXT) \
+  psputility.$(MODEXT) \
+  pspvariable.$(MODEXT) \
+  psplevel1.$(MODEXT)
 
 # Libraries to install
 lib_LTLIBRARIES = libpspblas.la
