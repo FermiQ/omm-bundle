@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module MatrixSwitch_wrapper
   use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &
@@ -22,8 +26,8 @@ module MatrixSwitch_wrapper
 #endif
 #ifdef PSP
   use MatrixSwitch, only: &
-    m_register_psp_thre_orig => m_register_psp_thre, &
-    m_register_psp_st_orig => m_register_psp_st
+    m_register_msw_thre_orig => m_register_msw_thre, &
+    m_register_msw_st_orig => m_register_msw_st
 #endif
 
   implicit none
@@ -89,15 +93,15 @@ module MatrixSwitch_wrapper
 #endif
 
 #ifdef PSP
-  interface m_register_psp_thre
+  interface m_register_msw_thre
      module procedure m_register_pdsp_thre
      module procedure m_register_pzsp_thre
-  end interface m_register_psp_thre
+  end interface m_register_msw_thre
 
-  interface m_register_psp_st
+  interface m_register_msw_st
      module procedure m_register_pdsp_st
      module procedure m_register_pzsp_st
-  end interface m_register_psp_st
+  end interface m_register_msw_st
 #endif
 
   !************************************************!
@@ -130,8 +134,8 @@ module MatrixSwitch_wrapper
   public :: ms_lap_icontxt
 #endif
 #ifdef PSP
-  public :: m_register_psp_thre
-  public :: m_register_psp_st
+  public :: m_register_msw_thre
+  public :: m_register_msw_st
 #endif
 
 contains
@@ -812,7 +816,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
+    call m_register_msw_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pdsp_thre
 #endif
@@ -836,7 +840,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
+    call m_register_msw_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
 
   end subroutine m_register_pzsp_thre
 #endif
@@ -862,7 +866,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_msw_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pdsp_st
 #endif
@@ -884,7 +888,7 @@ contains
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_msw_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
 
   end subroutine m_register_pzsp_st
 #endif

@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module MatrixSwitch
 #ifdef PSP
   use pspBLAS
@@ -54,7 +58,7 @@ module MatrixSwitch
      complex(dp), pointer :: zval(:,:) => null() ! matrix elements for a complex matrix
 
 #ifdef PSP
-     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
+     type(msw_matrix_spm) :: spm ! a sparse matrix in pspBLAS
 #endif
   end type matrix
 
@@ -118,15 +122,15 @@ module MatrixSwitch
 #endif
 
 #ifdef PSP
-  interface m_register_psp_thre
+  interface m_register_msw_thre
      module procedure m_register_pdsp_thre
      module procedure m_register_pzsp_thre
-  end interface m_register_psp_thre
+  end interface m_register_msw_thre
 
-  interface m_register_psp_st
+  interface m_register_msw_st
      module procedure m_register_pdsp_st
      module procedure m_register_pzsp_st
-  end interface m_register_psp_st
+  end interface m_register_msw_st
 #endif
 
   !************************************************!
@@ -151,8 +155,8 @@ module MatrixSwitch
   public :: ms_lap_icontxt
 #endif
 #ifdef PSP
-  public :: m_register_psp_thre
-  public :: m_register_psp_st
+  public :: m_register_msw_thre
+  public :: m_register_msw_st
 #endif
 
 contains
@@ -287,7 +291,7 @@ contains
 
 #ifdef PSP
     if ((m_name%str_type .eq. 'coo') .or. &
-        (m_name%str_type .eq. 'csc')) call psp_deallocate_spm(m_name%spm)
+        (m_name%str_type .eq. 'csc')) call msw_deallocate_spm(m_name%spm)
 #endif
 
     m_name%is_initialized=.false.
@@ -913,7 +917,7 @@ contains
        else
           i=A%dim2
        end if
-       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
+       call msw_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%dval,opB,C%dval,alpha,beta)
 #else
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
@@ -924,7 +928,7 @@ contains
        else
           i=A%dim2
        end if
-       call psp_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
+       call msw_gemspm(C%dim1,C%dim2,i,A%dval,opA,B%spm,opB,C%dval,alpha,beta)
 #else
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
@@ -1101,7 +1105,7 @@ contains
        else
           i=A%dim2
        end if
-       call psp_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
+       call msw_gespmm(C%dim1,C%dim2,i,A%spm,opA,B%zval,opB,C%zval,alpha,beta)
 #else
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
@@ -1112,7 +1116,7 @@ contains
        else
           i=A%dim2
        end if
-       call psp_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
+       call msw_gemspm(C%dim1,C%dim2,i,A%zval,opA,B%spm,opB,C%zval,alpha,beta)
 #else
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
@@ -2644,7 +2648,7 @@ contains
     m_name%is_sparse=.true.
     m_name%is_initialized=.true.
 
-    call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
+    call msw_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
   end subroutine m_register_pdsp_thre
 #endif
@@ -2695,7 +2699,7 @@ contains
 
     m_name%is_initialized=.true.
 
-    call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
+    call msw_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
 
   end subroutine m_register_pzsp_thre
 #endif
@@ -2730,12 +2734,12 @@ contains
     integer, external :: numroc
 
     !***** COMMON BLOCK ***************************!
-    integer :: psp_bs_def_row, psp_bs_def_col, psp_icontxt
+    integer :: msw_bs_def_row, msw_bs_def_col, msw_icontxt
 
-    common /coeff/ psp_bs_def_row, psp_bs_def_col, psp_icontxt
+    common /coeff/ msw_bs_def_row, msw_bs_def_col, msw_icontxt
 
     !**********************************************!
-    call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
+    call blacs_gridinfo(msw_icontxt,nprow,npcol,iprow,ipcol)
     if (m_name%is_initialized .EQV. .true.) then
        call m_deallocate(m_name)
     end if
@@ -2743,8 +2747,8 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
-    dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
-    dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
+    dim(1)=numroc(m_name%dim1,msw_bs_def_row,iprow,0,nprow)
+    dim(2)=numroc(m_name%dim2,msw_bs_def_col,ipcol,0,npcol)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
     if (m_name%dim1==m_name%dim2) then
@@ -2758,7 +2762,7 @@ contains
     m_name%is_sparse=.true.
     m_name%is_initialized=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
+    call msw_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
   end subroutine m_register_pdsp_st
 #endif
@@ -2789,12 +2793,12 @@ contains
     integer, external :: numroc
 
     !***** COMMON BLOCK ***************************!
-    integer :: psp_bs_def_row, psp_bs_def_col, psp_icontxt
+    integer :: msw_bs_def_row, msw_bs_def_col, msw_icontxt
 
-    common /coeff/ psp_bs_def_row, psp_bs_def_col, psp_icontxt
+    common /coeff/ msw_bs_def_row, msw_bs_def_col, msw_icontxt
 
     !**********************************************!
-    call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
+    call blacs_gridinfo(msw_icontxt,nprow,npcol,iprow,ipcol)
     if (m_name%is_initialized .EQV. .true.) then
        call m_deallocate(m_name)
     end if
@@ -2802,8 +2806,8 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
-    dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
-    dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
+    dim(1)=numroc(m_name%dim1,msw_bs_def_row,iprow,0,nprow)
+    dim(2)=numroc(m_name%dim2,msw_bs_def_col,ipcol,0,npcol)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
     if (m_name%dim1==m_name%dim2) then
@@ -2817,7 +2821,7 @@ contains
     m_name%is_sparse=.true.
     m_name%is_initialized=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
+    call msw_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
 
   end subroutine m_register_pzsp_st
 #endif
@@ -3588,7 +3592,7 @@ contains
 
 #ifdef PSP
     ! initialized grid information in pspBLAS
-    call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
+    call msw_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
 #endif
 
   end subroutine ms_scalapack_setup
