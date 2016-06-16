@@ -96,13 +96,16 @@ All these mistakes will likely cause *Automake* to fail. We thus highly
 recommend that you use an editor with syntax highlighting when modifying a
 *Makefile.am*.
 
-If the file is a ".c" source, it will go to a *"_SOURCES"* variable. Finding
+If the file is a ".F90" source, it will go to a *"_SOURCES"* variable. Finding
 which one is just a question of common sense, since you already know what this
 file is for.
 
 If the file is a ".h" source, it will go to a *"_HEADERS"* variable. If it is
 supposed to be installed, it will most likely fit into *"include_HEADERS"*. If
 it is purely internal, then it should be registered within *"noinst_HEADERS"*.
+
+Fortran modules - i.e. the *.mod* files - you want to install have to be
+manually declared in *"include_DATA"*, since they are not standard files.
 
 If the file can be considered as inert data from the perspective of the build
 system, it should go to the *"EXTRA_DIST"* variable. ".c" files included in
@@ -111,6 +114,12 @@ other ".c" files enter in this category. Another typical example is a local
 
 Once done with *Makefile.am*, synchronise the build system with the source
 tree.
+
+Automatic tracking of Fortran dependencies is a tricky process and is still
+under development. Meanwhile, whenever you add a new file, you should update
+*src/dependencies.mf* accordingly. When the dependency-generating feature
+becomes mature enough, this file will be automatically generated and updated by
+the build system.
 
 
 Adding a library

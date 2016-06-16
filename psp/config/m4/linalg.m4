@@ -22,6 +22,8 @@
 #
 AC_DEFUN([PSP_LINALG_DETECT],[
   dnl Init
+  psp_linalg_has_lapack="unknown"
+  psp_linalg_has_scalapack="unknown"
   psp_linalg_ok="unknown"
 
   dnl Prepare environment
@@ -37,7 +39,17 @@ AC_DEFUN([PSP_LINALG_DETECT],[
     [[
       call zgemm
       call zhpev
-    ]])], [psp_linalg_ok="yes"], [psp_linalg_ok="no"])
+    ]])], [psp_linalg_ok="yes"; psp_linalg_has_lapack="yes"], [psp_linalg_ok="no"])
+  AC_MSG_RESULT([${psp_linalg_ok}])
+  AC_LANG_POP([Fortran])
+
+  dnl Check ScaLAPACK routines
+  AC_LANG_PUSH([Fortran])
+  AC_MSG_CHECKING([whether linear algebra libraries have ScaLAPACK])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([],
+    [[
+      call pzheevx
+    ]])], [psp_linalg_has_scalapack="yes"], [psp_linalg_has_scalapack="no"])
   AC_MSG_RESULT([${psp_linalg_ok}])
   AC_LANG_POP([Fortran])
 

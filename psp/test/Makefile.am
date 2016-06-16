@@ -8,6 +8,8 @@ pzgemmScaling_x_SOURCES = pzgemmScaling.F90
 pzgemmScaling_x_FCFLAGS = -I../src
 pzgemmScaling_x_LDADD = ../src/libpspblas.la
 
+LOG_COMPILER = $(TESTS_CMD)
+
 TESTS = \
   pdgemmScaling.x \
   pzgemmScaling.x

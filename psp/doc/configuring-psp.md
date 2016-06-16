@@ -26,7 +26,8 @@ Here is how to build Psp with a build directory:
 Example:
 
     git clone http://www.e-cam2020.eu:10080/ESL/omm.git
-    cd psp
+    cd omm/psp
+    ./autogen.sh
     mkdir my-build-with-gcc
     cd my-build-with-gcc
     ../configure --prefix="$HOME/my-libs/psp" CC="gcc" \

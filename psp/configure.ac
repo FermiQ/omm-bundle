@@ -26,7 +26,7 @@ _AC_SRCDIRS([.])
 
 # Init Automake
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([1.14 subdir-objects])
+AM_INIT_AUTOMAKE([1.14 subdir-objects parallel-tests color-tests])
 AM_CONFIG_HEADER([config.h])
 
 # Generate timestamp
@@ -56,11 +56,11 @@ AC_PROG_GREP
 # Note for developers: you may edit these parameters to tune the behaviour
 # of the build system. Please do it with care.
 
-# List of options to manage (psp_*_enable_def variables)
+# Lists of options to manage (psp_*_enable_def variables)
 #
 # Note:
-#   * switches must be set to "yes" or "no"
-#   * external dependencies must be set to "yes", "no", or "auto"
+#   * switches (--enable-*) must be set to "yes" or "no"
+#   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
 psp_cfg_switches="debug"
 psp_cfg_extdeps="linalg mpi"
@@ -68,15 +68,17 @@ psp_cfg_extdeps="linalg mpi"
 # Optional features
 psp_debug_enable_def="yes"
 
-# MPI
-psp_mpi_enable_def="yes"
-
 # Linear algebra
 # Note: default libraries must be empty because some compilers have
 #       built-in support.
 psp_linalg_enable_def="yes"
 psp_linalg_incs_def=""
 psp_linalg_libs_def="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
+
+# MPI
+psp_mpi_enable_def="yes"
+psp_mpi_incs_def=""
+psp_mpi_libs_def=""
 
                     # ------------------------------------ #
 
@@ -87,6 +89,8 @@ psp_linalg_libs_def="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -l
 # Default triggers for optional features must be yes or no, and not empty
 for psp_cfg_default in ${psp_cfg_switches}; do
   tmp_default=`eval echo \$\{psp_${psp_cfg_default}_enable_def\}`
+  AC_MSG_CHECKING([default value of the ${psp_cfg_default} switch])
+  AC_MSG_RESULT([${tmp_default}])
   if test "${tmp_default}" != "no" -a \
           "${tmp_default}" != "yes"; then
     AC_MSG_ERROR([invalid default value: psp_${psp_cfg_default}_enable_def = ${tmp_default}])
@@ -96,6 +100,8 @@ done
 # Default triggers for external dependencies must be yes, no, or auto
 for psp_cfg_default in ${psp_cfg_extdeps}; do
   tmp_default=`eval echo \$\{psp_${psp_cfg_default}_enable_def\}`
+  AC_MSG_CHECKING([default detection behavior for ${psp_cfg_default}])
+  AC_MSG_RESULT([${tmp_default}])
   if test "${tmp_default}" != "" -a \
           "${tmp_default}" != "auto" -a \
           "${tmp_default}" != "no" -a \
@@ -116,7 +122,7 @@ unset tmp_default
 # Conditional compilation: --enable-* options (alphabetical order)
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug],
-    [Enable extra debug information (default: ${psp_debug_enable_def})])],
+    [Enable extra debug information])],
   [psp_debug_enable="${enableval}"; psp_debug_type="yon"],
   [psp_debug_enable="${psp_debug_enable_def}"; psp_debug_type="def"])
 AC_SUBST(enable_debug)
@@ -127,7 +133,7 @@ AC_SUBST(enable_debug)
 # External dependencies
 #
 
-# MPI (optional)
+# MPI (mandatory for now)
 AC_ARG_WITH([mpi],
   [AS_HELP_STRING([--with-mpi],
     [Install prefix of MPI (e.g. /usr/local). The default behaviour is to detect whether the specified compilers properly support MPI and to fall back to serial mode if not. You may use --with-mpi without argument to force MPI detection, in which case detection failures will result in errors, and --without-mpi to disable MPI support completely.])],
@@ -139,9 +145,32 @@ AC_ARG_WITH([mpi],
       psp_mpi_type="dir"
     fi],
   [psp_mpi_enable="${psp_mpi_enable_def}"; psp_mpi_type="def"])
-AC_ARG_VAR([MPICC], [MPI-aware C compiler (usually called 'mpicc'). Please note that this variable conflicts with the --with-mpi option.])
-AC_ARG_VAR([MPIFC], [MPI-aware Fortran compiler (usually called 'mpif90'. Please note that this variable conflicts with the --with-mpi option.])
 AC_SUBST(with_mpi)
+
+AC_ARG_VAR([MPICC], [MPI-aware C compiler (usually called 'mpicc'). Please note that this variable conflicts with the --with-mpi option.])
+if test -n "${MPICC}"; then
+  psp_mpi_enable="yes"
+  psp_mpi_type="env"
+fi
+AC_ARG_VAR([MPIFC], [MPI-aware Fortran compiler (usually called 'mpif90'. Please note that this variable conflicts with the --with-mpi option.])
+if test -n "${MPIFC}"; then
+  psp_mpi_enable="yes"
+  psp_mpi_type="env"
+fi
+AC_ARG_VAR([MPI_INCLUDES],
+  [Include flags for MPI. Please note that this variable conflicts with the --with-mpi option.])
+if test -n "${MPI_INCLUDES}"; then
+  psp_mpi_enable="yes"
+  psp_mpi_type="env"
+  psp_mpi_incs="${MPI_INCLUDES}"
+fi
+AC_ARG_VAR([MPI_LIBS],
+    [Library flags for MPI. Please note that this variable conflicts with the --with-mpi option.])
+if test -n "${MPI_LIBS}"; then
+  psp_mpi_enable="yes"
+  psp_mpi_type="env"
+  psp_mpi_libs="${MPI_LIBS}"
+fi
 
 # Linear algebra (mandatory)
 AC_ARG_WITH([linalg],
@@ -196,7 +225,7 @@ if test "${psp_linalg_enable}" != "yes"; then
 fi
 
 # All MPI environment variables must be provided at once
-tmp_mpi_vars="${MPICC}${MPIFC}"
+tmp_mpi_vars="${MPICC}${MPIFC}${MPI_INCLUDES}${MPI_LIBS}"
 if test -n "${tmp_mpi_vars}" -a \
         \( -z "${MPICC}" -o -z "${MPIFC}" \); then
   AC_MSG_ERROR([MPICC and MPIFC must both be set])
@@ -234,6 +263,8 @@ unset tmp_mpi_vars
 # Defaults
 AC_SUBST(psp_debug_enable_def)
 AC_SUBST(psp_mpi_enable_def)
+AC_SUBST(psp_mpi_incs_def)
+AC_SUBST(psp_mpi_libs_def)
 AC_SUBST(psp_linalg_enable_def)
 AC_SUBST(psp_linalg_incs_def)
 AC_SUBST(psp_linalg_libs_def)
@@ -255,8 +286,12 @@ AC_SUBST(psp_mpi_fc_set)
 AC_SUBST(psp_mpi_fc_wrap)
 
 # Build flags for external dependencies
+AC_SUBST(psp_mpi_incs)
+AC_SUBST(psp_mpi_libs)
 AC_SUBST(psp_linalg_incs)
 AC_SUBST(psp_linalg_libs)
+AC_SUBST(psp_linalg_has_lapack)
+AC_SUBST(psp_linalg_has_scalapack)
 
                     # ------------------------------------ #
 
@@ -274,7 +309,7 @@ PSP_MPI_INIT
 #
 
 # Init C compiler and preprocessor
-AC_PROG_CC
+AC_PROG_CC([mpicc mpiicc icc gcc cc])
 AC_PROG_CPP
 
 # C compiler peculiarities (for Libtool)
@@ -296,7 +331,7 @@ if test "${FC}" != "" -a ! -x "${FC}"; then
     fi
   fi
 fi
-AC_PROG_FC
+AC_PROG_FC([mpif90 mpiifort ifort gfortran g95 xlf95 xlf90 f95 fort ifc efc pgfortran pgf95 lf95 ftn nagfor xlf90 f90 pgf90 pghpf epcf90])
 
 # Fail if no Fortran compiler is available
 if test "${FC}" = ""; then
@@ -349,6 +384,9 @@ if test "${psp_mpi_enable}" != "no" -a "${psp_mpi_enable}" != "yes"; then
   AC_MSG_ERROR([unexpected MPI trigger value: '${psp_mpi_enable}'])
 fi
 
+TESTS_CMD="mpirun -np 4"
+AC_SUBST(TESTS_CMD)
+
                     # ------------------------------------ #
 
 #
@@ -383,7 +421,7 @@ AC_MSG_RESULT([${psp_linalg_libs}])
 PSP_LINALG_DETECT
 if test "${psp_linalg_ok}" != "yes" -a "${psp_linalg_type}" = "def"; then
   AC_MSG_NOTICE([retrying with generic linear algebra library flags (Netlib)])
-  LIBS="-llapack -lblas ${LIBS}"
+  LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas ${LIBS}"
   PSP_LINALG_DETECT
 fi
 if test "${psp_linalg_ok}" = "yes"; then

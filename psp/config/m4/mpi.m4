@@ -108,6 +108,7 @@ AC_DEFUN([_PSP_MPI_CHECK_CC], [
 
   dnl Prepare environment
   psp_saved_CC="${CC}"
+  psp_saved_CC="${CC}"
   CC="$1"
   tmp_mpi_header=mpi.h
   tmp_mpi_cache=AS_TR_SH([ac_cv_header_${tmp_mpi_header}])

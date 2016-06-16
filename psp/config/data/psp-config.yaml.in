@@ -47,9 +47,15 @@ deps:
     mpi_incs: "@psp_mpi_incs@"
     mpi_libs: "@psp_mpi_libs@"
 
+linalg_internals:
+    has_lapack: "@psp_linalg_has_lapack@"
+    has_scalapack: "@psp_linalg_has_lapack@"
+
 mpi_internals:
     cc_set: "@psp_mpi_cc_set@"
     cc_wrap: "@psp_mpi_cc_wrap@"
     fc_set: "@psp_mpi_fc_set@"
     fc_wrap: "@psp_mpi_fc_wrap@"
+    fc_wrap: "@psp_mpi_incs@"
+    fc_wrap: "@psp_mpi_libs@"
 
