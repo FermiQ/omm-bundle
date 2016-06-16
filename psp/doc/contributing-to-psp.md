@@ -22,7 +22,7 @@ library.
 Optional features
 -----------------
 
-Optional features are triggered either through *HAVE_FEATURE* or *VDW_FEATURE*
+Optional features are triggered either through *HAVE_FEATURE* or *PSP_FEATURE*
 preprocessing options, where *FEATURE* is the name of the feature. All these
 preprocessing options are handled through *config.h*, with the exception of
 the Autotools-reserved *HAVE_CONFIG_H* option.
