@@ -14,3 +14,13 @@ TESTS = \
   pdgemmScaling.x \
   pzgemmScaling.x
 
+CLEANFILES = \
+  zgemm.txt \
+  dgemm.txt \
+  zlap.txt \
+  zspmm.txt \
+  dspmm.txt \
+  zmspm.txt \
+  dlap.txt \
+  dmspm.txt
+
