@@ -59,6 +59,15 @@ AC_DEFUN([PSP_MPI_DETECT], [
     _PSP_MPI_CHECK_FC([${FC}])
   fi
 
+  dnl Look for mpirun
+  dnl FIXME: hard-coded command-line options
+  if test "${MPIRUN}" = ""; then
+    AC_CHECK_PROGS([MPIRUN], [mpirun mpiexec])
+  fi
+  if test "${MPIRUN}" != ""; then
+    MPIRUN="${MPIRUN} -np 4"
+  fi
+
   dnl Take final decision
   AC_MSG_CHECKING([whether we have a full MPI support])
   if test "${psp_mpi_cc_ok}" = "yes" -a \

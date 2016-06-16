@@ -384,7 +384,8 @@ if test "${psp_mpi_enable}" != "no" -a "${psp_mpi_enable}" != "yes"; then
   AC_MSG_ERROR([unexpected MPI trigger value: '${psp_mpi_enable}'])
 fi
 
-TESTS_CMD="mpirun -np 4"
+# Let the test suite know about mpirun
+TESTS_CMD="${MPIRUN}"
 AC_SUBST(TESTS_CMD)
 
                     # ------------------------------------ #
