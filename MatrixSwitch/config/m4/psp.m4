@@ -41,7 +41,7 @@ AC_DEFUN([MSW_PSP_DETECT],[
       integer :: M,N,K
       type(psp_matrix_spm) :: A
       character(1) :: opA, opB
-      double precision :: B,C(2,2),alpha,beta
+      double precision :: B(2,2),C(2,2),alpha,beta
       call psp_gespmm(M,N,K,A,opA,B,opB,C,alpha,beta)
     ]])], [msw_psp_ok="yes"], [msw_psp_ok="no"])
   AC_MSG_RESULT([${msw_psp_ok}])
