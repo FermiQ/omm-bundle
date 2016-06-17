@@ -72,9 +72,9 @@ msw_examples_enable_def="no"
 # Linear algebra
 # Note: default libraries must be empty because some compilers have
 #       built-in support.
-msw_linalg_enable_def="yes"
+msw_linalg_enable_def="no"
 msw_linalg_incs_def=""
-msw_linalg_libs_def="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
+msw_linalg_libs_def=""
 
 # MPI
 msw_mpi_enable_def="auto"
@@ -145,7 +145,7 @@ AC_SUBST(enable_examples)
 # External dependencies
 #
 
-# MPI (mandatory for now)
+# MPI (optional)
 AC_ARG_WITH([mpi],
   [AS_HELP_STRING([--with-mpi],
     [Install prefix of MPI (e.g. /usr/local). The default behaviour is to detect whether the specified compilers properly support MPI and to fall back to serial mode if not. You may use --with-mpi without argument to force MPI detection, in which case detection failures will result in errors, and --without-mpi to disable MPI support completely.])],
@@ -184,10 +184,10 @@ if test -n "${MPI_LIBS}"; then
   msw_mpi_libs="${MPI_LIBS}"
 fi
 
-# Linear algebra (mandatory)
+# Linear algebra (optional)
 AC_ARG_WITH([linalg],
   [AS_HELP_STRING([--with-linalg],
-    [Install prefix of the linear algebra libraries (e.g. /usr/local). Since linear algebra is a mandatory dependency, --with-linalg without argument has no effect, while --without-linalg produces an error.])],
+    [Install prefix of the linear algebra libraries (e.g. /usr/local). Linear algebra support will be enabled only if you use this option. You may use --with-linalg without argument if linear algebra libraries are available system-wide, and --without-linalg to disable linear algebra support completely.])],
   [ if test "${withval}" = "no" -o "${withval}" = "yes"; then
       msw_linalg_enable="${withval}"
       msw_linalg_type="yon"
@@ -262,10 +262,10 @@ for msw_cfg_option in ${msw_cfg_switches}; do
 done
 
 # Linear algebra must be enabled
-if test "${msw_linalg_enable}" != "yes"; then
-  AC_MSG_ERROR([linear algebra support has been disabled
-                  while it is mandatory])
-fi
+#if test "${msw_linalg_enable}" != "yes"; then
+#  AC_MSG_ERROR([linear algebra support has been disabled
+#                  while it is mandatory])
+#fi
 
 # All MPI wrappers must be provided at once
 tmp_mpi_vars="${MPICC}${MPIFC}"
@@ -490,23 +490,27 @@ if test "${msw_linalg_type}" != "dir"; then
 fi
 
 # Look for linear algebra
-AC_MSG_CHECKING([how linear algebra parameters have been set])
-AC_MSG_RESULT([${msw_linalg_type}])
-AC_MSG_CHECKING([for linear algebra include flags])
-AC_MSG_RESULT([${msw_linalg_incs}])
-AC_MSG_CHECKING([for linear algebra library flags])
-AC_MSG_RESULT([${msw_linalg_libs}])
-MSW_LINALG_DETECT
-if test "${msw_linalg_ok}" != "yes" -a "${msw_linalg_type}" = "def"; then
-  AC_MSG_NOTICE([retrying with generic linear algebra library flags (Netlib)])
-  LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas ${LIBS}"
+AC_MSG_CHECKING([whether to look for linear algebra])
+AC_MSG_RESULT([${msw_linalg_enable}])
+if test "${msw_linalg_enable}" = "yes"; then
+  AC_MSG_CHECKING([how linear algebra parameters have been set])
+  AC_MSG_RESULT([${msw_linalg_type}])
+  AC_MSG_CHECKING([for linear algebra include flags])
+  AC_MSG_RESULT([${msw_linalg_incs}])
+  AC_MSG_CHECKING([for linear algebra library flags])
+  AC_MSG_RESULT([${msw_linalg_libs}])
   MSW_LINALG_DETECT
-fi
-if test "${msw_linalg_ok}" = "yes"; then
-  CPPFLAGS="${CPPFLAGS} ${msw_linalg_incs}"
-  LIBS="${msw_linalg_libs} ${LIBS}"
-else
-  AC_MSG_FAILURE([linear algebra is missing or incomplete])
+  if test "${msw_linalg_ok}" != "yes" -a "${msw_linalg_type}" = "def"; then
+    AC_MSG_NOTICE([retrying with generic linear algebra library flags (Netlib)])
+    LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas ${LIBS}"
+    MSW_LINALG_DETECT
+  fi
+  if test "${msw_linalg_ok}" = "yes"; then
+    CPPFLAGS="${CPPFLAGS} ${msw_linalg_incs}"
+    LIBS="${msw_linalg_libs} ${LIBS}"
+  else
+    AC_MSG_FAILURE([linear algebra is missing or incomplete])
+  fi
 fi
 
                               # ---------------- #
@@ -574,7 +578,7 @@ fi
 if test "${msw_linalg_has_scalapack}" = "yes"; then
   AC_DEFINE([SLAP], 1, [Define to 1 if you have ScaLAPACK libraries available.])
 fi
-if test "${msw_psp_has_scalapack}" = "yes"; then
+if test "${msw_psp_ok}" = "yes"; then
   AC_DEFINE([PSP], 1, [Define to 1 if you have the Psp library available.])
 fi
 
@@ -582,6 +586,8 @@ fi
 
 # Write down YAML configuration now (allows full report with deferred errors)
 AC_OUTPUT([config/data/MatrixSwitch-config.yaml])
+
+                    # ------------------------------------ #
 
 # Report configuration
 AC_MSG_NOTICE([])
@@ -591,6 +597,7 @@ AC_MSG_NOTICE([])
 AC_MSG_NOTICE([TSTAMP     = ${msw_timestamp}])
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([DEBUG    = ${msw_debug_enable} (init: ${msw_debug_type})])
+AC_MSG_NOTICE([EXAMPLES = ${msw_examples_enable} (init: ${msw_examples_type})])
 AC_MSG_NOTICE([MPI      = ${msw_mpi_enable} (init: ${msw_mpi_type})])
 AC_MSG_NOTICE([LINALG   = ${msw_linalg_enable} (init: ${msw_linalg_type})])
 AC_MSG_NOTICE([PSP      = ${msw_psp_enable} (init: ${msw_psp_type})])

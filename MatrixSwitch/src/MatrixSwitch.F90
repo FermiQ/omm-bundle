@@ -151,7 +151,9 @@ module MatrixSwitch
   public :: m_convert
 #ifdef MPI
   public :: m_register_pdbc
+#ifdef SLAP
   public :: ms_scalapack_setup
+#endif
   public :: ms_lap_icontxt
 #endif
 #ifdef PSP
@@ -3540,7 +3542,7 @@ contains
   !================================================!
   ! implementation: ScaLAPACK                      !
   !================================================!
-#ifdef MPI
+#if defined(MPI) && defined(SLAP)
   subroutine ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,bs_list,icontxt)
     implicit none
 

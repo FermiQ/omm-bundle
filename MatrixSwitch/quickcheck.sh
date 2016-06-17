@@ -28,8 +28,6 @@ set -ev
 test -s "configure.ac" -a -s "src/MatrixSwitch.F90" || exit 0
 
 # Init build parameters
-export CC="mpicc"
-export FC="mpif90"
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 
@@ -50,6 +48,54 @@ make install DESTDIR="${PWD}/install-minimal"
 ls -lR install-minimal >install-minimal.log
 cd ..
 
+# Check examples build
+mkdir tmp-examples
+cd tmp-examples
+../configure --enable-examples
+make -j4
+make check -j4
+cd ..
+
+# Check Linalg build
+mkdir tmp-linalg
+cd tmp-linalg
+../configure \
+  LINALG_LIBS="-llapack -lblas"
+make -j4
+make check -j4
+cd ..
+
+# Check bare MPI build
+mkdir tmp-mpi
+cd tmp-mpi
+../configure --enable-examples CC="mpicc" FC="mpif90"
+make -j4
+make check -j4
+cd ..
+
+# Check MPI + Linalg build
+mkdir tmp-mpi-linalg
+cd tmp-mpi-linalg
+../configure \
+  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
+  --enable-examples \
+  CC="mpicc" FC="mpif90"
+make -j4
+make check -j4
+cd ..
+
+# Check MPI + Psp build
+mkdir tmp-mpi-psp
+cd tmp-mpi-psp
+../configure \
+  --with-psp="${PWD}/../../tmp-psp" \
+  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
+  --enable-examples \
+  CC="mpicc" FC="mpif90"
+make -j4
+make check -j4
+cd ..
+
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
@@ -59,4 +105,4 @@ make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-distcheck
+rm -rf tmp-minimal tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck

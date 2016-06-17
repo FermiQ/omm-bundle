@@ -21,7 +21,9 @@ module MatrixSwitch_wrapper
 #ifdef MPI
   use MatrixSwitch, only: &
     m_register_pdbc_orig => m_register_pdbc, &
+#ifdef SLAP
     ms_scalapack_setup, &
+#endif
     ms_lap_icontxt
 #endif
 #ifdef PSP
@@ -130,7 +132,9 @@ module MatrixSwitch_wrapper
   public :: m_convert
 #ifdef MPI
   public :: m_register_pdbc
+#ifdef SLAP
   public :: ms_scalapack_setup
+#endif
   public :: ms_lap_icontxt
 #endif
 #ifdef PSP
