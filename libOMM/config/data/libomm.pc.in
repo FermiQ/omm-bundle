@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libomm
+Description: Library solving the Kohn-Sham equation for a fixed Hamiltonian.
+Version: @VERSION@
+Libs: -L${libdir} -lomm
+Cflags: -I${includedir}
