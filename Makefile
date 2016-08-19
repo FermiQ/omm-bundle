@@ -1,12 +1,12 @@
 all : libs tests
 
-libs : psp_lib MatrixSwitch_lib libOMM_lib
+libs : psp_lib MatrixSwitch_lib libOMM_lib tomato_lib
 
 tests : psp_test MatrixSwitch_examples libOMM_examples
 
 clean : clean_libs clean_tests
 
-clean_libs : clean_psp clean_MatrixSwitch clean_libOMM
+clean_libs : clean_psp clean_MatrixSwitch clean_libOMM clean_tomato
 
 clean_tests : clean_psp_test clean_MatrixSwitch_examples clean_libOMM_examples
 
@@ -22,6 +22,11 @@ MatrixSwitch_lib : psp_lib
 
 libOMM_lib : MatrixSwitch_lib psp_lib
 	cd libOMM/src; \
+	make; \
+	make install
+
+tomato_lib : MatrixSwitch_lib psp_lib
+	cd tomato/src; \
 	make; \
 	make install
 
@@ -47,6 +52,10 @@ clean_MatrixSwitch :
 
 clean_libOMM :
 	cd libOMM/src; \
+	make clean
+
+clean_tomato :
+	cd tomato/src; \
 	make clean
 
 clean_psp_test :
