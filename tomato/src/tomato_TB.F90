@@ -20,6 +20,7 @@ subroutine tomato_TB(template_basedir,system_label,&
   integer, parameter :: i64=selected_int_kind(18)
 
   real(dp), parameter :: Pi=3.141592653589793238462643383279502884197_dp
+  real(dp), parameter :: twoPi=2.0_dp*Pi
 
   complex(dp), parameter :: cmplx_1=(1.0_dp,0.0_dp)
   complex(dp), parameter :: cmplx_i=(0.0_dp,1.0_dp)
@@ -494,9 +495,9 @@ subroutine tomato_TB(template_basedir,system_label,&
                   i3=(i+template_i(3,l)-i2)/num_cells_dir(1)
                   j3=(j+template_i(4,l)-j2)/num_cells_dir(2)
                   k3=(k+template_i(5,l)-k2)/num_cells_dir(3)
-                  kdotT=2.0_dp*Pi*(k_point(1)*i3+&
-                                   k_point(2)*j3+&
-                                   k_point(3)*k3)
+                  kdotT=twoPi*(k_point(1)*i3+&
+                               k_point(2)*j3+&
+                               k_point(3)*k3)
                   a=cell_index(i,j,k)+subset_convert(template_i(1,l))
                   b=cell_index(i2,j2,k2)+subset_convert(template_i(2,l))
                   call m_get_element(H,a,b,cel1)
@@ -542,9 +543,9 @@ subroutine tomato_TB(template_basedir,system_label,&
                 i3=(i+template_i(3,l)-i2)/num_cells_dir(1)
                 j3=(j+template_i(4,l)-j2)/num_cells_dir(2)
                 k3=(k+template_i(5,l)-k2)/num_cells_dir(3)
-                kdotT=2.0_dp*Pi*(k_point(1)*i3+&
-                                 k_point(2)*j3+&
-                                 k_point(3)*k3)
+                kdotT=twoPi*(k_point(1)*i3+&
+                             k_point(2)*j3+&
+                             k_point(3)*k3)
                 a=cell_index(i,j,k)+template_i(1,l)
                 b=cell_index(i2,j2,k2)+template_i(2,l)
                 call m_get_element(H,a,b,cel1)
