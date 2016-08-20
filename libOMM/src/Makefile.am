@@ -28,13 +28,9 @@ omm_srcs = \
 # Fortran modules
 # TODO: support both lower-case and upper-case file names
 omm_f03_mods = \
-  omm.$(MODEXT) \
-  omm_callback.$(MODEXT) \
   omm_ops.$(MODEXT) \
   omm_params.$(MODEXT) \
-  omm_quartic.$(MODEXT) \
-  omm_rand.$(MODEXT) \
-  omm_wrappers.$(MODEXT)
+  omm_rand.$(MODEXT)
 
 # Libraries to install
 lib_LTLIBRARIES = libomm.la

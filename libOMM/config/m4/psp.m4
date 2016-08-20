@@ -15,12 +15,12 @@
 
 
 
-# MSW_PSP_DETECT()
+# OMM_PSP_DETECT()
 # -------------------
 #
 # Checks that the selected linear algebra libraries properly work.
 #
-AC_DEFUN([MSW_PSP_DETECT],[
+AC_DEFUN([OMM_PSP_DETECT],[
   dnl Init
   omm_psp_ok="unknown"
 
@@ -51,4 +51,4 @@ AC_DEFUN([MSW_PSP_DETECT],[
   CPPFLAGS="${saved_CPPFLAGS}"
   FCFLAGS="${saved_FCFLAGS}"
   LIBS="${saved_LIBS}"
-]) # MSW_PSP_DETECT
+]) # OMM_PSP_DETECT

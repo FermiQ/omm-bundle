@@ -9,12 +9,12 @@
 
 
 
-# MSW_MPI_DETECT()
+# OMM_MPI_DETECT()
 # ----------------
 #
 # Checks whether the configured MPI implementation is working.
 #
-AC_DEFUN([MSW_MPI_DETECT], [
+AC_DEFUN([OMM_MPI_DETECT], [
   dnl Init
   omm_mpi_ok="unknown"
 
@@ -34,7 +34,7 @@ AC_DEFUN([MSW_MPI_DETECT], [
   if test "${omm_mpi_cc_wrap}" = "yes"; then
     AC_MSG_NOTICE([validating that '${omm_sercc}' is indeed serial])
     AC_MSG_NOTICE([please ignore possible warnings about mpi.h not found])
-    _MSW_MPI_CHECK_CC([${omm_sercc}])
+    _OMM_MPI_CHECK_CC([${omm_sercc}])
     if test "${omm_mpi_cc_ok}" = "yes"; then
       AC_MSG_WARN([the serial C compiler is MPI-aware
                     Your current configuration is probably ill-defined.
@@ -44,7 +44,7 @@ AC_DEFUN([MSW_MPI_DETECT], [
   fi
   if test "${omm_mpi_fc_wrap}" = "yes"; then
     AC_MSG_NOTICE([validating that '${omm_serfc}' is indeed serial])
-    _MSW_MPI_CHECK_FC([${omm_serfc}])
+    _OMM_MPI_CHECK_FC([${omm_serfc}])
     if test "${omm_mpi_fc_ok}" = "yes"; then
       AC_MSG_WARN([the serial Fortran compiler is MPI-aware
                     Your current configuration is probably ill-defined.
@@ -54,9 +54,9 @@ AC_DEFUN([MSW_MPI_DETECT], [
   fi
 
   dnl Test MPI compilers
-  _MSW_MPI_CHECK_CC([${CC}])
+  _OMM_MPI_CHECK_CC([${CC}])
   if test "${omm_mpi_cc_ok}" = "yes"; then
-    _MSW_MPI_CHECK_FC([${FC}])
+    _OMM_MPI_CHECK_FC([${FC}])
   fi
 
   dnl Look for mpirun
@@ -77,26 +77,26 @@ AC_DEFUN([MSW_MPI_DETECT], [
     omm_mpi_ok="no"
   fi
   AC_MSG_RESULT([${omm_mpi_ok}])
-]) # MSW_MPI_DETECT
+]) # OMM_MPI_DETECT
 
 
 
-# MSW_MPI_INIT()
+# OMM_MPI_INIT()
 # --------------
 #
 # Initializes MPI parameters.
 #
-AC_DEFUN([MSW_MPI_INIT], [
+AC_DEFUN([OMM_MPI_INIT], [
   if test "${omm_mpi_enable}" != "no"; then
     AC_MSG_CHECKING([how MPI parameters have been set])
     AC_MSG_RESULT([${omm_mpi_type}])
     if test "${omm_mpi_type}" = "env"; then
       _AC_SRCDIRS(["."])
     fi
-    _MSW_MPI_INIT_CC
-    _MSW_MPI_INIT_FC
+    _OMM_MPI_INIT_CC
+    _OMM_MPI_INIT_FC
   fi
-]) # MSW_MPI_INIT
+]) # OMM_MPI_INIT
 
 
 
@@ -104,12 +104,12 @@ AC_DEFUN([MSW_MPI_INIT], [
 
 
 
-# _MSW_MPI_CHECK_CC(CC)
+# _OMM_MPI_CHECK_CC(CC)
 # ---------------------
 #
 # Check whether the MPI C compiler is working.
 #
-AC_DEFUN([_MSW_MPI_CHECK_CC], [
+AC_DEFUN([_OMM_MPI_CHECK_CC], [
   dnl Init
   omm_mpi_cc_ok="unknown"
   omm_mpi_cc_has_funs="unknown"
@@ -149,16 +149,16 @@ AC_DEFUN([_MSW_MPI_CHECK_CC], [
   CC="${omm_saved_CC}"
   unset tmp_mpi_cache
   unset tmp_mpi_header
-]) # _MSW_MPI_CHECK_CC
+]) # _OMM_MPI_CHECK_CC
 
 
 
-# _MSW_MPI_CHECK_FC(FC)
+# _OMM_MPI_CHECK_FC(FC)
 # ---------------------
 #
 # Check whether the MPI Fortran compiler is working.
 #
-AC_DEFUN([_MSW_MPI_CHECK_FC], [
+AC_DEFUN([_OMM_MPI_CHECK_FC], [
   dnl Init
   omm_mpi_fc_ok="unknown"
   omm_mpi_fc_has_funs="unknown"
@@ -204,16 +204,16 @@ AC_DEFUN([_MSW_MPI_CHECK_FC], [
 
   dnl Restore environment
   FC="${omm_saved_FC}"
-]) # _MSW_MPI_CHECK_FC
+]) # _OMM_MPI_CHECK_FC
 
 
 
-# _MSW_MPI_INIT_CC()
+# _OMM_MPI_INIT_CC()
 # ------------------
 #
 # Initializes MPI parameters related to the C compiler.
 #
-AC_DEFUN([_MSW_MPI_INIT_CC], [
+AC_DEFUN([_OMM_MPI_INIT_CC], [
   dnl Init
   omm_sercc="${CC}"
   omm_mpicc=""
@@ -264,19 +264,19 @@ AC_DEFUN([_MSW_MPI_INIT_CC], [
   esac
 
   if test "${omm_mpi_cc_wrap}" = "yes"; then
-    _MSW_MPI_CREATE_WRAPPER([CC], [${omm_sercc}], [${omm_mpicc}])
+    _OMM_MPI_CREATE_WRAPPER([CC], [${omm_sercc}], [${omm_mpicc}])
     omm_mpi_cc_set="yes"
   fi
-]) # _MSW_MPI_INIT_CC
+]) # _OMM_MPI_INIT_CC
 
 
 
-# _MSW_MPI_INIT_FC()
+# _OMM_MPI_INIT_FC()
 # ------------------
 #
 # Initializes MPI parameters related to the Fortran compiler.
 #
-AC_DEFUN([_MSW_MPI_INIT_FC], [
+AC_DEFUN([_OMM_MPI_INIT_FC], [
   dnl Init
   omm_serfc="${FC}"
   omm_mpifc=""
@@ -327,14 +327,14 @@ AC_DEFUN([_MSW_MPI_INIT_FC], [
   esac
 
   if test "${omm_mpi_fc_wrap}" = "yes"; then
-    _MSW_MPI_CREATE_WRAPPER([FC], [${omm_serfc}], [${omm_mpifc}])
+    _OMM_MPI_CREATE_WRAPPER([FC], [${omm_serfc}], [${omm_mpifc}])
     omm_mpi_fc_set="yes"
   fi
-]) # _MSW_MPI_INIT_FC
+]) # _OMM_MPI_INIT_FC
 
 
 
-# _MSW_MPI_CREATE_WRAPPER(COMPILER_TYPE, SERIAL_COMPILER, MPI_COMPILER)
+# _OMM_MPI_CREATE_WRAPPER(COMPILER_TYPE, SERIAL_COMPILER, MPI_COMPILER)
 # ---------------------------------------------------------------------
 #
 # Creates a wrapper for MPI compilers when they can be configured to
@@ -344,7 +344,7 @@ AC_DEFUN([_MSW_MPI_INIT_FC], [
 #       because Automake requires CC, CXX, and FC to be set to
 #       the actual compilers.
 #
-AC_DEFUN([_MSW_MPI_CREATE_WRAPPER], [
+AC_DEFUN([_OMM_MPI_CREATE_WRAPPER], [
   dnl Init
   tmp_comp_name=`echo "$1" | sed -e 's/.*/\L&/'`
   ${MKDIR_P} config/wrappers
@@ -372,4 +372,4 @@ EOF
   unset tmp_comp_name
   unset tmp_wrapper_name
   unset tmp_wrapper_path
-]) # _MSW_MPI_CREATE_WRAPPER
+]) # _OMM_MPI_CREATE_WRAPPER

@@ -22,6 +22,7 @@ compilers:
 defaults:
     debug_enable: "@omm_debug_enable_def@"
     examples_enable: "@omm_examples_enable_def@"
+    randseed_enable: "@omm_randseed_enable_def@"
     linalg_enable: "@omm_linalg_enable_def@"
     mpi_enable: "@omm_mpi_enable_def@"
     linalg_incs: "@omm_linalg_incs_def@"
@@ -31,6 +32,7 @@ defaults:
 options:
     enable_debug: "@enable_debug@"
     enable_examples: "@enable_examples@"
+    enable_randseed: "@enable_randseed@"
     with_linalg: "@with_linalg@"
     with_mpi: "@with_mpi@"
     with_psp: "@with_psp@"
@@ -38,6 +40,7 @@ options:
 triggers:
     debug_enable: "@omm_debug_enable@"
     examples_enable: "@omm_examples_enable@"
+    randseed_enable: "@omm_randseed_enable@"
     linalg_enable: "@omm_linalg_enable@"
     mpi_enable: "@omm_mpi_enable@"
     psp_enable: "@omm_psp_enable@"
@@ -45,6 +48,7 @@ triggers:
 inits:
     debug: "@omm_debug_type@"
     examples: "@omm_examples_type@"
+    randseed: "@omm_randseed_type@"
     linalg: "@omm_linalg_type@"
     mpi: "@omm_mpi_type@"
     psp: "@omm_psp_type@"

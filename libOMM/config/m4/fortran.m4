@@ -15,13 +15,13 @@
 
 
 
-# MSW_FC_EXTENSIONS()
+# OMM_FC_EXTENSIONS()
 # -------------------
 #
 # Sets the default extensions of Fortran source files and modules,
 # whenever possible.
 #
-AC_DEFUN([MSW_FC_EXTENSIONS], [
+AC_DEFUN([OMM_FC_EXTENSIONS], [
   dnl Set Fortran module extension
   AX_F90_MODULE_EXTENSION
   if test "${ax_cv_f90_modext}" != ""; then
@@ -38,18 +38,18 @@ AC_DEFUN([MSW_FC_EXTENSIONS], [
     AC_MSG_WARN([Fortran file extension could not be changed])
     AC_MSG_WARN([some advanced Fortran tests may fail])
   fi
-]) # MSW_FC_EXTENSIONS
+]) # OMM_FC_EXTENSIONS
 
 
 
-# MSW_FC_MOD_CASE()
+# OMM_FC_MOD_CASE()
 # -----------------
 #
 # Checks whether the Fortran compiler creates upper-case or lower-case
 # module files.
 #
-AC_DEFUN([MSW_FC_MOD_CASE],[
-  AC_REQUIRE([MSW_FC_EXTENSIONS])
+AC_DEFUN([OMM_FC_MOD_CASE],[
+  AC_REQUIRE([OMM_FC_EXTENSIONS])
 
   dnl Init
   fc_mod_lowercase="yes"
@@ -78,4 +78,4 @@ AC_DEFUN([MSW_FC_MOD_CASE],[
   dnl Output final outcome
   AC_MSG_CHECKING([whether Fortran modules are upper-case])
   AC_MSG_RESULT([${fc_mod_uppercase}])
-]) # MSW_FC_MOD_CASE
+]) # OMM_FC_MOD_CASE

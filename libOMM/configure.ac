@@ -62,12 +62,13 @@ AC_PROG_GREP
 #   * switches (--enable-*) must be set to "yes" or "no"
 #   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
-omm_cfg_switches="debug examples"
-omm_cfg_extdeps="linalg mpi psp"
+omm_cfg_switches="debug examples randseed"
+omm_cfg_extdeps="linalg mpi psp matrixswitch"
 
 # Optional features
 omm_debug_enable_def="yes"
 omm_examples_enable_def="no"
+omm_randseed_enable_def="yes"
 
 # Linear algebra
 # Note: default libraries must be empty because some compilers have
@@ -85,6 +86,11 @@ omm_mpi_libs_def=""
 omm_psp_enable_def="no"
 omm_psp_incs_def=""
 omm_psp_libs_def=""
+
+# MatrixSwitch
+omm_matrixswitch_enable_def="yes"
+omm_matrixswitch_incs_def=""
+omm_matrixswitch_libs_def=""
 
                     # ------------------------------------ #
 
@@ -138,6 +144,12 @@ AC_ARG_ENABLE([examples],
   [omm_examples_enable="${enableval}"; omm_examples_type="yon"],
   [omm_examples_enable="${omm_examples_enable_def}"; omm_examples_type="def"])
 AC_SUBST(enable_examples)
+AC_ARG_ENABLE([randseed],
+  [AS_HELP_STRING([--enable-randseed],
+    [Enable time-based random seed, or else 123456])],
+  [omm_randseed_enable="${enableval}"; omm_randseed_type="yon"],
+  [omm_randseed_enable="${omm_randseed_enable_def}"; omm_randseed_type="def"])
+AC_SUBST(enable_randseed)
 
                     # ------------------------------------ #
 
@@ -244,6 +256,35 @@ if test -n "${PSP_LIBS}"; then
   omm_psp_type="env"
 fi
 
+# MatrixSwitch (optional)
+AC_ARG_WITH([matrixswitch],
+  [AS_HELP_STRING([--with-matrixswitch],
+    [Install prefix of the MatrixSwitch library (e.g. /usr/local). MatrixSwitch support will be enabled only if you use this option. You may use --with-matrixswitch without argument if MatrixSwitch is installed as a system library, and --without-matrixswitch to disable MatrixSwitch support completely.])],
+  [ if test "${withval}" = "no" -o "${withval}" = "yes"; then
+      omm_matrixswitch_enable="${withval}"
+      omm_matrixswitch_type="yon"
+    else
+      omm_matrixswitch_enable="yes"
+      omm_matrixswitch_type="dir"
+      omm_matrixswitch_incs="-I${withval}/include"
+      omm_matrixswitch_libs="-L${withval}/lib -lMatrixSwitch"
+    fi],
+  [omm_matrixswitch_enable="${omm_matrixswitch_enable_def}"; omm_matrixswitch_type="def";
+    omm_matrixswitch_incs=""; omm_matrixswitch_libs=""])
+AC_SUBST(with_matrixswitch)
+
+AC_ARG_VAR([MSW_INCLUDES],
+  [Include flags for MatrixSwitch. Please note that this variable conflicts with the --with-matrixswitch option.])
+if test -n "${MSW_INCLUDES}"; then
+  omm_matrixswitch_enable="yes"
+  omm_matrixswitch_type="env"
+fi
+AC_ARG_VAR([MSW_LIBS],
+    [Library flags for MatrixSwitch. Please note that this variable conflicts with the --with-matrixswitch option.])
+if test -n "${MSW_LIBS}"; then
+  omm_matrixswitch_enable="yes"
+  omm_matrixswitch_type="env"
+fi
 
                     # ------------------------------------ #
 
@@ -281,6 +322,13 @@ if test -n "${tmp_psp_vars}" -a \
   AC_MSG_ERROR([PSP_INCLUDES and PSP_LIBS must both be set])
 fi
 
+# All MatrixSwitch environment variables must be provided at once
+tmp_matrixswitch_vars="${MSW_INCLUDES}${MSW_LIBS}"
+if test -n "${tmp_matrixswitch_vars}" -a \
+        \( -z "${MSW_INCLUDES}" -o -z "${MSW_LIBS}" \); then
+  AC_MSG_ERROR([MSW_INCLUDES and MSW_LIBS must both be set])
+fi
+
 # Environment variables conflict with --with-* options
 # Note: for linear algebra, only LINALG_LIBS is relevant
 if test -n "${tmp_mpi_vars}" -a -n "${with_mpi}"; then
@@ -312,6 +360,10 @@ if test -n "${tmp_psp_vars}"; then
   omm_psp_enable="yes"
   omm_psp_type="env"
 fi
+if test -n "${tmp_matrixswitch_vars}"; then
+  omm_matrixswitch_enable="yes"
+  omm_matrixswitch_type="env"
+fi
 
 # Psp requires MPI
 if test "${omm_mpi_enable}" = "no" -a "${omm_psp_enable}" = "yes"; then
@@ -332,6 +384,8 @@ unset tmp_psp_vars
 
 # Defaults
 AC_SUBST(omm_debug_enable_def)
+AC_SUBST(omm_examples_enable_def)
+AC_SUBST(omm_randseed_enable_def)
 AC_SUBST(omm_mpi_enable_def)
 AC_SUBST(omm_mpi_incs_def)
 AC_SUBST(omm_mpi_libs_def)
@@ -341,18 +395,27 @@ AC_SUBST(omm_linalg_libs_def)
 AC_SUBST(omm_psp_enable_def)
 AC_SUBST(omm_psp_incs_def)
 AC_SUBST(omm_psp_libs_def)
+AC_SUBST(omm_matrixswitch_enable_def)
+AC_SUBST(omm_matrixswitch_incs_def)
+AC_SUBST(omm_matrixswitch_libs_def)
 
 # Triggers
 AC_SUBST(omm_debug_enable)
+AC_SUBST(omm_examples_enable)
+AC_SUBST(omm_randseed_enable)
 AC_SUBST(omm_mpi_enable)
 AC_SUBST(omm_linalg_enable)
 AC_SUBST(omm_psp_enable)
+AC_SUBST(omm_matrixswitch_enable)
 
 # Initialization types
 AC_SUBST(omm_debug_type)
+AC_SUBST(omm_examples_type)
+AC_SUBST(omm_randseed_type)
 AC_SUBST(omm_mpi_type)
 AC_SUBST(omm_linalg_type)
 AC_SUBST(omm_psp_type)
+AC_SUBST(omm_matrixswitch_type)
 
 # Internal MPI parameters
 AC_SUBST(omm_mpi_cc_set)
@@ -369,6 +432,8 @@ AC_SUBST(omm_linalg_has_lapack)
 AC_SUBST(omm_linalg_has_scalapack)
 AC_SUBST(omm_psp_incs)
 AC_SUBST(omm_psp_libs)
+AC_SUBST(omm_matrixswitch_incs)
+AC_SUBST(omm_matrixswitch_libs)
 
                     # ------------------------------------ #
 
@@ -377,7 +442,7 @@ AC_SUBST(omm_psp_libs)
 #
 
 # Init MPI parameters, possibly setting and/or wrapping compilers
-MSW_MPI_INIT
+OMM_MPI_INIT
 
                     # ------------------------------------ #
 
@@ -416,10 +481,10 @@ if test "${FC}" = ""; then
 fi
 
 # Set default file extensions
-MSW_FC_EXTENSIONS
+OMM_FC_EXTENSIONS
 
 # Get module file case
-MSW_FC_MOD_CASE
+OMM_FC_MOD_CASE
 
                     # ------------------------------------ #
 
@@ -442,7 +507,7 @@ AC_SUBST(LTOBJEXT)
 
 # Look for MPI
 if test "${omm_mpi_enable}" != "no"; then
-  MSW_MPI_DETECT
+  OMM_MPI_DETECT
   if test "${omm_mpi_ok}" = "yes"; then
     AC_DEFINE([MPI], 1, [Define to 1 to enable MPI support.])
     omm_mpi_enable="yes"
@@ -499,11 +564,11 @@ if test "${omm_linalg_enable}" = "yes"; then
   AC_MSG_RESULT([${omm_linalg_incs}])
   AC_MSG_CHECKING([for linear algebra library flags])
   AC_MSG_RESULT([${omm_linalg_libs}])
-  MSW_LINALG_DETECT
+  OMM_LINALG_DETECT
   if test "${omm_linalg_ok}" != "yes" -a "${omm_linalg_type}" = "def"; then
     AC_MSG_NOTICE([retrying with generic linear algebra library flags (Netlib)])
     LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas ${LIBS}"
-    MSW_LINALG_DETECT
+    OMM_LINALG_DETECT
   fi
   if test "${omm_linalg_ok}" = "yes"; then
     CPPFLAGS="${CPPFLAGS} ${omm_linalg_incs}"
@@ -549,12 +614,49 @@ if test "${omm_psp_enable}" = "yes"; then
   AC_MSG_RESULT([${omm_psp_incs}])
   AC_MSG_CHECKING([for Psp library flags])
   AC_MSG_RESULT([${omm_psp_libs}])
-  MSW_PSP_DETECT
+  OMM_PSP_DETECT
   if test "${omm_psp_ok}" = "yes"; then
     CPPFLAGS="${CPPFLAGS} ${omm_psp_incs}"
     LIBS="${omm_psp_libs} ${LIBS}"
   else
     AC_MSG_FAILURE([Psp is missing or incomplete])
+  fi
+fi
+
+# Set MatrixSwitch includes
+if test "${omm_matrixswitch_type}" != "dir"; then
+  if test -n "${MSW_INCLUDES}"; then
+    omm_matrixswitch_incs="${MSW_INCLUDES}"
+  else
+    omm_matrixswitch_incs="${omm_matrixswitch_incs_def}"
+  fi
+fi
+
+# Set MatrixSwitch libraries
+if test "${omm_matrixswitch_type}" != "dir"; then
+  if test -n "${MSW_LIBS}"; then
+    omm_matrixswitch_libs="${MSW_LIBS}"
+  else
+    omm_matrixswitch_libs="${omm_matrixswitch_libs_def}"
+  fi
+fi
+
+# Look for MatrixSwitch
+AC_MSG_CHECKING([whether to look for MatrixSwitch])
+AC_MSG_RESULT([${omm_matrixswitch_enable}])
+if test "${omm_matrixswitch_enable}" = "yes"; then
+  AC_MSG_CHECKING([how MatrixSwitch parameters have been set])
+  AC_MSG_RESULT([${omm_matrixswitch_type}])
+  AC_MSG_CHECKING([for MatrixSwitch include flags])
+  AC_MSG_RESULT([${omm_matrixswitch_incs}])
+  AC_MSG_CHECKING([for MatrixSwitch library flags])
+  AC_MSG_RESULT([${omm_matrixswitch_libs}])
+  OMM_MSW_DETECT
+  if test "${omm_matrixswitch_ok}" = "yes"; then
+    CPPFLAGS="${CPPFLAGS} ${omm_matrixswitch_incs}"
+    LIBS="${omm_matrixswitch_libs} ${LIBS}"
+  else
+    AC_MSG_FAILURE([MatrixSwitch is missing or incomplete])
   fi
 fi
 
@@ -564,10 +666,17 @@ fi
 # Adjust build parameters according to configure options
 #
 
+# ISO C Bindings are always available nowadays
+AC_DEFINE([CBIND], 1, [Define to 1 to use ISO C Bindings])
+
 # Conditional compilation (alphabetical order)
 if test "${omm_debug_enable}" = "yes"; then
   AC_DEFINE([DEBUG_MODE], 1,
     [Define to 1 if you want to enable enhanced debugging information.])
+fi
+if test "${omm_randseed_enable}" = "no"; then
+  AC_DEFINE([NORAND], 1,
+    [Define to 1 if you want a deterministic random seed.])
 fi
 AM_CONDITIONAL([DO_BUILD_EXAMPLES], [test "${enable_examples}" = "yes"])
 
@@ -598,6 +707,7 @@ AC_MSG_NOTICE([TSTAMP     = ${omm_timestamp}])
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([DEBUG    = ${omm_debug_enable} (init: ${omm_debug_type})])
 AC_MSG_NOTICE([EXAMPLES = ${omm_examples_enable} (init: ${omm_examples_type})])
+AC_MSG_NOTICE([RANDSEED = ${omm_randseed_enable} (init: ${omm_randseed_type})])
 AC_MSG_NOTICE([MPI      = ${omm_mpi_enable} (init: ${omm_mpi_type})])
 AC_MSG_NOTICE([LINALG   = ${omm_linalg_enable} (init: ${omm_linalg_type})])
 AC_MSG_NOTICE([PSP      = ${omm_psp_enable} (init: ${omm_psp_type})])

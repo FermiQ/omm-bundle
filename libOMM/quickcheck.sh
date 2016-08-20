@@ -27,9 +27,19 @@ set -ev
 # Check that we are in the correct directory
 test -s "configure.ac" -a -s "src/omm.F90" || exit 0
 
+# Required install dirs
+MSW_ROOT="${PWD}/../tmp-msw"
+PSP_ROOT="${PWD}/../tmp-psp"
+
 # Init build parameters
+export CC="mpicc"
+export FC="mpif90"
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
+export MSW_INCLUDES="-I${MSW_ROOT}/include"
+export MSW_LIBS="-L${MSW_ROOT}/lib -lMatrixSwitch"
+export PSP_INCLUDES="-I${PSP_ROOT}/include"
+export PSP_LIBS="-L${PSP_ROOT}/lib -lpspblas"
 
 # Prepare source tree
 ./wipeout.sh
@@ -85,16 +95,16 @@ make check -j4
 cd ..
 
 # Check MPI + Psp build
-mkdir tmp-mpi-psp
-cd tmp-mpi-psp
-../configure \
-  --with-psp="${PWD}/../../tmp-psp" \
-  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
-  --enable-examples \
-  CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
-cd ..
+#mkdir tmp-mpi-psp
+#cd tmp-mpi-psp
+#../configure \
+#  --with-psp="${PWD}/../../tmp-psp" \
+#  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
+#  --enable-examples \
+#  CC="mpicc" FC="mpif90"
+#make -j4
+#make check -j4
+#cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
@@ -105,4 +115,4 @@ make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
+rm -rf tmp-minimal tmp-examples tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck

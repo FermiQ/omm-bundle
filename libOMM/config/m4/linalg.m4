@@ -15,12 +15,12 @@
 
 
 
-# MSW_LINALG_DETECT()
+# OMM_LINALG_DETECT()
 # -------------------
 #
 # Checks that the selected linear algebra libraries properly work.
 #
-AC_DEFUN([MSW_LINALG_DETECT],[
+AC_DEFUN([OMM_LINALG_DETECT],[
   dnl Init
   omm_linalg_has_lapack="unknown"
   omm_linalg_has_scalapack="unknown"
@@ -56,4 +56,4 @@ AC_DEFUN([MSW_LINALG_DETECT],[
   dnl Restore environment
   CPPFLAGS="${saved_CPPFLAGS}"
   LIBS="${saved_LIBS}"
-]) # MSW_LINALG_DETECT
+]) # OMM_LINALG_DETECT
