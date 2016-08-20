@@ -438,21 +438,28 @@ fi
 # Adjust build parameters according to configure options
 #
 
+# Reset option counter
+psp_cpp_options=""
+
 # ISO C Bindings are always available nowadays
 AC_DEFINE([CBIND], 1, [Define to 1 to use ISO C Bindings])
+psp_cpp_options="${psp_cpp_options} CBIND"
 
 # Conditional compilation (alphabetical order)
 if test "${psp_debug_enable}" = "yes"; then
   AC_DEFINE([DEBUG_MODE], 1,
     [Define to 1 if you want to enable enhanced debugging information.])
+  psp_cpp_options="${psp_cpp_options} DEBUG_MODE"
 fi
 
 # External dependencies (alphabetical order)
 if test "${psp_linalg_has_lapack}" = "yes"; then
   AC_DEFINE([LAP], 1, [Define to 1 if you have LAPACK libraries available.])
+  psp_cpp_options="${psp_cpp_options} LAP"
 fi
 if test "${psp_linalg_has_scalapack}" = "yes"; then
   AC_DEFINE([SLAP], 1, [Define to 1 if you have ScaLAPACK libraries available.])
+  psp_cpp_options="${psp_cpp_options} SLAP"
 fi
 
                     # ------------------------------------ #
@@ -480,6 +487,7 @@ AC_MSG_NOTICE([MPIFC    = ${MPIFC}])
 AC_MSG_NOTICE([FCFLAGS  = ${FCFLAGS}])
 AC_MSG_NOTICE([LDFLAGS  = ${LDFLAGS}])
 AC_MSG_NOTICE([LIBS     = ${LIBS}])
+AC_MSG_NOTICE([OPTIONS  = ${psp_cpp_options}])
 AC_MSG_NOTICE([])
 
                     # ------------------------------------ #
