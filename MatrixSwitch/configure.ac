@@ -577,29 +577,38 @@ fi
 # Adjust build parameters according to configure options
 #
 
+# Reset option counter
+msw_cpp_options=""
+
 # ISO C Bindings are always available nowadays
 AC_DEFINE([CBIND], 1, [Define to 1 to use ISO C Bindings])
+msw_cpp_options="${msw_cpp_options} CBIND"
 
 # Conditional compilation (alphabetical order)
 if test "${msw_conv_enable}" = "yes"; then
   AC_DEFINE([CONV], 1,
     [Define to 1 if you want to use real <-> complex conversion.])
+  msw_cpp_options="${msw_cpp_options} CONV"
 fi
 if test "${msw_debug_enable}" = "yes"; then
   AC_DEFINE([DEBUG_MODE], 1,
     [Define to 1 if you want to enable enhanced debugging information.])
+  msw_cpp_options="${msw_cpp_options} DEBUG_MODE"
 fi
 AM_CONDITIONAL([DO_BUILD_EXAMPLES], [test "${enable_examples}" = "yes"])
 
 # External dependencies (alphabetical order)
 if test "${msw_linalg_has_lapack}" = "yes"; then
   AC_DEFINE([LAP], 1, [Define to 1 if you have LAPACK libraries available.])
+  msw_cpp_options="${msw_cpp_options} LAP"
 fi
 if test "${msw_linalg_has_scalapack}" = "yes"; then
   AC_DEFINE([SLAP], 1, [Define to 1 if you have ScaLAPACK libraries available.])
+  msw_cpp_options="${msw_cpp_options} SLAP"
 fi
 if test "${msw_psp_ok}" = "yes"; then
   AC_DEFINE([PSP], 1, [Define to 1 if you have the Psp library available.])
+  msw_cpp_options="${msw_cpp_options} PSP"
 fi
 
                     # ------------------------------------ #
@@ -632,6 +641,7 @@ AC_MSG_NOTICE([MPIFC    = ${MPIFC}])
 AC_MSG_NOTICE([FCFLAGS  = ${FCFLAGS}])
 AC_MSG_NOTICE([LDFLAGS  = ${LDFLAGS}])
 AC_MSG_NOTICE([LIBS     = ${LIBS}])
+AC_MSG_NOTICE([OPTIONS  = ${msw_cpp_options}])
 AC_MSG_NOTICE([])
 
                     # ------------------------------------ #
