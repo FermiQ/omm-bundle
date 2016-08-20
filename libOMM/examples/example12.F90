@@ -164,24 +164,33 @@ program example12
               ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
               call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
               call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
-              C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),1:C_min_dim(2),i-1)
-              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
-                   desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.true.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
-                   i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
+              C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),&
+              1:C_min_dim(2),i-1)
+              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,&
+                   new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+                   desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,&
+                   .true.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
+                   i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,&
+                   bs_def,icontxt)
 #else
               C_min(1:n,1:m,i)=C_min(1:n,1:m,i-1)
-              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.true.,.false.,T,&
+              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),&
+                   D_min(1,1,i),.false.,eta,C_min(1,1,i),.true.,.false.,T,&
                    0.0_dp,flavour,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
            else
 #ifdef MPI
               call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
               call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
-              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
-                   desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
-                   i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
+              call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,&
+                   desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
+                   desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,&
+                   .false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,&
+                   i,-1.0_dp,.true.,.false.,mpi_rank,mpi_size,nprow,order,&
+                   bs_def,icontxt)
 #else
-              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),D_min(1,1,i),.false.,eta,C_min(1,1,i),.false.,.false.,T,&
+              call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),new_S,e_min(i),&
+                   D_min(1,1,i),.false.,eta,C_min(1,1,i),.false.,.false.,T,&
                    0.0_dp,flavour,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
            end if
@@ -193,7 +202,8 @@ program example12
         end if
 
         do i=1,nk
-           if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'D_11  : ', real(D_min(1,1,i),dp), ' , ', aimag(D_min(1,1,i)), &
+           if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'D_11  : ',&
+                real(D_min(1,1,i),dp), ' , ', aimag(D_min(1,1,i)), &
                 ' (k point', i, ')'
         end do
         if (mpi_rank==0) print('()')
@@ -211,15 +221,20 @@ program example12
         call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
         call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
 
-        call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
-             desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,i,&
-             -1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
+        call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,&
+             .false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
+             desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,&
+             .false.,.false.,T_dim,T,desc_T,0.0_dp,flavour,nk,i,&
+             -1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,&
+             icontxt)
 #else
-        call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),.false.,e_min(i),ED_min(1,1,i),.true.,eta,C_min(1,1,i),.false.,.false.,T,&
+        call omm_szden_ref(m,n,H(1,1,i),.true.,S(1,1,i),.false.,e_min(i),&
+             ED_min(1,1,i),.true.,eta,C_min(1,1,i),.false.,.false.,T,&
              0.0_dp,flavour,nk,i,-1.0_dp,.true.,dealloc,mpi_rank)
 #endif
 
-        if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'ED_11  : ', real(ED_min(1,1,i),dp), ' , ', aimag(ED_min(1,1,i)), &
+        if (mpi_rank==0) print('(2(a,f21.15),a,1x,i1,a)'), 'ED_11  : ',&
+             real(ED_min(1,1,i),dp), ' , ', aimag(ED_min(1,1,i)), &
              ' (k point', i, ')'
      end do
      if (mpi_rank==0) print('()')
