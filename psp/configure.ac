@@ -438,6 +438,9 @@ fi
 # Adjust build parameters according to configure options
 #
 
+# ISO C Bindings are always available nowadays
+AC_DEFINE([CBIND], 1, [Define to 1 to use ISO C Bindings])
+
 # Conditional compilation (alphabetical order)
 if test "${psp_debug_enable}" = "yes"; then
   AC_DEFINE([DEBUG_MODE], 1,
