@@ -1,0 +1,97 @@
+#!/bin/sh
+
+# Set external dependencies
+#LINALG_INCLUDES="-I/usr/local/include"
+LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
+
+export LINALG_INCLUDES LINALG_LIBS
+
+                    # ------------------------------------ #
+
+# Check that we are in an OMM source tree
+if test ! -s "psp/src/pspBLAS.F90" -o \
+        ! -s "MatrixSwitch/src/MatrixSwitch.F90" -o \
+        ! -s "libOMM/src/omm.F90"; then
+  echo "Error: this is not an OMM source tree" >&2
+  exit 1
+fi
+
+                    # ------------------------------------ #
+
+# Set install dirs
+psp_prefix="${PWD}/build_psp"
+msw_prefix="${PWD}/build_MatrixSwitch"
+omm_prefix="${PWD}/build_libOMM"
+
+# Set build dirs
+root_builddir="${PWD}/tmp-objs"
+psp_builddir="${root_builddir}/psp"
+msw_builddir="${root_builddir}/MatrixSwitch"
+omm_builddir="${root_builddir}/libOMM"
+
+# Set source dirs
+psp_srcdir="${PWD}/psp"
+msw_srcdir="${PWD}/MatrixSwitch"
+omm_srcdir="${PWD}/libOMM"
+
+                    # ------------------------------------ #
+
+# Do we want to clean the source tree?
+if test "${1}" = "clean"; then
+  cln_ok="yes"
+  for tmpdir in "${root_builddir}" "${psp_prefix}" "${msw_prefix}" "${omm_prefix}"; do
+    cln_internal=`echo "${tmpdir}" | grep "${PWD}"`
+    if test "${cln_internal}" = ""; then
+      echo "Cowardly refusing to remove external directory:" >&2
+      echo "    ${tmpdir}" >&2
+      cln_ok="no"
+    else
+      chmod -R u+w "${tmpdir}"
+      rm -r "${tmpdir}"
+    fi
+  done
+  if test "${cln_ok}" = "yes"; then
+    exit 0
+  else
+    exit 1
+  fi
+fi
+
+                    # ------------------------------------ #
+
+# Set build parameters
+export CC="mpicc"
+export FC="mpif90"
+
+                    # ------------------------------------ #
+
+# Build Psp
+mkdir -p "${psp_builddir}"
+cd "${psp_builddir}"
+"${psp_srcdir}/configure" \
+  --srcdir="${psp_srcdir}" \
+  --prefix="${psp_prefix}"
+make -j4 install
+
+                    # ------------------------------------ #
+
+# Build MatrixSwitch
+mkdir -p "${msw_builddir}"
+cd "${msw_builddir}"
+"${msw_srcdir}/configure" \
+  --srcdir="${msw_srcdir}" \
+  --prefix="${msw_prefix}" \
+  --with-psp="${psp_prefix}"
+make -j4 install
+
+                    # ------------------------------------ #
+
+# Build LibOMM
+mkdir -p "${omm_builddir}"
+cd "${omm_builddir}"
+"${omm_srcdir}/configure" \
+  --srcdir="${omm_srcdir}" \
+  --prefix="${omm_prefix}" \
+  --with-psp="${psp_prefix}" \
+  --with-matrixswitch="${msw_prefix}"
+make -j4 install
