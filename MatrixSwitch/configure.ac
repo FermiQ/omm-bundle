@@ -62,10 +62,11 @@ AC_PROG_GREP
 #   * switches (--enable-*) must be set to "yes" or "no"
 #   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
-msw_cfg_switches="debug examples"
+msw_cfg_switches="conv debug examples"
 msw_cfg_extdeps="linalg mpi psp"
 
 # Optional features
+msw_conv_enable_def="no"
 msw_debug_enable_def="yes"
 msw_examples_enable_def="no"
 
@@ -126,6 +127,12 @@ unset tmp_default
 #
 
 # Conditional compilation: --enable-* options (alphabetical order)
+AC_ARG_ENABLE([conv],
+  [AS_HELP_STRING([--enable-conv],
+    [Enable real <-> complex conversion])],
+  [msw_conv_enable="${enableval}"; msw_conv_type="yon"],
+  [msw_conv_enable="${msw_conv_enable_def}"; msw_conv_type="def"])
+AC_SUBST(enable_conv)
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug],
     [Enable extra debug information])],
@@ -331,7 +338,9 @@ unset tmp_psp_vars
 #
 
 # Defaults
+AC_SUBST(msw_conv_enable_def)
 AC_SUBST(msw_debug_enable_def)
+AC_SUBST(msw_examples_enable_def)
 AC_SUBST(msw_mpi_enable_def)
 AC_SUBST(msw_mpi_incs_def)
 AC_SUBST(msw_mpi_libs_def)
@@ -343,13 +352,17 @@ AC_SUBST(msw_psp_incs_def)
 AC_SUBST(msw_psp_libs_def)
 
 # Triggers
+AC_SUBST(msw_conv_enable)
 AC_SUBST(msw_debug_enable)
+AC_SUBST(msw_examples_enable)
 AC_SUBST(msw_mpi_enable)
 AC_SUBST(msw_linalg_enable)
 AC_SUBST(msw_psp_enable)
 
 # Initialization types
+AC_SUBST(msw_conv_type)
 AC_SUBST(msw_debug_type)
+AC_SUBST(msw_examples_type)
 AC_SUBST(msw_mpi_type)
 AC_SUBST(msw_linalg_type)
 AC_SUBST(msw_psp_type)
@@ -564,7 +577,14 @@ fi
 # Adjust build parameters according to configure options
 #
 
+# ISO C Bindings are always available nowadays
+AC_DEFINE([CBIND], 1, [Define to 1 to use ISO C Bindings])
+
 # Conditional compilation (alphabetical order)
+if test "${msw_conv_enable}" = "yes"; then
+  AC_DEFINE([CONV], 1,
+    [Define to 1 if you want to use real <-> complex conversion.])
+fi
 if test "${msw_debug_enable}" = "yes"; then
   AC_DEFINE([DEBUG_MODE], 1,
     [Define to 1 if you want to enable enhanced debugging information.])
@@ -596,6 +616,7 @@ AC_MSG_NOTICE([----------------------])
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([TSTAMP     = ${msw_timestamp}])
 AC_MSG_NOTICE([])
+AC_MSG_NOTICE([CONVERT  = ${msw_conv_enable} (init: ${msw_conv_type})])
 AC_MSG_NOTICE([DEBUG    = ${msw_debug_enable} (init: ${msw_debug_type})])
 AC_MSG_NOTICE([EXAMPLES = ${msw_examples_enable} (init: ${msw_examples_type})])
 AC_MSG_NOTICE([MPI      = ${msw_mpi_enable} (init: ${msw_mpi_type})])

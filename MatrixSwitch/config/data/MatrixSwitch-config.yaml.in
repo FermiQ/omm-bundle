@@ -20,6 +20,7 @@ compilers:
     LIBS: "@LIBS@"
 
 defaults:
+    conv_enable: "@msw_conv_enable_def@"
     debug_enable: "@msw_debug_enable_def@"
     examples_enable: "@msw_examples_enable_def@"
     linalg_enable: "@msw_linalg_enable_def@"
@@ -29,6 +30,7 @@ defaults:
     psp_enable: "@msw_psp_enable_def@"
 
 options:
+    enable_conv: "@enable_conv@"
     enable_debug: "@enable_debug@"
     enable_examples: "@enable_examples@"
     with_linalg: "@with_linalg@"
@@ -36,6 +38,7 @@ options:
     with_psp: "@with_psp@"
 
 triggers:
+    conv_enable: "@msw_conv_enable@"
     debug_enable: "@msw_debug_enable@"
     examples_enable: "@msw_examples_enable@"
     linalg_enable: "@msw_linalg_enable@"
@@ -43,6 +46,7 @@ triggers:
     psp_enable: "@msw_psp_enable@"
 
 inits:
+    conv: "@msw_conv_type@"
     debug: "@msw_debug_type@"
     examples: "@msw_examples_type@"
     linalg: "@msw_linalg_type@"

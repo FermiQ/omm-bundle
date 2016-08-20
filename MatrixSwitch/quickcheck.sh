@@ -105,4 +105,4 @@ make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
+rm -rf tmp-minimal tmp-examples tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
