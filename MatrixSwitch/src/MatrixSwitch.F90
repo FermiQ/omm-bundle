@@ -357,11 +357,23 @@ contains
 
     ! storage type
     if ((m_name%str_type .eq. 'den') .and. &
-         (m_name%is_serial) .and. &
-         (A%str_type .eq. 'den') .and. &
-         (A%is_serial)) then
+         (m_name%is_serial)) then
        m_name%is_sparse=.false.
-       st=1
+       if ((A%str_type .eq. 'coo') .and. &
+           (A%is_serial)) then
+          st=9
+       else if ((A%str_type .eq. 'csc') .and. &
+                (A%is_serial)) then
+          st=10
+       else if ((A%str_type .eq. 'csr') .and. &
+                (A%is_serial)) then
+          st=11
+       else if ((A%str_type .eq. 'den') .and. &
+                (A%is_serial)) then
+          st=1
+       else
+          call die('m_copy: invalid label')
+       end if
     else if ((m_name%str_type .eq. 'dbc') .and. &
              (.not. m_name%is_serial) .and. &
              (A%str_type .eq. 'dbc') .and. &
@@ -374,6 +386,12 @@ contains
        if ((A%str_type .eq. 'coo') .and. &
            (A%is_serial)) then
           st=3
+       else if ((A%str_type .eq. 'csc') .and. &
+                (A%is_serial)) then
+          st=12
+       else if ((A%str_type .eq. 'csr') .and. &
+                (A%is_serial)) then
+          st=13
        else if ((A%str_type .eq. 'den') .and. &
                 (A%is_serial)) then
           st=4
@@ -683,6 +701,170 @@ contains
              end do
           end if
        end if
+    case (9)
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval=0.0_dp
+          if (present(threshold)) then
+             do i=1,A%iaux2(1)
+                if (abs(A%dval(i,1))>abs_threshold) then
+                   m_name%dval(A%iaux3(i),A%iaux4(i))=A%dval(i,1)-soft_threshold*A%dval(i,1)/abs(A%dval(i,1))
+                else
+                   m_name%dval(A%iaux3(i),A%iaux4(i))=0.0_dp
+                end if
+             end do
+          else
+             do i=1,A%iaux2(1)
+                m_name%dval(A%iaux3(i),A%iaux4(i))=A%dval(i,1)
+             end do
+          end if
+       else
+          allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval=cmplx_0
+          if (present(threshold)) then
+             do i=1,A%iaux2(1)
+                if (abs(A%zval(i,1))>abs_threshold) then
+                   m_name%zval(A%iaux3(i),A%iaux4(i))=A%zval(i,1)-soft_threshold*A%zval(i,1)/abs(A%zval(i,1))
+                else
+                   m_name%zval(A%iaux3(i),A%iaux4(i))=cmplx_0
+                end if
+             end do
+          else
+             do i=1,A%iaux2(1)
+                m_name%zval(A%iaux3(i),A%iaux4(i))=A%zval(i,1)
+             end do
+          end if
+       end if
+    case (10)
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval=0.0_dp
+          if (present(threshold)) then
+             do i=1,A%dim2
+                do j=1,A%iaux4(i+1)-A%iaux4(i)
+                   k=A%iaux4(i)+j
+                   if (abs(A%dval(k,1))>abs_threshold) then
+                      m_name%dval(A%iaux3(k),i)=A%dval(k,1)-soft_threshold*A%dval(k,1)/abs(A%dval(k,1))
+                   else
+                      m_name%dval(A%iaux3(k),i)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             do i=1,A%dim2
+                do j=1,A%iaux4(i+1)-A%iaux4(i)
+                   k=A%iaux4(i)+j
+                   m_name%dval(A%iaux3(k),i)=A%dval(k,1)
+                end do
+             end do
+          end if
+       else
+          allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval=cmplx_0
+          if (present(threshold)) then
+             do i=1,A%dim2
+                do j=1,A%iaux4(i+1)-A%iaux4(i)
+                   k=A%iaux4(i)+j
+                   if (abs(A%zval(k,1))>abs_threshold) then
+                      m_name%zval(A%iaux3(k),i)=A%zval(k,1)-soft_threshold*A%zval(k,1)/abs(A%zval(k,1))
+                   else
+                      m_name%zval(A%iaux3(k),i)=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             do i=1,A%dim2
+                do j=1,A%iaux4(i+1)-A%iaux4(i)
+                   k=A%iaux4(i)+j
+                   m_name%zval(A%iaux3(k),i)=A%zval(k,1)
+                end do
+             end do
+          end if
+       end if
+    case (11)
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval=0.0_dp
+          if (present(threshold)) then
+             do i=1,A%dim1
+                do j=1,A%iaux3(i+1)-A%iaux3(i)
+                   k=A%iaux3(i)+j
+                   if (abs(A%dval(k,1))>abs_threshold) then
+                      m_name%dval(i,A%iaux4(k))=A%dval(k,1)-soft_threshold*A%dval(k,1)/abs(A%dval(k,1))
+                   else
+                      m_name%dval(i,A%iaux4(k))=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             do i=1,A%dim1
+                do j=1,A%iaux3(i+1)-A%iaux3(i)
+                   k=A%iaux3(i)+j
+                   m_name%dval(i,A%iaux4(k))=A%dval(k,1)
+                end do
+             end do
+          end if
+       else
+          allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval=cmplx_0
+          if (present(threshold)) then
+             do i=1,A%dim1
+                do j=1,A%iaux3(i+1)-A%iaux3(i)
+                   k=A%iaux3(i)+j
+                   if (abs(A%zval(k,1))>abs_threshold) then
+                      m_name%zval(i,A%iaux4(k))=A%zval(k,1)-soft_threshold*A%zval(k,1)/abs(A%zval(k,1))
+                   else
+                      m_name%zval(i,A%iaux4(k))=0.0_dp
+                   end if
+                end do
+             end do
+          else
+             do i=1,A%dim1
+                do j=1,A%iaux3(i+1)-A%iaux3(i)
+                   k=A%iaux3(i)+j
+                   m_name%zval(i,A%iaux4(k))=A%zval(k,1)
+                end do
+             end do
+          end if
+       end if
+    case (12)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+       do i=1,A%dim2
+          do j=1,A%iaux4(i+1)-A%iaux4(i)
+             k=A%iaux4(i)+j
+             m_name%iaux3(k)=A%iaux3(k)
+             m_name%iaux4(k)=i
+          end do
+       end do
+    case (13)
+       allocate(m_name%iaux2(1))
+       m_name%iaux2(1)=A%iaux2(1)
+       allocate(m_name%iaux3(m_name%iaux2(1)))
+       allocate(m_name%iaux4(m_name%iaux2(1)))
+       if (m_name%is_real) then
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval=A%dval
+       else
+          allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval=A%zval
+       end if
+       do i=1,A%dim1
+          do j=1,A%iaux3(i+1)-A%iaux3(i)
+             k=A%iaux3(i)+j
+             m_name%iaux3(k)=i
+             m_name%iaux4(k)=A%iaux4(k)
+          end do
+       end do
     end select
 
     m_name%is_initialized=.true.
@@ -830,6 +1012,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=2
+          else
+             call die('mm_dmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -845,6 +1029,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('mm_dmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csc') .and. &
@@ -860,6 +1048,8 @@ contains
              ot=4
           else if (label .eq. 't1D') then
              ot=6
+          else
+             call die('mm_dmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -875,6 +1065,8 @@ contains
              ot=5
           else if (label .eq. 't1D') then
              ot=7
+          else
+             call die('mm_dmultiply: invalid implementation')
           end if
        end if
     else
@@ -1018,6 +1210,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=2
+          else
+             call die('mm_zmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1033,6 +1227,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('mm_zmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csc') .and. &
@@ -1048,6 +1246,8 @@ contains
              ot=4
           else if (label .eq. 't1D') then
              ot=6
+          else
+             call die('mm_zmultiply: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1063,6 +1263,8 @@ contains
              ot=5
           else if (label .eq. 't1D') then
              ot=7
+          else
+             call die('mm_zmultiply: invalid implementation')
           end if
        end if
     else
@@ -1197,6 +1399,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_dadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1210,6 +1414,25 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'psp') then
+             ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('m_dadd: invalid implementation')
           end if
        end if
     else
@@ -1225,6 +1448,15 @@ contains
 #else
        call die('m_dadd: compile with ScaLAPACK')
 #endif
+    case (3)
+#ifdef PSP
+       if (trA) call die('m_dadd: implementation only valid for opA=''n''')
+       if ((A%spm%loc_dim1/=C%iaux2(1)) .or. &
+           (A%spm%loc_dim2/=C%iaux2(2))) call die('m_dadd: matrices A and C must have identical parallel distributions')
+       call m_add_pdcscpddbcref(A,C,alpha,beta)
+#else
+       call die('m_dadd: compile with pspBLAS')
+#endif   
     end select
 
   end subroutine m_dadd
@@ -1287,6 +1519,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1300,6 +1534,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else
@@ -1373,6 +1611,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_dtrace: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1384,6 +1624,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_dtrace: invalid implementation')
           end if
        end if
     else
@@ -1456,6 +1700,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_ztrace: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1467,6 +1713,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_ztrace: invalid implementation')
           end if
        end if
     else
@@ -1555,6 +1805,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=2
+          else
+             call die('mm_dtrace: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1568,6 +1820,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('mm_dtrace: invalid implementation')
           end if
        end if
     else
@@ -1591,7 +1847,7 @@ contains
     case (3)
 #if defined(MPI) && defined(LAP)
        if ((A%iaux2(1)/=B%iaux2(1)) .or. &
-            (A%iaux2(2)/=B%iaux2(2))) call die('mm_dtrace: matrices A and B must have identical parallel distributions')
+           (A%iaux2(2)/=B%iaux2(2))) call die('mm_dtrace: matrices A and B must have identical parallel distributions')
        alpha_loc=ddot(A%iaux2(1)*A%iaux2(2),A%dval,1,B%dval,1)
        call mpi_allreduce(alpha_loc,alpha,1,mpi_double_precision,mpi_sum,mpi_comm_world,info)
        if (info/=0) call die('mm_dtrace: error in mpi_allreduce')
@@ -1661,6 +1917,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('mm_ztrace: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'dbc') .and. &
@@ -1674,6 +1932,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('mm_ztrace: invalid implementation')
           end if
        end if
     else
@@ -1691,7 +1953,7 @@ contains
     case (3)
 #ifdef MPI
        if ((A%iaux2(1)/=B%iaux2(1)) .or. &
-            (A%iaux2(2)/=B%iaux2(2))) call die('mm_ztrace: matrices A and B must have identical parallel distributions')
+           (A%iaux2(2)/=B%iaux2(2))) call die('mm_ztrace: matrices A and B must have identical parallel distributions')
        alpha_loc=cmplx_0
        do i=1,A%iaux2(1)
           do j=1,A%iaux2(2)
@@ -1754,6 +2016,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_dscale: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -1765,6 +2029,10 @@ contains
              ot=1
           else if (label .eq. 'psp') then
              ot=1
+          else if (label .eq. 't1D') then
+             ot=1
+          else
+             call die('m_dscale: invalid implementation')
           end if
        end if
     else
@@ -1821,6 +2089,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_zscale: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -1832,6 +2102,10 @@ contains
              ot=1
           else if (label .eq. 'psp') then
              ot=1
+          else if (label .eq. 't1D') then
+             ot=1
+          else
+             call die('m_zscale: invalid implementation')
           end if
        end if
     else
@@ -1896,6 +2170,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_dset: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -1907,6 +2183,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_dset: invalid implementation')
           end if
        end if
     else
@@ -1972,6 +2252,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_zset: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -1983,6 +2265,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_zset: invalid implementation')
           end if
        end if
     else
@@ -2061,6 +2347,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+            call die('m_dset_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -2072,6 +2360,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+            call die('m_dset_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'coo') .and. &
@@ -2083,6 +2375,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+            call die('m_dset_element: invalid implementation')
           end if
        end if
     else
@@ -2099,38 +2395,48 @@ contains
        call die('m_dset_element: compile with ScaLAPACK')
 #endif
     case (3)
-       el_present=.false.
-       do k=1,C%iaux2(1)
-          if ((C%iaux3(k)==i) .and. &
-               (C%iaux4(k)==j)) then
-             C%dval(k,1)=alpha
-             el_present=.true.
-          end if
-       end do
-       if (.not. el_present) then
-          allocate(iaux3_temp(C%iaux2(1)))
-          allocate(iaux4_temp(C%iaux2(1)))
-          allocate(dval_temp(C%iaux2(1),1))
-          iaux3_temp=C%iaux3
-          iaux4_temp=C%iaux4
-          dval_temp=C%dval
-          deallocate(C%dval)
-          deallocate(C%iaux4)
-          deallocate(C%iaux3)
-          C%iaux2(1)=C%iaux2(1)+1
+       if (C%iaux2(1)==0) then
+          C%iaux2(1)=1
           allocate(C%iaux3(C%iaux2(1)))
           allocate(C%iaux4(C%iaux2(1)))
           allocate(C%dval(C%iaux2(1),1))
-          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
-          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
-          C%dval(1:C%iaux2(1)-1,1)=dval_temp(1:C%iaux2(1)-1,1)
-          deallocate(dval_temp)
-          deallocate(iaux4_temp)
-          deallocate(iaux3_temp)
           C%iaux3(C%iaux2(1))=i
           C%iaux4(C%iaux2(1))=j
           C%dval(C%iaux2(1),1)=alpha
-       end if
+       else
+          el_present=.false.
+          do k=1,C%iaux2(1)
+             if ((C%iaux3(k)==i) .and. &
+                 (C%iaux4(k)==j)) then
+                C%dval(k,1)=alpha
+                el_present=.true.
+             end if
+          end do
+          if (.not. el_present) then
+             allocate(iaux3_temp(C%iaux2(1)))
+             allocate(iaux4_temp(C%iaux2(1)))
+             allocate(dval_temp(C%iaux2(1),1))
+             iaux3_temp=C%iaux3
+             iaux4_temp=C%iaux4
+             dval_temp=C%dval
+             deallocate(C%dval)
+             deallocate(C%iaux4)
+             deallocate(C%iaux3)
+             C%iaux2(1)=C%iaux2(1)+1
+             allocate(C%iaux3(C%iaux2(1)))
+             allocate(C%iaux4(C%iaux2(1)))
+             allocate(C%dval(C%iaux2(1),1))
+             C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+             C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+             C%dval(1:C%iaux2(1)-1,1)=dval_temp(1:C%iaux2(1)-1,1)
+             deallocate(dval_temp)
+             deallocate(iaux4_temp)
+             deallocate(iaux3_temp)
+             C%iaux3(C%iaux2(1))=i
+             C%iaux4(C%iaux2(1))=j
+             C%dval(C%iaux2(1),1)=alpha
+         end if
+      end if
     end select
 
   end subroutine m_dset_element
@@ -2190,6 +2496,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_zset_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -2201,6 +2509,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_zset_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'coo') .and. &
@@ -2212,6 +2524,10 @@ contains
              ot=3
           else if (label .eq. 'psp') then
              ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('m_zset_element: invalid implementation')
           end if
        end if
     else
@@ -2228,37 +2544,47 @@ contains
        call die('m_zset_element: compile with ScaLAPACK')
 #endif
     case (3)
-       el_present=.false.
-       do k=1,C%iaux2(1)
-          if ((C%iaux3(k)==i) .and. &
-               (C%iaux4(k)==j)) then
-             C%zval(k,1)=alpha
-             el_present=.true.
-          end if
-       end do
-       if (.not. el_present) then
-          allocate(iaux3_temp(C%iaux2(1)))
-          allocate(iaux4_temp(C%iaux2(1)))
-          allocate(zval_temp(C%iaux2(1),1))
-          iaux3_temp=C%iaux3
-          iaux4_temp=C%iaux4
-          zval_temp=C%zval
-          deallocate(C%zval)
-          deallocate(C%iaux4)
-          deallocate(C%iaux3)
-          C%iaux2(1)=C%iaux2(1)+1
+       if (C%iaux2(1)==0) then
+          C%iaux2(1)=1
           allocate(C%iaux3(C%iaux2(1)))
           allocate(C%iaux4(C%iaux2(1)))
           allocate(C%zval(C%iaux2(1),1))
-          C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
-          C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
-          C%zval(1:C%iaux2(1)-1,1)=zval_temp(1:C%iaux2(1)-1,1)
-          deallocate(zval_temp)
-          deallocate(iaux4_temp)
-          deallocate(iaux3_temp)
           C%iaux3(C%iaux2(1))=i
           C%iaux4(C%iaux2(1))=j
           C%zval(C%iaux2(1),1)=alpha
+       else
+          el_present=.false.
+          do k=1,C%iaux2(1)
+             if ((C%iaux3(k)==i) .and. &
+                 (C%iaux4(k)==j)) then
+                C%zval(k,1)=alpha
+                el_present=.true.
+             end if
+          end do
+          if (.not. el_present) then
+             allocate(iaux3_temp(C%iaux2(1)))
+             allocate(iaux4_temp(C%iaux2(1)))
+             allocate(zval_temp(C%iaux2(1),1))
+             iaux3_temp=C%iaux3
+             iaux4_temp=C%iaux4
+             zval_temp=C%zval
+             deallocate(C%zval)
+             deallocate(C%iaux4)
+             deallocate(C%iaux3)
+             C%iaux2(1)=C%iaux2(1)+1
+             allocate(C%iaux3(C%iaux2(1)))
+             allocate(C%iaux4(C%iaux2(1)))
+             allocate(C%zval(C%iaux2(1),1))
+             C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
+             C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
+             C%zval(1:C%iaux2(1)-1,1)=zval_temp(1:C%iaux2(1)-1,1)
+             deallocate(zval_temp)
+             deallocate(iaux4_temp)
+             deallocate(iaux3_temp)
+             C%iaux3(C%iaux2(1))=i
+             C%iaux4(C%iaux2(1))=j
+             C%zval(C%iaux2(1),1)=alpha
+          end if
        end if
     end select
 
@@ -2318,6 +2644,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_dget_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -2329,6 +2657,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_dget_element: invalid implementation')
           end if
        end if
     else
@@ -2398,6 +2730,8 @@ contains
              ot=1
           else if (label .eq. 'lap') then
              ot=1
+          else
+             call die('m_zget_element: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'dbc') .and. &
@@ -2409,6 +2743,10 @@ contains
              ot=2
           else if (label .eq. 'psp') then
              ot=2
+          else if (label .eq. 't1D') then
+             ot=2
+          else
+             call die('m_zget_element: invalid implementation')
           end if
        end if
     else
@@ -3257,6 +3595,38 @@ contains
     end do
 
   end subroutine mm_multiply_pzcscpzdbcref
+
+  subroutine m_add_pdcscpddbcref(A,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, l
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do i=1,A%spm%loc_dim2
+       do j=0,A%spm%col_ptr(i+1)-A%spm%col_ptr(i)-1
+          l=A%spm%col_ptr(i)+j
+          C%dval(A%spm%row_ind(l),i)=C%dval(A%spm%row_ind(l),i)+alpha*A%spm%dval(l)
+       end do
+    end do
+
+  end subroutine m_add_pdcscpddbcref
 #endif
 
   subroutine m_add_sddenref(A,trA,C,alpha,beta)

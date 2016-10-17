@@ -268,6 +268,8 @@ subroutine m_dfactorize(C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_dfactorize: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -279,6 +281,10 @@ subroutine m_dfactorize(C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_dfactorize: invalid implementation')
         end if
       end if
   else
@@ -331,6 +337,8 @@ subroutine m_zfactorize(C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_zfactorize: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -342,6 +350,10 @@ subroutine m_zfactorize(C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_zfactorize: invalid implementation')
         end if
       end if
   else
@@ -436,6 +448,8 @@ subroutine m_dreduce(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_dreduce: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -447,6 +461,10 @@ subroutine m_dreduce(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_dreduce: invalid implementation')
         end if
       end if
   else
@@ -537,6 +555,8 @@ subroutine m_zreduce(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_zreduce: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -548,6 +568,10 @@ subroutine m_zreduce(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_zreduce: invalid implementation')
         end if
       end if
   else
@@ -661,6 +685,8 @@ subroutine m_dtransform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_dtransform: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -672,6 +698,10 @@ subroutine m_dtransform(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_dtransform: invalid implementation')
         end if
       end if
   else
@@ -723,6 +753,8 @@ subroutine m_ztransform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_ztransform: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -734,6 +766,10 @@ subroutine m_ztransform(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_ztransform: invalid implementation')
         end if
       end if
   else
@@ -816,6 +852,8 @@ subroutine m_dback_transform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_dback_transform: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -827,6 +865,10 @@ subroutine m_dback_transform(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_dback_transform: invalid implementation')
         end if
       end if
   else
@@ -878,6 +920,8 @@ subroutine m_zback_transform(A,C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_zback_transform: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -889,6 +933,10 @@ subroutine m_zback_transform(A,C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_zback_transform: invalid implementation')
         end if
       end if
   else
@@ -979,6 +1027,8 @@ subroutine m_dinverse(C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_dinverse: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -990,6 +1040,10 @@ subroutine m_dinverse(C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_dinverse: invalid implementation')
         end if
       end if
   else
@@ -1085,6 +1139,8 @@ subroutine m_zinverse(C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else
+          call die('m_zinverse: invalid implementation')
         end if
       end if
   else if ((C%str_type .eq. 'dbc') .and. &
@@ -1096,6 +1152,10 @@ subroutine m_zinverse(C,label)
           ot=2
         else if (label .eq. 'psp') then
           ot=2
+        else if (label .eq. 't1D') then
+          ot=2
+        else
+          call die('m_zinverse: invalid implementation')
         end if
       end if
   else
