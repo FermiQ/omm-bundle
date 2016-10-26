@@ -405,14 +405,8 @@ subroutine tomato_TB(template_basedir,system_label,&
                   k2=modulo(k+template_i(5,l)-1,num_cells_dir(3))+1
                   a=cell_index(i,j,k)+subset_convert(template_i(1,l))
                   b=cell_index(i2,j2,k2)+subset_convert(template_i(2,l))
-                  call m_get_element(H,a,b,el1)
-                  el1=el1+template_d(1,l)
-                  call m_set_element(H,a,b,el1)
-                  if (overlap_present) then
-                    call m_get_element(S,a,b,el2)
-                    el2=el2+template_d(2,l)
-                    call m_set_element(S,a,b,el2)
-                  end if
+                  call m_set_element(H,a,b,template_d(1,l),1.0_dp)
+                  if (overlap_present) call m_set_element(S,a,b,template_d(2,l),1.0_dp)
                 end do
               end do
             end do
@@ -429,9 +423,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=subset_convert(template_i(1,l))
               b=subset_convert(template_i(2,l))
-              call m_get_element(H,a,b,el1)
-              el1=el1+defect_perturbation*template_d(1,l)
-              call m_set_element(H,a,b,el1)
+              call m_set_element(H,a,b,defect_perturbation*template_d(1,l),1.0_dp)
             end if
           end do
         end if
@@ -447,14 +439,8 @@ subroutine tomato_TB(template_basedir,system_label,&
                 k2=modulo(k+template_i(5,l)-1,num_cells_dir(3))+1
                 a=cell_index(i,j,k)+template_i(1,l)
                 b=cell_index(i2,j2,k2)+template_i(2,l)
-                call m_get_element(H,a,b,el1)
-                el1=el1+template_d(1,l)
-                call m_set_element(H,a,b,el1)
-                if (overlap_present) then
-                  call m_get_element(S,a,b,el2)
-                  el2=el2+template_d(2,l)
-                  call m_set_element(S,a,b,el2)
-                end if
+                call m_set_element(H,a,b,template_d(1,l),1.0_dp)
+                if (overlap_present) call m_set_element(S,a,b,template_d(2,l),1.0_dp)
               end do
             end do
           end do
@@ -468,9 +454,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=template_i(1,l)
               b=template_i(2,l)
-              call m_get_element(H,a,b,el1)
-              el1=el1+defect_perturbation*template_d(1,l)
-              call m_set_element(H,a,b,el1)
+              call m_set_element(H,a,b,defect_perturbation*template_d(1,l),1.0_dp)
             end if
           end do
         end if
@@ -500,14 +484,8 @@ subroutine tomato_TB(template_basedir,system_label,&
                                k_point(3)*k3)
                   a=cell_index(i,j,k)+subset_convert(template_i(1,l))
                   b=cell_index(i2,j2,k2)+subset_convert(template_i(2,l))
-                  call m_get_element(H,a,b,cel1)
-                  cel1=cel1+cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT)
-                  call m_set_element(H,a,b,cel1)
-                  if (overlap_present) then
-                    call m_get_element(S,a,b,cel2)
-                    cel2=cel2+cmplx(template_d(2,l),0.0_dp,dp)*exp(cmplx_i*kdotT)
-                    call m_set_element(S,a,b,cel2)
-                  end if
+                  call m_set_element(H,a,b,cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT),1.0_dp)
+                  if (overlap_present) call m_set_element(S,a,b,cmplx(template_d(2,l),0.0_dp,dp)*exp(cmplx_i*kdotT),cmplx_1)
                 end do
               end do
             end do
@@ -524,9 +502,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=subset_convert(template_i(1,l))
               b=subset_convert(template_i(2,l))
-              call m_get_element(H,a,b,cel1)
-              cel1=cel1+cmplx(defect_perturbation*template_d(1,l),0.0_dp)
-              call m_set_element(H,a,b,cel1)
+              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp),cmplx_1)
             end if
           end do
         end if
@@ -548,14 +524,8 @@ subroutine tomato_TB(template_basedir,system_label,&
                              k_point(3)*k3)
                 a=cell_index(i,j,k)+template_i(1,l)
                 b=cell_index(i2,j2,k2)+template_i(2,l)
-                call m_get_element(H,a,b,cel1)
-                cel1=cel1+cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT)
-                call m_set_element(H,a,b,cel1)
-                if (overlap_present) then
-                  call m_get_element(S,a,b,cel2)
-                  cel2=cel2+cmplx(template_d(2,l),0.0_dp,dp)*exp(cmplx_i*kdotT)
-                  call m_set_element(S,a,b,cel2)
-                end if
+                call m_set_element(H,a,b,cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT),cmplx_1)
+                if (overlap_present) call m_set_element(S,a,b,cmplx(template_d(2,l),0.0_dp,dp)*exp(cmplx_i*kdotT),cmplx_1)
               end do
             end do
           end do
@@ -569,9 +539,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=template_i(1,l)
               b=template_i(2,l)
-              call m_get_element(H,a,b,cel1)
-              cel1=cel1+cmplx(defect_perturbation*template_d(1,l),0.0_dp)
-              call m_set_element(H,a,b,cel1)
+              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp),cmplx_1)
             end if
           end do
         end if
