@@ -502,7 +502,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=subset_convert(template_i(1,l))
               b=subset_convert(template_i(2,l))
-              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp),cmplx_1)
+              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp,dp),cmplx_1)
             end if
           end do
         end if
@@ -539,7 +539,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                 (template_i(5,l)==0)) then
               a=template_i(1,l)
               b=template_i(2,l)
-              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp),cmplx_1)
+              call m_set_element(H,a,b,cmplx(defect_perturbation*template_d(1,l),0.0_dp,dp),cmplx_1)
             end if
           end do
         end if
