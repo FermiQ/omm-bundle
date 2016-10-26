@@ -2504,7 +2504,7 @@ contains
              C%iaux2(1)=C%iaux2(1)+1
              C%iaux3(C%iaux2(1))=i
              C%iaux4(C%iaux2(1))=j
-             C%dval(C%iaux2(1),1)=alpha
+             C%zval(C%iaux2(1),1)=alpha
           end if
        end if
     end select
