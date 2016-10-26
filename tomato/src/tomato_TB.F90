@@ -484,7 +484,7 @@ subroutine tomato_TB(template_basedir,system_label,&
                                k_point(3)*k3)
                   a=cell_index(i,j,k)+subset_convert(template_i(1,l))
                   b=cell_index(i2,j2,k2)+subset_convert(template_i(2,l))
-                  call m_set_element(H,a,b,cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT),1.0_dp)
+                  call m_set_element(H,a,b,cmplx(template_d(1,l),0.0_dp,dp)*exp(cmplx_i*kdotT),cmplx_1)
                   if (overlap_present) call m_set_element(S,a,b,cmplx(template_d(2,l),0.0_dp,dp)*exp(cmplx_i*kdotT),cmplx_1)
                 end do
               end do
