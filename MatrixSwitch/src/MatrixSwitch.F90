@@ -1240,6 +1240,32 @@ contains
              call die('m_dadd: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (A%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'ref') then
+             ot=4
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (A%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'ref') then
+             ot=5
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
     else
        call die('m_dadd: invalid implementation')
     end if
@@ -1261,7 +1287,11 @@ contains
        call m_add_pdcscpddbcref(A,C,alpha,beta)
 #else
        call die('m_dadd: compile with pspBLAS')
-#endif   
+#endif
+    case (4)
+       call m_add_sdcscsddenref(A,trA,C,alpha,beta)
+    case (5)
+       call m_add_sdcsrsddenref(A,trA,C,alpha,beta)
     end select
 
   end subroutine m_dadd
@@ -1345,6 +1375,32 @@ contains
              call die('m_zadd: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csc') .and. &
+         (A%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=4
+       else
+          if (label .eq. 'ref') then
+             ot=4
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (A%is_serial) .and. &
+         (C%str_type .eq. 'den') .and. &
+         (C%is_serial)) then
+       if (.not. present(label)) then
+          ot=5
+       else
+          if (label .eq. 'ref') then
+             ot=5
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
     else
        call die('m_zadd: invalid implementation')
     end if
@@ -1358,6 +1414,10 @@ contains
 #else
        call die('m_zadd: compile with ScaLAPACK')
 #endif
+    case (4)
+       call m_add_szcscszdenref(A,tcA,C,alpha,beta)
+    case (5)
+       call m_add_szcsrszdenref(A,tcA,C,alpha,beta)
     end select
 
   end subroutine m_zadd

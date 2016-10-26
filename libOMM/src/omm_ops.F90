@@ -1027,6 +1027,8 @@ subroutine m_dinverse(C,label)
       else
         if (label .eq. 'lap') then
           ot=1
+        else if (label .eq. 'ref') then
+          ot=1
         else
           call die('m_dinverse: invalid implementation')
         end if
@@ -1138,6 +1140,8 @@ subroutine m_zinverse(C,label)
         ot=1
       else
         if (label .eq. 'lap') then
+          ot=1
+        else if (label .eq. 'ref') then
           ot=1
         else
           call die('m_zinverse: invalid implementation')
