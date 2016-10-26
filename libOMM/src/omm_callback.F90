@@ -322,7 +322,7 @@ subroutine omm_callback(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,sca
         !cmplx_el=cmplx(sign(0.5_dp*rn(1),rn(2)-0.5_dp),&
         !               sign(0.5_dp*rn(3),rn(4)-0.5_dp),dp)
         el=sign(0.5_dp*rn(1),rn(2)-0.5_dp)
-        call m_set_element(C_min,j,i,el,m_operation)
+        call m_set_element(C_min,j,i,el,0.0_dp,m_operation)
       end do
     end do
     call m_scale(C_min,1.0d-2/sqrt(real(m,dp)),m_operation)

@@ -501,14 +501,14 @@ subroutine m_dreduce(A,C,label)
       ! Fill in missing triangle of C.
       do i = 1, C%dim1
           do j = 1, i-1
-              call m_set_element(C, i, j, 0.0_dp, label)
+              call m_set_element(C, i, j, 0.0_dp, 0.0_dp, label)
           end do
       end do
       write(m_storage,'(a1,a1,a3)') c1, c2, C%str_type
       call m_allocate(work1,C%dim1,C%dim2,m_storage)
       call m_add(C,'t',work1,1.0_dp,0.0_dp,label)
       do i = 1, work1%dim1
-          call m_set_element(work1, i, i, 0.0_dp, label)
+          call m_set_element(work1, i, i, 0.0_dp, 0.0_dp, label)
       end do
       call m_add(work1,'n',C,1.0_dp,1.0_dp)
       call m_deallocate(work1)
@@ -608,14 +608,14 @@ subroutine m_zreduce(A,C,label)
       ! Fill in missing triangle of C.
       do i = 1, C%dim1
           do j = 1, i-1
-              call m_set_element(C, i, j, 0.0_dp, label)
+              call m_set_element(C, i, j, 0.0_dp, 0.0_dp, label)
           end do
       end do
       write(m_storage,'(a1,a1,a3)') c1, c2, C%str_type
       call m_allocate(work1,C%dim1,C%dim2,m_storage)
       call m_add(C,'c',work1,1.0_dp,0.0_dp,label)
       do i = 1, work1%dim1
-          call m_set_element(work1, i, i, 0.0_dp, label)
+          call m_set_element(work1, i, i, 0.0_dp, 0.0_dp, label)
       end do
       call m_add(work1,'n',C,1.0_dp,1.0_dp)
       call m_deallocate(work1)
