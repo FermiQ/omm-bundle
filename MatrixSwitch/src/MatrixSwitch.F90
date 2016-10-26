@@ -2187,7 +2187,7 @@ contains
   ! set matrix element                             !
   ! C_ij := alpha                                  !
   !================================================!
-  subroutine m_dset_element(C,i,j,alpha,label)
+  subroutine m_dset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2198,6 +2198,7 @@ contains
     integer, intent(in) :: j ! column index of element
 
     real(dp), intent(in) :: alpha ! scalar alpha
+    real(dp), intent(in) :: beta ! scalar beta
 
     !**** INOUT ***********************************!
 
@@ -2207,13 +2208,14 @@ contains
 
     logical :: el_present
 
-    integer :: ot, k
+    integer :: ot, k, buffer
     integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
 
+    real(dp) :: el
     real(dp), allocatable :: dval_temp(:,:)
 
 #ifdef CONV
-    complex(dp) :: cmplx_alpha
+    complex(dp) :: cmplx_alpha, cmplx_beta
 #endif
 
     !**********************************************!
@@ -2221,7 +2223,8 @@ contains
 #ifdef CONV
     if (.not. C%is_real) then
        cmplx_alpha=cmplx(alpha,0.0_dp,dp)
-       call m_zset_element(C,i,j,cmplx_alpha,label)
+       cmplx_beta=cmplx(beta,0.0_dp,dp)
+       call m_zset_element(C,i,j,cmplx_alpha,cmplx_beta,label)
        return
     end if
 #else
@@ -2282,62 +2285,71 @@ contains
 
     select case (ot)
     case (1)
-       C%dval(i,j)=alpha
+       C%dval(i,j)=alpha+beta*C%dval(i,j)
     case (2)
 #if defined(MPI) && defined(SLAP)
-       call pdelset(C%dval,i,j,C%iaux1,alpha)
+       if (beta==0.0_dp) then
+          call pdelset(C%dval,i,j,C%iaux1,alpha)
+       else
+          call pdelget('a',' ',el,C%dval,i,j,C%iaux1)
+          call pdelset(C%dval,i,j,C%iaux1,alpha+beta*el)
+       end if
 #else
        call die('m_dset_element: compile with ScaLAPACK')
 #endif
     case (3)
        if (C%iaux2(1)==0) then
           C%iaux2(1)=1
-          allocate(C%iaux3(C%iaux2(1)))
-          allocate(C%iaux4(C%iaux2(1)))
-          allocate(C%dval(C%iaux2(1),1))
-          C%iaux3(C%iaux2(1))=i
-          C%iaux4(C%iaux2(1))=j
-          C%dval(C%iaux2(1),1)=alpha
+          buffer=min(C%dim1,C%dim2)
+          allocate(C%iaux3(buffer))
+          allocate(C%iaux4(buffer))
+          allocate(C%dval(buffer,1))
+          C%iaux3(1)=i
+          C%iaux4(1)=j
+          C%dval(1,1)=alpha
        else
           el_present=.false.
           do k=1,C%iaux2(1)
              if ((C%iaux3(k)==i) .and. &
                  (C%iaux4(k)==j)) then
-                C%dval(k,1)=alpha
+                C%dval(k,1)=alpha+beta*C%dval(k,1)
                 el_present=.true.
                 exit
              end if
           end do
           if (.not. el_present) then
-             allocate(iaux3_temp(C%iaux2(1)))
-             allocate(iaux4_temp(C%iaux2(1)))
-             allocate(dval_temp(C%iaux2(1),1))
-             iaux3_temp=C%iaux3
-             iaux4_temp=C%iaux4
-             dval_temp=C%dval
-             deallocate(C%dval)
-             deallocate(C%iaux4)
-             deallocate(C%iaux3)
+             if (C%iaux2(1)==size(C%iaux3)) then
+                allocate(iaux3_temp(C%iaux2(1)))
+                allocate(iaux4_temp(C%iaux2(1)))
+                allocate(dval_temp(C%iaux2(1),1))
+                iaux3_temp=C%iaux3
+                iaux4_temp=C%iaux4
+                dval_temp=C%dval
+                deallocate(C%dval)
+                deallocate(C%iaux4)
+                deallocate(C%iaux3)
+                buffer=C%iaux2(1)+min(C%dim1,C%dim2)
+                allocate(C%iaux3(buffer))
+                allocate(C%iaux4(buffer))
+                allocate(C%dval(buffer,1))
+                C%iaux3(1:C%iaux2(1))=iaux3_temp(1:C%iaux2(1))
+                C%iaux4(1:C%iaux2(1))=iaux4_temp(1:C%iaux2(1))
+                C%dval(1:C%iaux2(1),1)=dval_temp(1:C%iaux2(1),1)
+                deallocate(dval_temp)
+                deallocate(iaux4_temp)
+                deallocate(iaux3_temp)
+             end if
              C%iaux2(1)=C%iaux2(1)+1
-             allocate(C%iaux3(C%iaux2(1)))
-             allocate(C%iaux4(C%iaux2(1)))
-             allocate(C%dval(C%iaux2(1),1))
-             C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
-             C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
-             C%dval(1:C%iaux2(1)-1,1)=dval_temp(1:C%iaux2(1)-1,1)
-             deallocate(dval_temp)
-             deallocate(iaux4_temp)
-             deallocate(iaux3_temp)
              C%iaux3(C%iaux2(1))=i
              C%iaux4(C%iaux2(1))=j
              C%dval(C%iaux2(1),1)=alpha
-         end if
-      end if
+          end if
+       end if
     end select
 
   end subroutine m_dset_element
 
-  subroutine m_zset_element(C,i,j,alpha,label)
+  subroutine m_zset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
@@ -2348,6 +2360,7 @@ contains
     integer, intent(in) :: j ! column index of element
 
     complex(dp), intent(in) :: alpha ! scalar alpha
+    complex(dp), intent(in) :: beta ! scalar beta
 
     !**** INOUT ***********************************!
 
@@ -2357,13 +2370,14 @@ contains
 
     logical :: el_present
 
-    integer :: ot, k
+    integer :: ot, k, buffer
     integer, allocatable :: iaux3_temp(:), iaux4_temp(:)
 
 #ifdef CONV
-    real(dp) :: real_alpha
+    real(dp) :: real_alpha, real_beta
 #endif
 
+    complex(dp) :: el
     complex(dp), allocatable :: zval_temp(:,:)
 
     !**********************************************!
@@ -2371,7 +2385,8 @@ contains
 #ifdef CONV
     if (C%is_real) then
        real_alpha=real(alpha,dp)
-       call m_dset_element(C,i,j,real_alpha,label)
+       real_beta=real(beta,dp)
+       call m_dset_element(C,i,j,real_alpha,real_beta,label)
        return
     end if
 #else
@@ -2432,55 +2447,64 @@ contains
 
     select case (ot)
     case (1)
-       C%zval(i,j)=alpha
+       C%zval(i,j)=alpha+beta*C%zval(i,j)
     case (2)
 #if defined(MPI) && defined(SLAP)
-       call pzelset(C%zval,i,j,C%iaux1,alpha)
+       if (beta==cmplx_0) then
+          call pzelset(C%zval,i,j,C%iaux1,alpha)
+       else
+          call pzelget('a',' ',el,C%zval,i,j,C%iaux1)
+          call pzelset(C%zval,i,j,C%iaux1,alpha+beta*el)
+       end if
 #else
        call die('m_zset_element: compile with ScaLAPACK')
 #endif
     case (3)
        if (C%iaux2(1)==0) then
           C%iaux2(1)=1
-          allocate(C%iaux3(C%iaux2(1)))
-          allocate(C%iaux4(C%iaux2(1)))
-          allocate(C%zval(C%iaux2(1),1))
-          C%iaux3(C%iaux2(1))=i
-          C%iaux4(C%iaux2(1))=j
-          C%zval(C%iaux2(1),1)=alpha
+          buffer=min(C%dim1,C%dim2)
+          allocate(C%iaux3(buffer))
+          allocate(C%iaux4(buffer))
+          allocate(C%zval(buffer,1))
+          C%iaux3(1)=i
+          C%iaux4(1)=j
+          C%zval(1,1)=alpha
        else
           el_present=.false.
           do k=1,C%iaux2(1)
              if ((C%iaux3(k)==i) .and. &
                  (C%iaux4(k)==j)) then
-                C%zval(k,1)=alpha
+                C%zval(k,1)=alpha+beta*C%zval(k,1)
                 el_present=.true.
                 exit
              end if
           end do
           if (.not. el_present) then
-             allocate(iaux3_temp(C%iaux2(1)))
-             allocate(iaux4_temp(C%iaux2(1)))
-             allocate(zval_temp(C%iaux2(1),1))
-             iaux3_temp=C%iaux3
-             iaux4_temp=C%iaux4
-             zval_temp=C%zval
-             deallocate(C%zval)
-             deallocate(C%iaux4)
-             deallocate(C%iaux3)
+             if (C%iaux2(1)==size(C%iaux3)) then
+                allocate(iaux3_temp(C%iaux2(1)))
+                allocate(iaux4_temp(C%iaux2(1)))
+                allocate(zval_temp(C%iaux2(1),1))
+                iaux3_temp=C%iaux3
+                iaux4_temp=C%iaux4
+                zval_temp=C%zval
+                deallocate(C%zval)
+                deallocate(C%iaux4)
+                deallocate(C%iaux3)
+                buffer=C%iaux2(1)+min(C%dim1,C%dim2)
+                allocate(C%iaux3(buffer))
+                allocate(C%iaux4(buffer))
+                allocate(C%zval(buffer,1))
+                C%iaux3(1:C%iaux2(1))=iaux3_temp(1:C%iaux2(1))
+                C%iaux4(1:C%iaux2(1))=iaux4_temp(1:C%iaux2(1))
+                C%zval(1:C%iaux2(1),1)=zval_temp(1:C%iaux2(1),1)
+                deallocate(zval_temp)
+                deallocate(iaux4_temp)
+                deallocate(iaux3_temp)
+             end if
              C%iaux2(1)=C%iaux2(1)+1
-             allocate(C%iaux3(C%iaux2(1)))
-             allocate(C%iaux4(C%iaux2(1)))
-             allocate(C%zval(C%iaux2(1),1))
-             C%iaux3(1:C%iaux2(1)-1)=iaux3_temp(1:C%iaux2(1)-1)
-             C%iaux4(1:C%iaux2(1)-1)=iaux4_temp(1:C%iaux2(1)-1)
-             C%zval(1:C%iaux2(1)-1,1)=zval_temp(1:C%iaux2(1)-1,1)
-             deallocate(zval_temp)
-             deallocate(iaux4_temp)
-             deallocate(iaux3_temp)
              C%iaux3(C%iaux2(1))=i
              C%iaux4(C%iaux2(1))=j
-             C%zval(C%iaux2(1),1)=alpha
+             C%dval(C%iaux2(1),1)=alpha
           end if
        end if
     end select
