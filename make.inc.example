@@ -15,6 +15,9 @@ MSBUILDPATH = $(ROOTDIR)/build_MatrixSwitch
 OMMLIBNAME = libOMM.a
 OMMBUILDPATH = $(ROOTDIR)/build_libOMM
 
+TOMATOLIBNAME = tomato.a
+TOMATOBUILDPATH = $(ROOTDIR)/build_tomato
+
 BLASLIB = -lblas
 LAPLIB  = -llapack
 SLAPLIB = -lscalapack
