@@ -25,7 +25,7 @@ libOMM_lib :
 	make; \
 	make install
 
-tomato_lib : MatrixSwitch_lib psp_lib
+tomato_lib :
 	cd tomato/src; \
 	make; \
 	make install
