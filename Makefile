@@ -15,12 +15,12 @@ psp_lib :
 	make; \
 	make install
 
-MatrixSwitch_lib : psp_lib
+MatrixSwitch_lib :
 	cd MatrixSwitch/src; \
 	make; \
 	make install
 
-libOMM_lib : MatrixSwitch_lib psp_lib
+libOMM_lib :
 	cd libOMM/src; \
 	make; \
 	make install

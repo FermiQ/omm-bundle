@@ -302,7 +302,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
       else
         call m_add(S,'n',P(ip),1.0_dp,0.0_dp,m_operation)
       end if
-        call m_inverse(P(ip),m_operation)
+      call m_inverse(P(ip),m_operation)
     else if (flavour==4) then
       call calc_PW_precon(T,scale_T,P(ip))
     end if
@@ -321,7 +321,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
         !cmplx_el=cmplx(sign(0.5_dp*rn(1),rn(2)-0.5_dp),&
         !               sign(0.5_dp*rn(3),rn(4)-0.5_dp),dp)
         el=sign(0.5_dp*rn(1),rn(2)-0.5_dp)
-        call m_set_element(C_min,j,i,el,m_operation)
+        call m_set_element(C_min,j,i,el,0.0_dp,m_operation)
       end do
     end do
     call m_scale(C_min,1.0d-2/sqrt(real(m,dp)),m_operation)
