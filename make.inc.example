@@ -12,11 +12,11 @@ PSPBUILDPATH = $(ROOTDIR)/build_psp
 MSLIBNAME = MatrixSwitch.a
 MSBUILDPATH = $(ROOTDIR)/build_MatrixSwitch
 
-OMMLIBNAME = libOMM.a
-OMMBUILDPATH = $(ROOTDIR)/build_libOMM
-
 TOMATOLIBNAME = tomato.a
 TOMATOBUILDPATH = $(ROOTDIR)/build_tomato
+
+OMMLIBNAME = libOMM.a
+OMMBUILDPATH = $(ROOTDIR)/build_libOMM
 
 BLASLIB = -lblas
 LAPLIB  = -llapack
