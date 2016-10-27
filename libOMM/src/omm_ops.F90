@@ -1336,11 +1336,19 @@ subroutine die(message)
 
   character(*), intent(in), optional :: message
 
+  !**** INTERNAL ********************************!
+
+  integer :: err_unit
+
   !**********************************************!
 
-  write(log_unit,'(a)'), 'FATAL ERROR in libOMM!'
-  if (present(message)) write(log_unit,'(a)'), message
-  close(log_unit)
+  open(newunit=err_unit,file='libOMM.err',status='replace')
+  write(err_unit,'(a)'), 'FATAL ERROR in libOMM!'
+  if (present(message)) write(err_unit,'(a)'), message
+#ifdef MPI
+  write(err_unit,'(a,1x,i5)'), 'MPI rank:', mpi_rank
+#endif
+  close(err_unit)
   stop
 
 end subroutine die

@@ -1,8 +1,11 @@
 subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flavour,np,ip,cg_tol,long_out,dealloc,&
-               m_storage,m_operation,mpi_rank)
+               m_storage,m_operation)
   use omm_ops
   use MatrixSwitch
   use omm_rand
+#ifdef MPI
+  use MatrixSwitch_ops, only : ms_mpi_size, ms_mpi_rank
+#endif
 
   implicit none
 
@@ -26,7 +29,6 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
                                  ! 3 for preconditioning, S provided (T optional)
   integer, intent(in) :: np ! (number of spin points)*(number of k points)
   integer, intent(in) :: ip ! spin+k point identifier (from 1 to np)
-  integer, intent(in) :: mpi_rank ! MPI process rank (0 for serial)
 
   real(dp), intent(in) :: eta ! eigenspectrum shift parameter
   real(dp), intent(in) :: cg_tol ! convergence tolerance of CG minimization (if negative, default of 1.0d-9 is used)
@@ -99,6 +101,14 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   type(matrix), allocatable, save :: CD(:) ! C*D matrix (n x m) for each value of ip
 
   !**********************************************!
+
+#ifdef MPI
+  mpi_size=ms_mpi_size
+  mpi_rank=ms_mpi_rank
+#else
+  mpi_size=1
+  mpi_rank=0
+#endif
 
   if (log_start) then
     open(newunit=log_unit,file='libOMM.log',position='append')

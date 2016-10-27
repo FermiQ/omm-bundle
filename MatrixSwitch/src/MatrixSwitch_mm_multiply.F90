@@ -214,8 +214,8 @@ contains
           loc_dim_recv=B%spm%loc_dim2
           nnz_recv=B%spm%nnz
        end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
        allocate(col_ptr_recv(loc_dim_recv+1))
        allocate(row_ind_recv(nnz_recv))
        allocate(dval_recv(nnz_recv))
@@ -224,9 +224,9 @@ contains
           row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
           dval_recv(1:nnz_recv)=B%spm%dval(1:nnz_recv)
        end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
-       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
        do i=1,loc_dim_recv
           do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
              l=col_ptr_recv(i)+j
@@ -281,8 +281,8 @@ contains
           loc_dim_recv=A%spm%loc_dim2
           nnz_recv=A%spm%nnz
        end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
        allocate(col_ptr_recv(loc_dim_recv+1))
        allocate(row_ind_recv(nnz_recv))
        allocate(dval_recv(nnz_recv))
@@ -291,9 +291,9 @@ contains
           row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
           dval_recv(1:nnz_recv)=A%spm%dval(1:nnz_recv)
        end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,mpi_comm_world,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,mpi_comm_world,info)
-       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,mpi_comm_world,info)
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
        do i=1,loc_dim_recv
           do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
              l=col_ptr_recv(i)+j
@@ -348,8 +348,8 @@ contains
           loc_dim_recv=B%spm%loc_dim2
           nnz_recv=B%spm%nnz
        end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
        allocate(col_ptr_recv(loc_dim_recv+1))
        allocate(row_ind_recv(nnz_recv))
        allocate(zval_recv(nnz_recv))
@@ -358,9 +358,9 @@ contains
           row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
           zval_recv(1:nnz_recv)=B%spm%zval(1:nnz_recv)
        end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
-       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
        do i=1,loc_dim_recv
           do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
              l=col_ptr_recv(i)+j
@@ -415,8 +415,8 @@ contains
           loc_dim_recv=A%spm%loc_dim2
           nnz_recv=A%spm%nnz
        end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,mpi_comm_world,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,mpi_comm_world,info)
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
        allocate(col_ptr_recv(loc_dim_recv+1))
        allocate(row_ind_recv(nnz_recv))
        allocate(zval_recv(nnz_recv))
@@ -425,9 +425,9 @@ contains
           row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
           zval_recv(1:nnz_recv)=A%spm%zval(1:nnz_recv)
        end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,mpi_comm_world,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,mpi_comm_world,info)
-       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,mpi_comm_world,info)
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
        do i=1,loc_dim_recv
           do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
              l=col_ptr_recv(i)+j

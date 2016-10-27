@@ -5,6 +5,8 @@ module MatrixSwitch_ops
 
   implicit none
 
+  public
+
   !**** PARAMS ************************************!
 
   integer, parameter :: dp=selected_real_kind(15,300)
@@ -18,6 +20,7 @@ module MatrixSwitch_ops
 #ifdef MPI
   character(1), save :: ms_lap_order
 
+  integer, save :: ms_mpi_comm
   integer, save :: ms_mpi_size
   integer, save :: ms_mpi_rank
   integer, save :: ms_lap_nprow
@@ -156,21 +159,17 @@ contains
 
     !**** INTERNAL ********************************!
 
-    logical, save :: log_start=.false.
-
-    integer :: log_unit
+    integer :: err_unit
 
     !**********************************************!
 
-    if (log_start) then
-       open(newunit=log_unit,file='MatrixSwitch.log',position='append')
-    else
-       open(newunit=log_unit,file='MatrixSwitch.log',status='replace')
-       log_start=.true.
-    end if
-    write(log_unit,'(a)'), 'FATAL ERROR in matrix_switch!'
-    write(log_unit,'(a)'), message
-    close(log_unit)
+    open(newunit=err_unit,file='MatrixSwitch.err',status='replace')
+    write(err_unit,'(a)'), 'FATAL ERROR in matrix_switch!'
+    if (present(message)) write(err_unit,'(a)'), message
+#ifdef MPI
+    write(err_unit,'(a,1x,i5)'), 'MPI rank:', ms_mpi_rank
+#endif
+    close(err_unit)
     stop
 
   end subroutine die

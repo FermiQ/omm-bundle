@@ -1714,7 +1714,7 @@ contains
        if ((A%iaux2(1)/=B%iaux2(1)) .or. &
            (A%iaux2(2)/=B%iaux2(2))) call die('mm_dtrace: matrices A and B must have identical parallel distributions')
        alpha_loc=ddot(A%iaux2(1)*A%iaux2(2),A%dval,1,B%dval,1)
-       call mpi_allreduce(alpha_loc,alpha,1,mpi_double_precision,mpi_sum,mpi_comm_world,info)
+       call mpi_allreduce(alpha_loc,alpha,1,mpi_double_precision,mpi_sum,ms_mpi_comm,info)
        if (info/=0) call die('mm_dtrace: error in mpi_allreduce')
 #else
        call die('mm_dtrace: compile with MPI + LAPACK')
@@ -1825,7 +1825,7 @@ contains
              alpha_loc=alpha_loc+conjg(A%zval(i,j))*B%zval(i,j)
           end do
        end do
-       call mpi_allreduce(alpha_loc,alpha,1,mpi_double_complex,mpi_sum,mpi_comm_world,info)
+       call mpi_allreduce(alpha_loc,alpha,1,mpi_double_complex,mpi_sum,ms_mpi_comm,info)
        if (info/=0) call die('mm_ztrace: error in mpi_allreduce')
 #else
        call die('mm_ztrace: compile with MPI')
@@ -2799,15 +2799,14 @@ contains
   ! implementation: ScaLAPACK                      !
   !================================================!
 #ifdef MPI
-  subroutine ms_scalapack_setup(mpi_rank,mpi_size,nprow,order,bs_def,bs_list,icontxt)
+  subroutine ms_scalapack_setup(nprow,order,bs_def,bs_list,icontxt)
     implicit none
+    include 'mpif.h'
 
     !**** INPUT ***********************************!
 
     character(1), intent(in) :: order ! ordering of processor grid: 'r/R' or other for row-major, 'c/C' for column-major
 
-    integer, intent(in) :: mpi_rank ! rank of local MPI process
-    integer, intent(in) :: mpi_size ! total number of MPI processes for the processor grid
     integer, intent(in) :: nprow ! number of rows in the processor grid
     integer, intent(in) :: bs_def ! default block size
     ! This is a list of exceptions to the default block size for specific matrix dimension sizes. The list has to be formatted as:
@@ -2821,14 +2820,15 @@ contains
 
     !**** INTERNAL ********************************!
 
-    integer :: i
+    integer :: i, mpi_err
 
     !**********************************************!
 
-    ms_mpi_size=mpi_size
-    ms_mpi_rank=mpi_rank
+    ms_mpi_comm=mpi_comm_world
+    call mpi_comm_size(ms_mpi_comm,ms_mpi_size,mpi_err)
+    call mpi_comm_rank(ms_mpi_comm,ms_mpi_rank,mpi_err)
     ms_lap_nprow=nprow
-    ms_lap_npcol=mpi_size/nprow
+    ms_lap_npcol=ms_mpi_size/nprow
     ms_lap_order=order
     ms_lap_bs_def=bs_def
     if (present(bs_list)) then
@@ -2850,7 +2850,7 @@ contains
 
 #ifdef PSP
     ! initialized grid information in pspBLAS
-    call psp_gridinit(mpi_size,nprow,order,bs_def,bs_def,icontxt)
+    call psp_gridinit(ms_mpi_size,nprow,ms_lap_order,ms_lap_bs_def,ms_lap_bs_def,ms_lap_icontxt)
 #endif
 
   end subroutine ms_scalapack_setup
