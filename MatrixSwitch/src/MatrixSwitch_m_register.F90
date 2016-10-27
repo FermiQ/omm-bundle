@@ -135,6 +135,7 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim=shape(A)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
@@ -176,10 +177,12 @@ contains
     !**********************************************!
 
     allocate(m_name%iaux1(9))
+    m_name%iaux1_is_allocated=.true.
     m_name%iaux1=desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim=shape(A)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
@@ -235,6 +238,7 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim=shape(A)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
@@ -285,6 +289,7 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim=shape(A)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
@@ -348,6 +353,7 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
     dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
     m_name%iaux2(1)=dim(1)
@@ -407,6 +413,7 @@ contains
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
     dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
     dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
     m_name%iaux2(1)=dim(1)

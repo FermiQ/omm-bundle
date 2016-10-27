@@ -24,9 +24,11 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
 
@@ -53,6 +55,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           do i=1,m_name%dim1
              do j=1,m_name%dim2
                 if (abs(A%dval(i,j))>abs_threshold) then
@@ -64,6 +67,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           do i=1,m_name%dim1
              do j=1,m_name%dim2
                 if (abs(A%zval(i,j))>abs_threshold) then
@@ -91,14 +95,18 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux1(9))
+       m_name%iaux1_is_allocated=.true.
        allocate(m_name%iaux2(2))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux1=A%iaux1
        m_name%iaux2=A%iaux2
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),m_name%iaux2(2)))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),m_name%iaux2(2)))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
 
@@ -124,11 +132,14 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux1(9))
+       m_name%iaux1_is_allocated=.true.
        allocate(m_name%iaux2(2))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux1=A%iaux1
        m_name%iaux2=A%iaux2
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),m_name%iaux2(2)))
+          m_name%dval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=1,m_name%iaux2(2)
                 if (abs(A%dval(i,j))>abs_threshold) then
@@ -140,6 +151,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%iaux2(1),m_name%iaux2(2)))
+          m_name%zval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=1,m_name%iaux2(2)
                 if (abs(A%zval(i,j))>abs_threshold) then
@@ -167,16 +179,21 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        m_name%iaux3=A%iaux3
        m_name%iaux4=A%iaux4
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
 
@@ -200,22 +217,27 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=m_name%dim1*m_name%dim2
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        if (m_name%is_real) then
-           allocate(m_name%dval(m_name%iaux2(1),1))
-           k=0
-           do i=1,m_name%dim2
-              do j=1,m_name%dim1
-                 k=k+1
-                 m_name%iaux3(k)=j
-                 m_name%iaux4(k)=i
-                 m_name%dval(k,1)=A%dval(j,i)
-              end do
-           end do
+          allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
+          k=0
+          do i=1,m_name%dim2
+             do j=1,m_name%dim1
+                k=k+1
+                m_name%iaux3(k)=j
+                m_name%iaux4(k)=i
+                m_name%dval(k,1)=A%dval(j,i)
+             end do
+          end do
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           k=0
           do i=1,m_name%dim2
              do j=1,m_name%dim1
@@ -249,6 +271,7 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=0
        if (m_name%is_real) then
           do i=1,m_name%dim2
@@ -258,8 +281,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%iaux2(1)))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%iaux2(1)))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%dval(m_name%iaux2(1),1))
+             m_name%dval_is_allocated=.true.
              k=0
              do i=1,m_name%dim2
                 do j=1,m_name%dim1
@@ -280,8 +306,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%iaux2(1)))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%iaux2(1)))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%zval(m_name%iaux2(1),1))
+             m_name%zval_is_allocated=.true.
              k=0
              do i=1,m_name%dim2
                 do j=1,m_name%dim1
@@ -312,16 +341,21 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%dim2+1))
+       m_name%iaux4_is_allocated=.true.
        m_name%iaux3=A%iaux3
        m_name%iaux4=A%iaux4
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
 
@@ -341,16 +375,21 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%dim1+1))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        m_name%iaux3=A%iaux3
        m_name%iaux4=A%iaux4
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
 
@@ -374,11 +413,15 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=m_name%dim1*m_name%dim2
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%dim2+1))
+       m_name%iaux4_is_allocated=.true.
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           k=0
           m_name%iaux4(1)=0
           do i=1,m_name%dim2
@@ -391,6 +434,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           k=0
           m_name%iaux4(1)=0
           do i=1,m_name%dim2
@@ -425,6 +469,7 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=0
        if (m_name%is_real) then
           do i=1,m_name%dim2
@@ -434,8 +479,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%iaux2(1)))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%dim2+1))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%dval(m_name%iaux2(1),1))
+             m_name%dval_is_allocated=.true.
              k=0
              m_name%iaux4(1)=0
              do i=1,m_name%dim2
@@ -457,8 +505,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%iaux2(1)))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%dim2+1))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%zval(m_name%iaux2(1),1))
+             m_name%zval_is_allocated=.true.
              k=0
              m_name%iaux4(1)=0
              do i=1,m_name%dim2
@@ -494,11 +545,15 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=m_name%dim1*m_name%dim2
        allocate(m_name%iaux3(m_name%dim1+1))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           k=0
           m_name%iaux3(1)=0
           do i=1,m_name%dim1
@@ -511,6 +566,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           k=0
           m_name%iaux3(1)=0
           do i=1,m_name%dim1
@@ -545,6 +601,7 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=0
        if (m_name%is_real) then
           do i=1,m_name%dim2
@@ -554,8 +611,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%dim1+1))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%iaux2(1)))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%dval(m_name%iaux2(1),1))
+             m_name%dval_is_allocated=.true.
              k=0
              m_name%iaux3(1)=0
              do i=1,m_name%dim1
@@ -577,8 +637,11 @@ contains
           end do
           if (m_name%iaux2(1)>0) then
              allocate(m_name%iaux3(m_name%dim1+1))
+             m_name%iaux3_is_allocated=.true.
              allocate(m_name%iaux4(m_name%iaux2(1)))
+             m_name%iaux4_is_allocated=.true.
              allocate(m_name%zval(m_name%iaux2(1),1))
+             m_name%zval_is_allocated=.true.
              k=0
              m_name%iaux3(1)=0
              do i=1,m_name%dim1
@@ -615,12 +678,14 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%iaux2(1)
              m_name%dval(A%iaux3(i),A%iaux4(i))=A%dval(i,1)
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%iaux2(1)
              m_name%zval(A%iaux3(i),A%iaux4(i))=A%zval(i,1)
@@ -650,6 +715,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%iaux2(1)
              if (abs(A%dval(i,1))>abs_threshold) then
@@ -660,6 +726,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%iaux2(1)
              if (abs(A%zval(i,1))>abs_threshold) then
@@ -691,6 +758,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%dim2
              do j=1,A%iaux4(i+1)-A%iaux4(i)
@@ -700,6 +768,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%dim2
              do j=1,A%iaux4(i+1)-A%iaux4(i)
@@ -732,6 +801,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%dim2
              do j=1,A%iaux4(i+1)-A%iaux4(i)
@@ -745,6 +815,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%dim2
              do j=1,A%iaux4(i+1)-A%iaux4(i)
@@ -779,6 +850,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%dim1
              do j=1,A%iaux3(i+1)-A%iaux3(i)
@@ -788,6 +860,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%dim1
              do j=1,A%iaux3(i+1)-A%iaux3(i)
@@ -820,6 +893,7 @@ contains
 
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
           do i=1,A%dim1
              do j=1,A%iaux3(i+1)-A%iaux3(i)
@@ -833,6 +907,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
           do i=1,A%dim1
              do j=1,A%iaux3(i+1)-A%iaux3(i)
@@ -866,14 +941,19 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
        do i=1,A%dim2
@@ -904,14 +984,19 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           m_name%dval=A%dval
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           m_name%zval=A%zval
        end if
        do i=1,A%dim1
@@ -943,9 +1028,12 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux3(m_name%iaux2(1)))
+       m_name%iaux3_is_allocated=.true.
        allocate(m_name%iaux4(m_name%dim2+1))
+       m_name%iaux4_is_allocated=.true.
        m_name%iaux4=0
        do i=1,m_name%iaux2(1)
           m_name%iaux4(A%iaux4(i)+1)=m_name%iaux4(A%iaux4(i)+1)+1
@@ -957,6 +1045,7 @@ contains
        allocate(sort_temp(m_name%dim2))
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=m_name%iaux4(A%iaux4(i))+1,m_name%iaux4(A%iaux4(i)+1)
                 if (m_name%iaux3(j)==0) then
@@ -977,6 +1066,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=m_name%iaux4(A%iaux4(i))+1,m_name%iaux4(A%iaux4(i)+1)
                 if (m_name%iaux3(j)==0) then
@@ -1019,9 +1109,12 @@ contains
     !**********************************************!
 
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=A%iaux2(1)
        allocate(m_name%iaux4(m_name%iaux2(1)))
+       m_name%iaux4_is_allocated=.true.
        allocate(m_name%iaux3(m_name%dim1+1))
+       m_name%iaux3_is_allocated=.true.
        m_name%iaux3=0
        do i=1,m_name%iaux2(1)
           m_name%iaux3(A%iaux3(i)+1)=m_name%iaux3(A%iaux3(i)+1)+1
@@ -1033,6 +1126,7 @@ contains
        allocate(sort_temp(m_name%dim1))
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%iaux2(1),1))
+          m_name%dval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=m_name%iaux3(A%iaux3(i))+1,m_name%iaux3(A%iaux3(i)+1)
                 if (m_name%iaux4(j)==0) then
@@ -1053,6 +1147,7 @@ contains
           end do
        else
           allocate(m_name%zval(m_name%iaux2(1),1))
+          m_name%zval_is_allocated=.true.
           do i=1,m_name%iaux2(1)
              do j=m_name%iaux3(A%iaux3(i))+1,m_name%iaux3(A%iaux3(i)+1)
                 if (m_name%iaux4(j)==0) then

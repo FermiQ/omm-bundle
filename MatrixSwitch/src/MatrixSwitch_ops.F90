@@ -42,6 +42,12 @@ module MatrixSwitch_ops
      logical :: is_real ! is the matrix real or complex (both kind dp)?
      logical :: is_square ! is the matrix square?
      logical :: is_sparse ! is the matrix sparse?
+     logical :: iaux1_is_allocated=.false. ! is iaux1 directly allocated?
+     logical :: iaux2_is_allocated=.false. ! is iaux2 directly allocated?
+     logical :: iaux3_is_allocated=.false. ! is iaux3 directly allocated?
+     logical :: iaux4_is_allocated=.false. ! is iaux4 directly allocated?
+     logical :: dval_is_allocated=.false. ! is dval directly allocated?
+     logical :: zval_is_allocated=.false. ! is zval directly allocated?
 
      integer :: dim1 ! (global) row dimension size of the matrix
      integer :: dim2 ! (global) column dimension size of the matrix

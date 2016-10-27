@@ -172,9 +172,11 @@ contains
     case (1)
        if (m_name%is_real) then
           allocate(m_name%dval(m_name%dim1,m_name%dim2))
+          m_name%dval_is_allocated=.true.
           m_name%dval=0.0_dp
        else
           allocate(m_name%zval(m_name%dim1,m_name%dim2))
+          m_name%zval_is_allocated=.true.
           m_name%zval=cmplx_0
        end if
     case (2)
@@ -185,6 +187,7 @@ contains
 #endif
     case (3)
        allocate(m_name%iaux2(1))
+       m_name%iaux2_is_allocated=.true.
        m_name%iaux2(1)=0
     end select
 
@@ -204,12 +207,54 @@ contains
 
     !**********************************************!
 
-    if (associated(m_name%iaux1)) nullify(m_name%iaux1)
-    if (associated(m_name%iaux2)) nullify(m_name%iaux2)
-    if (associated(m_name%iaux3)) nullify(m_name%iaux3)
-    if (associated(m_name%iaux4)) nullify(m_name%iaux4)
-    if (associated(m_name%dval)) nullify(m_name%dval)
-    if (associated(m_name%zval)) nullify(m_name%zval)
+    if (associated(m_name%iaux1)) then
+       if (m_name%iaux1_is_allocated) then
+          deallocate(m_name%iaux1)
+          m_name%iaux1_is_allocated=.false.
+       else
+          nullify(m_name%iaux1)
+       end if
+    end if
+    if (associated(m_name%iaux2)) then
+       if (m_name%iaux2_is_allocated) then
+          deallocate(m_name%iaux2)
+          m_name%iaux2_is_allocated=.false.
+       else
+          nullify(m_name%iaux2)
+       end if
+    end if
+    if (associated(m_name%iaux3)) then
+       if (m_name%iaux3_is_allocated) then
+          deallocate(m_name%iaux3)
+          m_name%iaux3_is_allocated=.false.
+       else
+          nullify(m_name%iaux3)
+       end if
+    end if
+    if (associated(m_name%iaux4)) then
+       if (m_name%iaux4_is_allocated) then
+          deallocate(m_name%iaux4)
+          m_name%iaux4_is_allocated=.false.
+       else
+          nullify(m_name%iaux4)
+       end if
+    end if
+    if (associated(m_name%dval)) then
+       if (m_name%dval_is_allocated) then
+          deallocate(m_name%dval)
+          m_name%dval_is_allocated=.false.
+       else
+          nullify(m_name%dval)
+       end if
+    end if
+    if (associated(m_name%zval)) then
+       if (m_name%zval_is_allocated) then
+          deallocate(m_name%zval)
+          m_name%zval_is_allocated=.false.
+       else
+          nullify(m_name%zval)
+       end if
+    end if
 
 #ifdef PSP
     if (((m_name%str_type .eq. 'coo') .or. &
@@ -2362,8 +2407,11 @@ contains
           C%iaux2(1)=1
           buffer=min(C%dim1,C%dim2)
           allocate(C%iaux3(buffer))
+          C%iaux3_is_allocated=.true.
           allocate(C%iaux4(buffer))
+          C%iaux4_is_allocated=.true.
           allocate(C%dval(buffer,1))
+          C%dval_is_allocated=.true.
           C%iaux3(1)=i
           C%iaux4(1)=j
           C%dval(1,1)=alpha
@@ -2386,12 +2434,18 @@ contains
                 iaux4_temp=C%iaux4
                 dval_temp=C%dval
                 deallocate(C%dval)
+                C%dval_is_allocated=.false.
                 deallocate(C%iaux4)
+                C%iaux4_is_allocated=.false.
                 deallocate(C%iaux3)
+                C%iaux3_is_allocated=.false.
                 buffer=C%iaux2(1)+min(C%dim1,C%dim2)
                 allocate(C%iaux3(buffer))
+                C%iaux3_is_allocated=.true.
                 allocate(C%iaux4(buffer))
+                C%iaux4_is_allocated=.true.
                 allocate(C%dval(buffer,1))
+                C%dval_is_allocated=.true.
                 C%iaux3(1:C%iaux2(1))=iaux3_temp(1:C%iaux2(1))
                 C%iaux4(1:C%iaux2(1))=iaux4_temp(1:C%iaux2(1))
                 C%dval(1:C%iaux2(1),1)=dval_temp(1:C%iaux2(1),1)
@@ -2524,8 +2578,11 @@ contains
           C%iaux2(1)=1
           buffer=min(C%dim1,C%dim2)
           allocate(C%iaux3(buffer))
+          C%iaux3_is_allocated=.true.
           allocate(C%iaux4(buffer))
+          C%iaux4_is_allocated=.true.
           allocate(C%zval(buffer,1))
+          C%zval_is_allocated=.true.
           C%iaux3(1)=i
           C%iaux4(1)=j
           C%zval(1,1)=alpha
@@ -2548,12 +2605,18 @@ contains
                 iaux4_temp=C%iaux4
                 zval_temp=C%zval
                 deallocate(C%zval)
+                C%zval_is_allocated=.false.
                 deallocate(C%iaux4)
+                C%iaux4_is_allocated=.false.
                 deallocate(C%iaux3)
+                C%iaux3_is_allocated=.false.
                 buffer=C%iaux2(1)+min(C%dim1,C%dim2)
                 allocate(C%iaux3(buffer))
+                C%iaux3_is_allocated=.true.
                 allocate(C%iaux4(buffer))
+                C%iaux4_is_allocated=.true.
                 allocate(C%zval(buffer,1))
+                C%zval_is_allocated=.true.
                 C%iaux3(1:C%iaux2(1))=iaux3_temp(1:C%iaux2(1))
                 C%iaux4(1:C%iaux2(1))=iaux4_temp(1:C%iaux2(1))
                 C%zval(1:C%iaux2(1),1)=zval_temp(1:C%iaux2(1),1)
@@ -2875,7 +2938,9 @@ contains
     !**********************************************!
 
     allocate(A%iaux1(9))
+    A%iaux1_is_allocated=.true.
     allocate(A%iaux2(2))
+    A%iaux2_is_allocated=.true.
     call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
     bs1=ms_lap_bs_def
     bs2=ms_lap_bs_def
@@ -2897,9 +2962,11 @@ contains
     if (info/=0) call die('ms_scalapack_allocate: error in descinit')
     if (A%is_real) then
        allocate(A%dval(A%iaux2(1),A%iaux2(2)))
+       A%dval_is_allocated=.true.
        A%dval=0.0_dp
     else
        allocate(A%zval(A%iaux2(1),A%iaux2(2)))
+       A%zval_is_allocated=.true.
        A%zval=cmplx_0
     end if
 
