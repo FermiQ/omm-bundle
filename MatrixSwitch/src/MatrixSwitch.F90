@@ -370,6 +370,15 @@ contains
        else
           call die('m_copy: invalid label')
        end if
+    else if ((m_name%str_type .eq. 'coo') .and. &
+             (.not. m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'dbc') .and. &
+           (.not. A%is_serial)) then
+          st=16
+       else
+          call die('m_copy: invalid label')
+       end if
     else if ((m_name%str_type .eq. 'csc') .and. &
              (m_name%is_serial)) then
        m_name%is_sparse=.true.
@@ -382,6 +391,15 @@ contains
        else if ((A%str_type .eq. 'den') .and. &
                 (A%is_serial)) then
           st=6
+       else
+          call die('m_copy: invalid label')
+       end if
+    else if ((m_name%str_type .eq. 'csc') .and. &
+             (.not. m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'dbc') .and. &
+           (.not. A%is_serial)) then
+          st=17
        else
           call die('m_copy: invalid label')
        end if
@@ -510,6 +528,34 @@ contains
           call die('m_copy: thresholding not yet implemented')
        else
           call m_copy_scooscsrref(m_name,A)
+       end if
+    case (16)
+       if (.not. present(threshold)) then
+          call die('m_copy: threshold must be specified')
+       else
+          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+             call die('m_copy: soft thresholding not yet implemented')
+          else
+             if (A%is_real) then
+                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'coo',threshold)
+             else
+                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'coo',threshold)
+             end if
+          end if
+       end if
+    case (17)
+       if (.not. present(threshold)) then
+          call die('m_copy: threshold must be specified')
+       else
+          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+             call die('m_copy: soft thresholding not yet implemented')
+          else
+             if (A%is_real) then
+                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'csc',threshold)
+             else
+                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'csc',threshold)
+             end if
+          end if
        end if
     end select
 
@@ -858,13 +904,21 @@ contains
 #endif
     case (6)
 #ifdef PSP
-       call mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+       if (trB) then
+          call die('mm_dmultiply: not implemented for transposed B')
+       else
+          call mm_multiply_pdcscpddbcpddbcref(A,trA,B,C,alpha,beta)
+       end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
     case (7)
 #ifdef PSP
-       call mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+       if (trA) then
+          call die('mm_dmultiply: not implemented for transposed A')
+       else
+          call mm_multiply_pddbcpdcscpddbcref(A,B,trB,C,alpha,beta)
+       end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
@@ -1158,13 +1212,21 @@ contains
 #endif
     case (6)
 #ifdef PSP
-       call mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+       if (tcB>0) then
+          call die('mm_zmultiply: not implemented for transposed B')
+       else
+          call mm_multiply_pzcscpzdbcpzdbcref(A,tcA,B,C,alpha,beta)
+       end if
 #else
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
     case (7)
 #ifdef PSP
-       call mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+       if (tcA>0) then
+          call die('mm_zmultiply: not implemented for transposed A')
+       else
+          call mm_multiply_pzdbcpzcscpzdbcref(A,B,tcB,C,alpha,beta)
+       end if
 #else
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
@@ -2913,7 +2975,7 @@ contains
 
 #ifdef PSP
     ! initialized grid information in pspBLAS
-    call psp_gridinit(ms_mpi_size,nprow,ms_lap_order,ms_lap_bs_def,ms_lap_bs_def,ms_lap_icontxt)
+    call psp_gridinit(ms_mpi_size,ms_lap_nprow,ms_lap_order,ms_lap_bs_def,ms_lap_bs_def,ms_lap_icontxt)
 #endif
 
   end subroutine ms_scalapack_setup

@@ -174,13 +174,12 @@ contains
   end subroutine mm_multiply_szdenref
 
 #ifdef PSP
-  subroutine mm_multiply_pddbcpdcscref(A,trA,B,trB,C,alpha,beta)
+  subroutine mm_multiply_pddbcpdcscpddbcref(A,B,trB,C,alpha,beta)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
-    logical, intent(in) :: trA
     logical, intent(in) :: trB
 
     real(dp), intent(in) :: alpha
@@ -227,28 +226,35 @@ contains
        call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
        call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
        call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
-       do i=1,loc_dim_recv
-          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
-             l=col_ptr_recv(i)+j
-             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-             C%dval(:,m)=C%dval(:,m)+alpha*A%dval(:,i)*dval_recv(l)
+       if (.not. trB) then
+          do j=1,loc_dim_recv
+             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
+                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
+             end do
           end do
-       end do
+       else
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
+             end do
+          end do
+       end if
        deallocate(dval_recv)
        deallocate(row_ind_recv)
        deallocate(col_ptr_recv)
     end do
 
-  end subroutine mm_multiply_pddbcpdcscref
+  end subroutine mm_multiply_pddbcpdcscpddbcref
 
-  subroutine mm_multiply_pdcscpddbcref(A,trA,B,trB,C,alpha,beta)
+  subroutine mm_multiply_pdcscpddbcpddbcref(A,trA,B,C,alpha,beta)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
     logical, intent(in) :: trA
-    logical, intent(in) :: trB
 
     real(dp), intent(in) :: alpha
     real(dp), intent(in) :: beta
@@ -294,27 +300,36 @@ contains
        call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
        call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
        call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
-       do i=1,loc_dim_recv
-          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
-             l=col_ptr_recv(i)+j
-             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
-             C%dval(m,:)=C%dval(m,:)+alpha*dval_recv(l)*B%dval(row_ind_recv(l),:)
+       if (.not. trA) then
+          do l=1,loc_dim_recv
+             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                i=row_ind_recv(m)
+                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
+             end do
           end do
-       end do
+       else
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
+             end do
+          end do
+       end if
        deallocate(dval_recv)
        deallocate(row_ind_recv)
        deallocate(col_ptr_recv)
     end do
 
-  end subroutine mm_multiply_pdcscpddbcref
+  end subroutine mm_multiply_pdcscpddbcpddbcref
 
-  subroutine mm_multiply_pzdbcpzcscref(A,tcA,B,tcB,C,alpha,beta)
+  subroutine mm_multiply_pzdbcpzcscpzdbcref(A,B,tcB,C,alpha,beta)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: tcA
     integer, intent(in) :: tcB
 
     complex(dp), intent(in) :: alpha
@@ -361,28 +376,42 @@ contains
        call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
        call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
        call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
-       do i=1,loc_dim_recv
-          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
-             l=col_ptr_recv(i)+j
-             m=indxl2g(row_ind_recv(l),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-             C%zval(:,m)=C%zval(:,m)+alpha*A%zval(:,i)*conjg(zval_recv(l))
+       if (tcB==0) then
+          do j=1,loc_dim_recv
+             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
+                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
+             end do
           end do
-       end do
+       else if (tcB==1) then
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*conjg(zval_recv(m))
+             end do
+          end do
+       else if (tcB==2) then
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
+             end do
+          end do
+       end if
        deallocate(zval_recv)
        deallocate(row_ind_recv)
        deallocate(col_ptr_recv)
     end do
 
-  end subroutine mm_multiply_pzdbcpzcscref
+  end subroutine mm_multiply_pzdbcpzcscpzdbcref
 
-  subroutine mm_multiply_pzcscpzdbcref(A,tcA,B,tcB,C,alpha,beta)
+  subroutine mm_multiply_pzcscpzdbcpzdbcref(A,tcA,B,C,alpha,beta)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
     integer, intent(in) :: tcA
-    integer, intent(in) :: tcB
 
     complex(dp), intent(in) :: alpha
     complex(dp), intent(in) :: beta
@@ -428,19 +457,37 @@ contains
        call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
        call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
        call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
-       do i=1,loc_dim_recv
-          do j=0,col_ptr_recv(i+1)-col_ptr_recv(i)-1
-             l=col_ptr_recv(i)+j
-             m=indxl2g(i,A%spm%desc(6),n_comm,A%spm%desc(8),ms_mpi_size)
-             C%zval(m,:)=C%zval(m,:)+alpha*conjg(zval_recv(l))*B%zval(row_ind_recv(l),:)
+       if (tcA==0) then
+          do l=1,loc_dim_recv
+             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                i=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
+             end do
           end do
-       end do
+       else if (tcA==1) then
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*conjg(zval_recv(m))*B%zval(k,:)
+             end do
+          end do
+       else if (tcA==2) then
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
+             end do
+          end do
+       end if
        deallocate(zval_recv)
        deallocate(row_ind_recv)
        deallocate(col_ptr_recv)
     end do
 
-  end subroutine mm_multiply_pzcscpzdbcref
+  end subroutine mm_multiply_pzcscpzdbcpzdbcref
 #endif
 
   subroutine mm_multiply_sdcscsddensddenref(A,trA,B,trB,C,alpha,beta)
@@ -549,7 +596,7 @@ contains
           do l=B%iaux4(j)+1,B%iaux4(j+1)
              k=B%iaux3(l)
              do i=1,C%dim1
-               C%dval(i,j)=C%dval(i,j)+alpha*A%dval(k,i)*B%dval(l,1)
+                C%dval(i,j)=C%dval(i,j)+alpha*A%dval(k,i)*B%dval(l,1)
              end do
           end do
        end do
