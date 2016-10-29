@@ -173,323 +173,6 @@ contains
 
   end subroutine mm_multiply_szdenref
 
-#ifdef PSP
-  subroutine mm_multiply_pddbcpdcscpddbcref(A,B,trB,C,alpha,beta)
-    implicit none
-    include 'mpif.h'
-
-    !**** INPUT ***********************************!
-
-    logical, intent(in) :: trB
-
-    real(dp), intent(in) :: alpha
-    real(dp), intent(in) :: beta
-
-    type(matrix), intent(in) :: A
-    type(matrix), intent(in) :: B
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: C
-
-    !**** INTERNAL ********************************!
-
-    integer :: i, j, k, l, m
-    integer :: n_comm, nnz_recv, loc_dim_recv, info
-    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
-
-    real(dp), allocatable :: dval_recv(:)
-
-    !**** EXTERNAL ********************************!
-
-    integer, external :: indxl2g
-
-    !**********************************************!
-
-    C%dval=beta*C%dval
-
-    do n_comm=0,ms_mpi_size-1
-       if (n_comm==ms_mpi_rank) then
-          loc_dim_recv=B%spm%loc_dim2
-          nnz_recv=B%spm%nnz
-       end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
-       allocate(col_ptr_recv(loc_dim_recv+1))
-       allocate(row_ind_recv(nnz_recv))
-       allocate(dval_recv(nnz_recv))
-       if (n_comm==ms_mpi_rank) then
-          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
-          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
-          dval_recv(1:nnz_recv)=B%spm%dval(1:nnz_recv)
-       end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
-       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
-       if (.not. trB) then
-          do j=1,loc_dim_recv
-             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
-                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
-             end do
-          end do
-       else
-          do k=1,loc_dim_recv
-             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
-                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
-             end do
-          end do
-       end if
-       deallocate(dval_recv)
-       deallocate(row_ind_recv)
-       deallocate(col_ptr_recv)
-    end do
-
-  end subroutine mm_multiply_pddbcpdcscpddbcref
-
-  subroutine mm_multiply_pdcscpddbcpddbcref(A,trA,B,C,alpha,beta)
-    implicit none
-    include 'mpif.h'
-
-    !**** INPUT ***********************************!
-
-    logical, intent(in) :: trA
-
-    real(dp), intent(in) :: alpha
-    real(dp), intent(in) :: beta
-
-    type(matrix), intent(in) :: A
-    type(matrix), intent(in) :: B
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: C
-
-    !**** INTERNAL ********************************!
-
-    integer :: i, j, k, l, m
-    integer :: n_comm, nnz_recv, loc_dim_recv, info
-    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
-
-    real(dp), allocatable :: dval_recv(:)
-
-    !**** EXTERNAL ********************************!
-
-    integer, external :: indxl2g
-
-    !**********************************************!
-
-    C%dval=beta*C%dval
-
-    do n_comm=0,ms_mpi_size-1
-       if (n_comm==ms_mpi_rank) then
-          loc_dim_recv=A%spm%loc_dim2
-          nnz_recv=A%spm%nnz
-       end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
-       allocate(col_ptr_recv(loc_dim_recv+1))
-       allocate(row_ind_recv(nnz_recv))
-       allocate(dval_recv(nnz_recv))
-       if (n_comm==ms_mpi_rank) then
-          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
-          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
-          dval_recv(1:nnz_recv)=A%spm%dval(1:nnz_recv)
-       end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
-       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
-       if (.not. trA) then
-          do l=1,loc_dim_recv
-             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
-             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
-                i=row_ind_recv(m)
-                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
-             end do
-          end do
-       else
-          do l=1,loc_dim_recv
-             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
-             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
-                k=row_ind_recv(m)
-                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
-             end do
-          end do
-       end if
-       deallocate(dval_recv)
-       deallocate(row_ind_recv)
-       deallocate(col_ptr_recv)
-    end do
-
-  end subroutine mm_multiply_pdcscpddbcpddbcref
-
-  subroutine mm_multiply_pzdbcpzcscpzdbcref(A,B,tcB,C,alpha,beta)
-    implicit none
-    include 'mpif.h'
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: tcB
-
-    complex(dp), intent(in) :: alpha
-    complex(dp), intent(in) :: beta
-
-    type(matrix), intent(in) :: A
-    type(matrix), intent(in) :: B
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: C
-
-    !**** INTERNAL ********************************!
-
-    integer :: i, j, k, l, m
-    integer :: n_comm, nnz_recv, loc_dim_recv, info
-    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
-
-    complex(dp), allocatable :: zval_recv(:)
-
-    !**** EXTERNAL ********************************!
-
-    integer, external :: indxl2g
-
-    !**********************************************!
-
-    C%zval=beta*C%zval
-
-    do n_comm=0,ms_mpi_size-1
-       if (n_comm==ms_mpi_rank) then
-          loc_dim_recv=B%spm%loc_dim2
-          nnz_recv=B%spm%nnz
-       end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
-       allocate(col_ptr_recv(loc_dim_recv+1))
-       allocate(row_ind_recv(nnz_recv))
-       allocate(zval_recv(nnz_recv))
-       if (n_comm==ms_mpi_rank) then
-          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
-          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
-          zval_recv(1:nnz_recv)=B%spm%zval(1:nnz_recv)
-       end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
-       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
-       if (tcB==0) then
-          do j=1,loc_dim_recv
-             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
-                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
-             end do
-          end do
-       else if (tcB==1) then
-          do k=1,loc_dim_recv
-             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
-                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*conjg(zval_recv(m))
-             end do
-          end do
-       else if (tcB==2) then
-          do k=1,loc_dim_recv
-             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
-                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
-                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
-             end do
-          end do
-       end if
-       deallocate(zval_recv)
-       deallocate(row_ind_recv)
-       deallocate(col_ptr_recv)
-    end do
-
-  end subroutine mm_multiply_pzdbcpzcscpzdbcref
-
-  subroutine mm_multiply_pzcscpzdbcpzdbcref(A,tcA,B,C,alpha,beta)
-    implicit none
-    include 'mpif.h'
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: tcA
-
-    complex(dp), intent(in) :: alpha
-    complex(dp), intent(in) :: beta
-
-    type(matrix), intent(in) :: A
-    type(matrix), intent(in) :: B
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: C
-
-    !**** INTERNAL ********************************!
-
-    integer :: i, j, k, l, m
-    integer :: n_comm, nnz_recv, loc_dim_recv, info
-    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
-
-    complex(dp), allocatable :: zval_recv(:)
-
-    !**** EXTERNAL ********************************!
-
-    integer, external :: indxl2g
-
-    !**********************************************!
-
-    C%zval=beta*C%zval
-
-    do n_comm=0,ms_mpi_size-1
-       if (n_comm==ms_mpi_rank) then
-          loc_dim_recv=A%spm%loc_dim2
-          nnz_recv=A%spm%nnz
-       end if
-       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
-       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
-       allocate(col_ptr_recv(loc_dim_recv+1))
-       allocate(row_ind_recv(nnz_recv))
-       allocate(zval_recv(nnz_recv))
-       if (n_comm==ms_mpi_rank) then
-          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
-          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
-          zval_recv(1:nnz_recv)=A%spm%zval(1:nnz_recv)
-       end if
-       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
-       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
-       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
-       if (tcA==0) then
-          do l=1,loc_dim_recv
-             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
-             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
-                i=row_ind_recv(m)
-                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
-             end do
-          end do
-       else if (tcA==1) then
-          do l=1,loc_dim_recv
-             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
-             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
-                k=row_ind_recv(m)
-                C%zval(i,:)=C%zval(i,:)+alpha*conjg(zval_recv(m))*B%zval(k,:)
-             end do
-          end do
-       else if (tcA==2) then
-          do l=1,loc_dim_recv
-             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
-             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
-                k=row_ind_recv(m)
-                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
-             end do
-          end do
-       end if
-       deallocate(zval_recv)
-       deallocate(row_ind_recv)
-       deallocate(col_ptr_recv)
-    end do
-
-  end subroutine mm_multiply_pzcscpzdbcpzdbcref
-#endif
-
   subroutine mm_multiply_sdcscsddensddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -1551,5 +1234,326 @@ contains
     end if
 
   end subroutine mm_multiply_szdenszdenszcsrref
+
+  !================================================!
+  ! implementation: sparse-dense 1D distributed    !
+  !================================================!
+
+#ifdef PSP
+  subroutine mm_multiply_pddbcpdcscpddbct1D(A,B,trB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trB
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=B%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
+       if (.not. trB) then
+          do j=1,loc_dim_recv
+             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
+                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
+             end do
+          end do
+       else
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%dval(:,j)=C%dval(:,j)+alpha*A%dval(:,k)*dval_recv(m)
+             end do
+          end do
+       end if
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pddbcpdcscpddbct1D
+
+  subroutine mm_multiply_pdcscpddbcpddbct1D(A,trA,B,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    logical, intent(in) :: trA
+
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    real(dp), allocatable :: dval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%dval=beta*C%dval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(dval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          dval_recv(1:nnz_recv)=A%spm%dval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,         n_comm,ms_mpi_comm,info)
+       call mpi_bcast(dval_recv(1),   nnz_recv,      mpi_double_precision,n_comm,ms_mpi_comm,info)
+       if (.not. trA) then
+          do l=1,loc_dim_recv
+             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                i=row_ind_recv(m)
+                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
+             end do
+          end do
+       else
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%dval(i,:)=C%dval(i,:)+alpha*dval_recv(m)*B%dval(k,:)
+             end do
+          end do
+       end if
+       deallocate(dval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pdcscpddbcpddbct1D
+
+  subroutine mm_multiply_pzdbcpzcscpzdbct1D(A,B,tcB,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcB
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=B%spm%loc_dim2
+          nnz_recv=B%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=B%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=B%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=B%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
+       if (tcB==0) then
+          do j=1,loc_dim_recv
+             do m=col_ptr_recv(j),col_ptr_recv(j+1)-1
+                k=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
+             end do
+          end do
+       else if (tcB==1) then
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*conjg(zval_recv(m))
+             end do
+          end do
+       else if (tcB==2) then
+          do k=1,loc_dim_recv
+             do m=col_ptr_recv(k),col_ptr_recv(k+1)-1
+                j=indxl2g(row_ind_recv(m),B%spm%desc(6),n_comm,B%spm%desc(8),ms_mpi_size)
+                C%zval(:,j)=C%zval(:,j)+alpha*A%zval(:,k)*zval_recv(m)
+             end do
+          end do
+       end if
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzdbcpzcscpzdbct1D
+
+  subroutine mm_multiply_pzcscpzdbcpzdbct1D(A,tcA,B,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: tcA
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, k, l, m
+    integer :: n_comm, nnz_recv, loc_dim_recv, info
+    integer, allocatable :: col_ptr_recv(:), row_ind_recv(:)
+
+    complex(dp), allocatable :: zval_recv(:)
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: indxl2g
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do n_comm=0,ms_mpi_size-1
+       if (n_comm==ms_mpi_rank) then
+          loc_dim_recv=A%spm%loc_dim2
+          nnz_recv=A%spm%nnz
+       end if
+       call mpi_bcast(loc_dim_recv,1,mpi_integer,n_comm,ms_mpi_comm,info)
+       call mpi_bcast(nnz_recv,    1,mpi_integer,n_comm,ms_mpi_comm,info)
+       allocate(col_ptr_recv(loc_dim_recv+1))
+       allocate(row_ind_recv(nnz_recv))
+       allocate(zval_recv(nnz_recv))
+       if (n_comm==ms_mpi_rank) then
+          col_ptr_recv(1:loc_dim_recv+1)=A%spm%col_ptr(1:loc_dim_recv+1)
+          row_ind_recv(1:nnz_recv)=A%spm%row_ind(1:nnz_recv)
+          zval_recv(1:nnz_recv)=A%spm%zval(1:nnz_recv)
+       end if
+       call mpi_bcast(col_ptr_recv(1),loc_dim_recv+1,mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(row_ind_recv(1),nnz_recv,      mpi_integer,       n_comm,ms_mpi_comm,info)
+       call mpi_bcast(zval_recv(1),   nnz_recv,      mpi_double_complex,n_comm,ms_mpi_comm,info)
+       if (tcA==0) then
+          do l=1,loc_dim_recv
+             k=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                i=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
+             end do
+          end do
+       else if (tcA==1) then
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*conjg(zval_recv(m))*B%zval(k,:)
+             end do
+          end do
+       else if (tcA==2) then
+          do l=1,loc_dim_recv
+             i=indxl2g(l,A%spm%desc(5),n_comm,A%spm%desc(7),ms_mpi_size)
+             do m=col_ptr_recv(l),col_ptr_recv(l+1)-1
+                k=row_ind_recv(m)
+                C%zval(i,:)=C%zval(i,:)+alpha*zval_recv(m)*B%zval(k,:)
+             end do
+          end do
+       end if
+       deallocate(zval_recv)
+       deallocate(row_ind_recv)
+       deallocate(col_ptr_recv)
+    end do
+
+  end subroutine mm_multiply_pzcscpzdbcpzdbct1D
+#endif
 
 end module MatrixSwitch_mm_multiply

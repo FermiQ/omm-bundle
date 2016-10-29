@@ -907,7 +907,7 @@ contains
        if (trB) then
           call die('mm_dmultiply: not implemented for transposed B')
        else
-          call mm_multiply_pdcscpddbcpddbcref(A,trA,B,C,alpha,beta)
+          call mm_multiply_pdcscpddbcpddbct1D(A,trA,B,C,alpha,beta)
        end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
@@ -917,7 +917,7 @@ contains
        if (trA) then
           call die('mm_dmultiply: not implemented for transposed A')
        else
-          call mm_multiply_pddbcpdcscpddbcref(A,B,trB,C,alpha,beta)
+          call mm_multiply_pddbcpdcscpddbct1D(A,B,trB,C,alpha,beta)
        end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
@@ -1215,7 +1215,7 @@ contains
        if (tcB>0) then
           call die('mm_zmultiply: not implemented for transposed B')
        else
-          call mm_multiply_pzcscpzdbcpzdbcref(A,tcA,B,C,alpha,beta)
+          call mm_multiply_pzcscpzdbcpzdbct1D(A,tcA,B,C,alpha,beta)
        end if
 #else
        call die('mm_zmultiply: compile with pspBLAS')
@@ -1225,7 +1225,7 @@ contains
        if (tcA>0) then
           call die('mm_zmultiply: not implemented for transposed A')
        else
-          call mm_multiply_pzdbcpzcscpzdbcref(A,B,tcB,C,alpha,beta)
+          call mm_multiply_pzdbcpzcscpzdbct1D(A,B,tcB,C,alpha,beta)
        end if
 #else
        call die('mm_zmultiply: compile with pspBLAS')
