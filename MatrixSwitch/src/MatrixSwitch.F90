@@ -761,6 +761,21 @@ contains
              call die('mm_dmultiply: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'csc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=14
+       else
+          if (label .eq. 't1D') then
+             ot=14
+          else
+             call die('mm_dmultiply: invalid implementation')
+          end if
+       end if
     else if ((A%str_type .eq. 'csc') .and. &
          (A%is_serial) .and. &
          (B%str_type .eq. 'den') .and. &
@@ -934,6 +949,16 @@ contains
        call mm_multiply_sddensdcsrsddenref(A,trA,B,trB,C,alpha,beta)
     case (13)
        call mm_multiply_sddensddensdcsrref(A,trA,B,trB,C,alpha,beta)
+    case (14)
+#ifdef PSP
+       if (trA .eq. trB) then
+          call die('mm_dmultiply: not implemented for combination of op(A) and op(B)')
+       else
+          call mm_multiply_pddbcpddbcpdcsct1D(A,trA,B,trB,C,alpha,beta)
+       end if
+#else
+       call die('mm_dmultiply: compile with pspBLAS')
+#endif
     end select
 
   end subroutine mm_dmultiply
@@ -1065,6 +1090,21 @@ contains
              ot=5
           else if (label .eq. 't1D') then
              ot=7
+          else
+             call die('mm_zmultiply: invalid implementation')
+          end if
+       end if
+    else if ((A%str_type .eq. 'dbc') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'dbc') .and. &
+         (.not. B%is_serial) .and. &
+         (C%str_type .eq. 'csc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=14
+       else
+          if (label .eq. 't1D') then
+             ot=14
           else
              call die('mm_zmultiply: invalid implementation')
           end if
@@ -1242,6 +1282,16 @@ contains
        call mm_multiply_szdenszcsrszdenref(A,tcA,B,tcB,C,alpha,beta)
     case (13)
        call mm_multiply_szdenszdenszcsrref(A,tcA,B,tcB,C,alpha,beta)
+    case (14)
+#ifdef PSP
+       if ((tcA==tcB) .or. (tcA+tcB>2)) then
+          call die('mm_zmultiply: not implemented for combination of op(A) and op(B)')
+       else
+          call mm_multiply_pzdbcpzdbcpzcsct1D(A,tcA,B,tcB,C,alpha,beta)
+       end if
+#else
+       call die('mm_zmultiply: compile with pspBLAS')
+#endif
     end select
 
   end subroutine mm_zmultiply
