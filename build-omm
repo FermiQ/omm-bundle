@@ -54,9 +54,9 @@ Commands can be:
    * all      : build all libraries
    * <lib>    : build library <lib> (psp, matrixswitch, and/or libomm)
    * check    : run test suites before installing libraries
-   * clean    : remove temporary build directories
-   * examples : build examples
-   * wipe     : remove both build and install directories
+   * clean    : remove temporary build directories (other commands are ignored)
+   * examples : build examples along with the libraries
+   * wipe     : remove both build and install directories (other commands are ignored)
 
 EOF
 exit 0
@@ -94,8 +94,8 @@ while test "${#}" -gt 0; do
       cln_bld="yes"
       ;;
     examples)
-      cfg_msw="--enable-examples"
-      cfg_omm="--enable-examples"
+      cfg_msw="${cfg_msw} --enable-examples"
+      cfg_omm="${cfg_omm} --enable-examples"
       ;;
     [Ll]ib[Oo][Mm][Mm])
       bld_omm="yes"
@@ -136,6 +136,10 @@ if test "${cln_bld}" = "yes"; then
           chmod -R u+w "${tmpdir}"
           rm -r "${tmpdir}"
           cln_ret="${?}"
+          if test "${cln_ret}" != "0"; then
+            echo "${script_name}: Error: could not remove directory:" >&2
+            echo "    ${tmpdir}" >&2
+          fi
         fi
       fi
       test "${cln_ret}" = "0" || break
