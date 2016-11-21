@@ -951,7 +951,7 @@ contains
        call mm_multiply_sddensddensdcsrref(A,trA,B,trB,C,alpha,beta)
     case (14)
 #ifdef PSP
-       if (trA .eq. trB) then
+       if (trA .eqv. trB) then
           call die('mm_dmultiply: not implemented for combination of op(A) and op(B)')
        else
           call mm_multiply_pddbcpddbcpdcsct1D(A,trA,B,trB,C,alpha,beta)
