@@ -347,7 +347,7 @@ subroutine tomato_TB(template_basedir,system_label,&
 #ifdef MPI
       call mpi_bcast(line,200,mpi_char,0,mpi_comm,mpi_err)
 #endif
-      backspace(10)
+      if (mpi_rank==0) backspace(10)
       read(line,*,iostat=j) template_i(1:5,1), el1, el2
       if (j==0) then
         overlap_present=.true.
