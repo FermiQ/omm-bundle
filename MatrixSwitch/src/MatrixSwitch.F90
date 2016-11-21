@@ -1533,6 +1533,21 @@ contains
           end if
        end if
     else if ((A%str_type .eq. 'csc') .and. &
+         (.not. A%is_serial) .and. &
+         (C%str_type .eq. 'dbc') .and. &
+         (.not. C%is_serial)) then
+       if (.not. present(label)) then
+          ot=3
+       else
+          if (label .eq. 'psp') then
+             ot=3
+          else if (label .eq. 't1D') then
+             ot=3
+          else
+             call die('m_dadd: invalid implementation')
+          end if
+       end if
+    else if ((A%str_type .eq. 'csc') .and. &
          (A%is_serial) .and. &
          (C%str_type .eq. 'den') .and. &
          (C%is_serial)) then
@@ -1570,6 +1585,15 @@ contains
        call pzgeadd(opA,C%dim1,C%dim2,alpha,A%zval,1,1,A%iaux1,beta,C%zval,1,1,C%iaux1)
 #else
        call die('m_zadd: compile with ScaLAPACK')
+#endif
+    case (3)
+#ifdef PSP
+       if (tcA>0) call die('m_zadd: implementation only valid for opA=''n''')
+       if ((A%spm%loc_dim1/=C%iaux2(1)) .or. &
+           (A%spm%loc_dim2/=C%iaux2(2))) call die('m_zadd: matrices A and C must have identical parallel distributions')
+       call m_add_pzcscpzdbcref(A,C,alpha,beta)
+#else
+       call die('m_dadd: compile with pspBLAS')
 #endif
     case (4)
        call m_add_szcscszdenref(A,tcA,C,alpha,beta)

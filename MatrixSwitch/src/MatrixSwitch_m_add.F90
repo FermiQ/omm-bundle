@@ -41,6 +41,38 @@ contains
     end do
 
   end subroutine m_add_pdcscpddbcref
+
+  subroutine m_add_pzcscpzdbcref(A,C,alpha,beta)
+    implicit none
+    include 'mpif.h'
+
+    !**** INPUT ***********************************!
+
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
+
+    type(matrix), intent(in) :: A
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: C
+
+    !**** INTERNAL ********************************!
+
+    integer :: i, j, l
+
+    !**********************************************!
+
+    C%zval=beta*C%zval
+
+    do i=1,A%spm%loc_dim2
+       do j=0,A%spm%col_ptr(i+1)-A%spm%col_ptr(i)-1
+          l=A%spm%col_ptr(i)+j
+          C%zval(A%spm%row_ind(l),i)=C%zval(A%spm%row_ind(l),i)+alpha*A%spm%zval(l)
+       end do
+    end do
+
+  end subroutine m_add_pzcscpzdbcref
 #endif
 
   subroutine m_add_sddenref(A,trA,C,alpha,beta)
