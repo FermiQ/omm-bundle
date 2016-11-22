@@ -4,7 +4,7 @@ include $(PSPDIR)/make.inc
 .SUFFIXES:
 .SUFFIXES: .o .a .f90 .F90
 
-all : pspVariable.o 
+all : pspNode.o psp_dList.o psp_zList.o pspListType.o pspMat.o pspVariable.o 
 
 clean :
 	rm -f *.a

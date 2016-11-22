@@ -5,11 +5,25 @@ include make.inc
 .SUFFIXES:
 .SUFFIXES: .x .f90 .F90
 
-all : pdgemmScaling.x pzgemmScaling.x
+all : pdgemmScaling.x pzgemmScaling.x testList.x matSum.x testMPI.x testMPI2.x testMPI3.x pdgemm.x spBLAS.x 
 
 pdgemmScaling.x : pdgemmScaling.F90
 
 pzgemmScaling.x : pzgemmScaling.F90
+
+testList.x : testList.F90
+
+testMPI.x : testMPI.F90
+
+testMPI2.x : testMPI2.F90
+
+testMPI3.x : testMPI3.F90
+
+matSum.x : matSum.F90
+
+pdgemm.x : pdgemm.F90
+
+spBLAS.x : spBLAS.F90
 
 clean :
 	rm -f *.x

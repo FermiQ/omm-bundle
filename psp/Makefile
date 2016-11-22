@@ -13,9 +13,9 @@ $(LIBNAME) : pspBLAS.o
 	$(RANLIB) $@
 
 update :
-	cd pspMPI; make; mv *.o ../; mv *.mod ../; cd ..;\
 	cd pspVariable; make; mv *.o ../; mv *.mod ../; cd ..;\
 	cd pspUtility; make; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspMPI; make; mv *.o ../; mv *.mod ../; cd ..;\
 	cd pspLevel1; make; mv *.o ../; mv *.mod ../; cd ..;\
 	cd pspLevel2; make; mv *.o ../; mv *.mod ../; cd ..;\
 	cd pspLevel3; make; mv *.o ../; mv *.mod ../; cd ..;

@@ -4,7 +4,7 @@ include $(PSPDIR)/make.inc
 .SUFFIXES:
 .SUFFIXES: .o .a .f90 .F90
 
-all : pspUtility.o
+all : pspBasicTool.o pspListTool.o psp_spBLAS_Level1.o psp_spBLAS_Level2.o psp_spBLAS_Level3.o psp_spBLAS.o pspUtility.o 
 
 clean :
 	rm -f *.a

@@ -1,13 +1,14 @@
-MODULE pspMspm
+MODULE pspSpmSpm
   use pspVariable
   use pspUtility
   use pspMPI
   use pspLevel1
   use pspLevel2
-use pspMspm_nn, only: psp_gemspm_nn
-use pspMspm_nt, only: psp_gemspm_nt
-use pspMspm_tn, only: psp_gemspm_tn
-use pspMspm_tt, only: psp_gemspm_tt
+  use pspMatSum
+  use pspSpmSpm_nn, only: psp_gespmspm_nn
+  use pspSpmSpm_nt, only: psp_gespmspm_nt
+  use pspSpmSpm_tn, only: psp_gespmspm_tn
+  use pspSpmSpm_tt, only: psp_gespmspm_tt
 
 #ifdef MPI
   include 'mpif.h'
@@ -29,20 +30,23 @@ use pspMspm_tt, only: psp_gemspm_tt
 
   !**** INTERFACES ********************************!
 
-  interface psp_gemspm
-     module procedure psp_dgemspm
-     module procedure psp_zgemspm
-  end interface psp_gemspm
+  interface psp_gespmspm
+     module procedure psp_dgespmspm
+     module procedure psp_zgespmspm
+  end interface psp_gespmspm
 
   interface die
      module procedure die
   end interface die
 
-  public :: psp_gemspm
+  public :: psp_gespmspm
 
 contains
 
-  subroutine psp_dgemspm(M,N,K,A,opA,B,opB,C,alpha,beta)
+  !================================================!
+  !        sparse pdgemm: spmspm                   !
+  !================================================!
+  subroutine psp_dgespmspm(M,N,K,A,opA,B,opB,C,alpha,beta)
     implicit none
 
     !**** INPUT ***********************************!
@@ -51,26 +55,40 @@ contains
     character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
     character(1), intent(in) :: opB ! form of op(B)
     real(dp), intent(in)  ::   alpha, beta ! scalar
-    real(dp), intent(in) :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(psp_matrix_spm), intent(in) ::   B ! matrix B
-    real(dp), intent(inout) :: C(:,:)
+    type(psp_matrix_spm), intent(inout ) :: A, B ! sparse matrix A and B
+    type(psp_matrix_spm), intent(inout) :: C ! sparse matrix C
 
     !**** LOCAL ***********************************!
 
-    !logical :: changeFmtB
     integer :: trA, trB, ot
+    logical :: changeFmtA, changeFmtB, changeFmtC
 
     !**********************************************!
     if (alpha/=0.0_dp) then
-       !if (B%str_type=='coo') then
-       !   changeFmtB=.true.
-       !   call psp_coo2csc(B)
-       !else
-       !   changeFmtB=.false.
-       !end if
+
+       ! check format
+       if (A%str_type=='coo') then
+          changeFmtA=.true.
+          call psp_coo2csc(A)
+       else
+          changeFmtA=.false.
+       end if
+       if (B%str_type=='coo') then
+          changeFmtB=.true.
+          call psp_coo2csc(B)
+       else
+          changeFmtB=.false.
+       end if
+       if (C%str_type=='coo') then
+          changeFmtC=.true.
+          call psp_coo2csc(C)
+       else
+          changeFmtC=.false.
+       end if
+
        call psp_process_opM(opA,trA)
        call psp_process_opM(opB,trB)
        ! operation table
@@ -88,26 +106,35 @@ contains
 
        select case (ot)
        case (1)
-          call psp_gemspm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (2)
-          call psp_gemspm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (3)
-          call psp_gemspm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (4)
-          call psp_gemspm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
        end select
+
        ! change format back to plan
-       !if (changeFmtB) then
-       !   call psp_csc2coo(B)
-       !end if
+       if (changeFmtA) then
+          call psp_csc2coo(A)
+       end if
+       if (changeFmtB) then
+          call psp_csc2coo(B)
+       end if
+       if (changeFmtC) then
+          call psp_csc2coo(C)
+       end if
     else
-       if (beta/=0.0_dp) C=beta*C
+       if (beta/=0.0_dp) C%dval=beta*C%dval
     end if
 
-  end subroutine psp_dgemspm
+  end subroutine psp_dgespmspm
 
-
-  subroutine psp_zgemspm(M,N,K,A,opA,B,opB,C,alpha,beta)
+  !================================================!
+  !        sparse pzgemm: spmspm                     !
+  !================================================!
+  subroutine psp_zgespmspm(M,N,K,A,opA,B,opB,C,alpha,beta)
     implicit none
 
     !**** INPUT ***********************************!
@@ -116,25 +143,40 @@ contains
     character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
     character(1), intent(in) :: opB ! form of op(B)
     complex(dp), intent(in)  ::   alpha, beta ! scalar
-    complex(dp), intent(in) :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(psp_matrix_spm), intent(in) ::   B ! matrix B
-    complex(dp), intent(inout) :: C(:,:)
+    type(psp_matrix_spm), intent(inout ) :: A, B ! sparse matrix A and B
+    type(psp_matrix_spm), intent(inout) :: C ! sparse matrix C
 
     !**** LOCAL ***********************************!
-    !logical :: changeFmtB
+
     integer :: trA, trB, ot
+    logical :: changeFmtA, changeFmtB, changeFmtC
 
     !**********************************************!
     if (alpha/=cmplx_0) then
-       !if (B%str_type=='coo') then
-       !   changeFmtB=.true.
-       !   call psp_coo2csc(B)
-       !else
-       !   changeFmtB=.false.
-       !end if
+
+       ! check format
+       if (A%str_type=='coo') then
+          changeFmtA=.true.
+          call psp_coo2csc(A)
+       else
+          changeFmtA=.false.
+       end if
+       if (B%str_type=='coo') then
+          changeFmtB=.true.
+          call psp_coo2csc(B)
+       else
+          changeFmtB=.false.
+       end if
+       if (C%str_type=='coo') then
+          changeFmtC=.true.
+          call psp_coo2csc(C)
+       else
+          changeFmtC=.false.
+       end if
+
        call psp_process_opM(opA,trA)
        call psp_process_opM(opB,trB)
        ! operation table
@@ -152,22 +194,30 @@ contains
 
        select case (ot)
        case (1)
-          call psp_gemspm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_nn(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (2)
-          call psp_gemspm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_nt(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (3)
-          call psp_gemspm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_tn(M,N,K,A,opA,B,opB,C,alpha,beta)
        case (4)
-          call psp_gemspm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
+          call psp_gespmspm_tt(M,N,K,A,opA,B,opB,C,alpha,beta)
        end select
+
        ! change format back to plan
-       !if (changeFmtB) then
-       !   call psp_csc2coo(B)
-       !end if
+       if (changeFmtA) then
+          call psp_csc2coo(A)
+       end if
+       if (changeFmtB) then
+          call psp_csc2coo(B)
+       end if
+       if (changeFmtC) then
+          call psp_csc2coo(C)
+       end if
     else
-       if (beta/=cmplx_0) C=beta*C
+       if (beta/=cmplx_0) C%zval=beta*C%zval
     end if
-  end subroutine psp_zgemspm
+
+  end subroutine psp_zgespmspm
 
   subroutine die(message)
     implicit none
@@ -197,5 +247,4 @@ contains
 
   end subroutine die
 
-
-END MODULE pspMspm
+END MODULE pspSpmSpm
