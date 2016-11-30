@@ -2426,7 +2426,7 @@ contains
 
   !================================================!
   ! set matrix element                             !
-  ! C_ij := alpha                                  !
+  ! C_ij := alpha + beta*C_ij                      !
   !================================================!
   subroutine m_dset_element(C,i,j,alpha,beta,label)
     implicit none
