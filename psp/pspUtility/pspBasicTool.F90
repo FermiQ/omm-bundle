@@ -1438,6 +1438,9 @@ contains
     integer, allocatable :: seed(:)
     integer :: i, n, un, istat, dt(8), pid, mpi_err
     integer(int64) :: t
+    integer :: psp_mpi_comm_world
+
+    common /psp_grid2D/ psp_mpi_comm_world
 
     call random_seed(size = n)
     allocate(seed(n))
@@ -1461,7 +1464,7 @@ contains
                + dt(6) * 60 * 1000 + dt(7) * 1000 &
                + dt(8)
        end if
-       call mpi_comm_rank(mpi_comm_world,pid,mpi_err)
+       call mpi_comm_rank(psp_mpi_comm_world,pid,mpi_err)
        t = ieor(t, int(pid, kind(t)))
        do i = 1, n
           seed(i) = lcg(t)
