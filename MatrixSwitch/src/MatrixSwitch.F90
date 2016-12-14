@@ -536,11 +536,15 @@ contains
           if (present(threshold_is_soft) .and. (threshold_is_soft)) then
              call die('m_copy: soft thresholding not yet implemented')
           else
+#ifdef PSP
              if (A%is_real) then
                 call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'coo',threshold)
              else
                 call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'coo',threshold)
              end if
+#else
+             call die('mm_dmultiply: compile with pspBLAS')
+#endif
           end if
        end if
     case (17)
@@ -550,11 +554,15 @@ contains
           if (present(threshold_is_soft) .and. (threshold_is_soft)) then
              call die('m_copy: soft thresholding not yet implemented')
           else
+#ifdef PSP
              if (A%is_real) then
                 call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'csc',threshold)
              else
                 call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'csc',threshold)
              end if
+#else
+             call die('mm_dmultiply: compile with pspBLAS')
+#endif
           end if
        end if
     end select
