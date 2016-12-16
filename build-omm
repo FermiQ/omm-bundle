@@ -1,0 +1,242 @@
+#!/bin/sh
+
+# Set external dependencies
+#LINALG_INCLUDES="-I/usr/local/include"
+LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
+
+export LINALG_INCLUDES LINALG_LIBS
+
+                    # ------------------------------------ #
+
+# Check that we are in an OMM source tree
+if test ! -s "psp/src/pspBLAS.F90" -o \
+        ! -s "MatrixSwitch/src/MatrixSwitch.F90" -o \
+        ! -s "libOMM/src/omm.F90"; then
+  echo "Error: this is not an OMM source tree" >&2
+  exit 1
+fi
+
+                    # ------------------------------------ #
+
+# Set install dirs
+psp_prefix="${PWD}/build_psp"
+msw_prefix="${PWD}/build_MatrixSwitch"
+omm_prefix="${PWD}/build_libOMM"
+
+# Set build dirs
+root_builddir="${PWD}/tmp-objs"
+psp_builddir="${root_builddir}/psp"
+msw_builddir="${root_builddir}/MatrixSwitch"
+omm_builddir="${root_builddir}/libOMM"
+
+# Set source dirs
+psp_srcdir="${PWD}/psp"
+msw_srcdir="${PWD}/MatrixSwitch"
+omm_srcdir="${PWD}/libOMM"
+
+                    # ------------------------------------ #
+
+# Usage
+script_name=`basename "${0}"`
+if test "${#}" = 0; then
+cat <<EOF
+Usage: ${script_name} command [command ...]
+
+This script will install libraries under the following paths:
+
+  * Psp -> ${psp_prefix}
+  * MatrixSwitch -> ${msw_prefix}
+  * LibOMM -> ${omm_prefix}
+
+
+Commands can be:
+
+   * all      : build all libraries
+   * <lib>    : build library <lib> (psp, matrixswitch, and/or libomm)
+   * check    : run test suites before installing libraries
+   * clean    : remove temporary build directories (other commands are ignored)
+   * examples : build examples along with the libraries
+   * wipe     : remove both build and install directories (other commands are ignored)
+
+EOF
+exit 0
+
+fi
+
+                    # ------------------------------------ #
+
+# Process command-line options
+tasks=""
+cfg_opts=""
+bld_psp="no"
+bld_msw="no"
+bld_omm="no"
+cfg_psp=""
+cfg_msw="--enable-conv"
+cfg_omm=""
+cln_bld="no"
+cln_ins="no"
+run_chk="no"
+
+while test "${#}" -gt 0; do
+  cmd="${1}"
+  shift
+  case "${cmd}" in
+    all)
+      bld_psp="yes"
+      bld_msw="yes"
+      bld_omm="yes"
+      ;;
+    check)
+      run_chk="yes"
+      ;;
+    clean)
+      cln_bld="yes"
+      ;;
+    examples)
+      cfg_msw="${cfg_msw} --enable-examples"
+      cfg_omm="${cfg_omm} --enable-examples"
+      ;;
+    [Ll]ib[Oo][Mm][Mm])
+      bld_omm="yes"
+      ;;
+    [Mm]atrix[Ss]witch)
+      bld_msw="yes"
+      ;;
+    [Pp]sp)
+      bld_psp="yes"
+      ;;
+    wipe)
+      cln_bld="yes"
+      cln_ins="yes"
+      ;;
+    *)
+      echo "${script_name}: Error: unknown command '${cmd}'" >&2
+      exit 1
+      ;;
+  esac
+done
+
+                    # ------------------------------------ #
+
+# Do we want to clean the source tree?
+if test "${cln_bld}" = "yes"; then
+  cln_ret="0"
+  test -d "${root_builddir}" && chmod -R u+w "${root_builddir}"
+  rm -rf "${root_builddir}"
+  if test "${cln_ins}" = "yes"; then
+    for tmpdir in "${psp_prefix}" "${msw_prefix}" "${omm_prefix}"; do
+      cln_internal=`echo "${tmpdir}" | grep "${PWD}"`
+      if test "${cln_internal}" = ""; then
+        echo "${script_name}: Cowardly refusing to remove external directory:" >&2
+        echo "    ${tmpdir}" >&2
+        cln_ret="10"
+      else
+        if test -d "${tmpdir}"; then
+          chmod -R u+w "${tmpdir}"
+          rm -r "${tmpdir}"
+          cln_ret="${?}"
+          if test "${cln_ret}" != "0"; then
+            echo "${script_name}: Error: could not remove directory:" >&2
+            echo "    ${tmpdir}" >&2
+          fi
+        fi
+      fi
+      test "${cln_ret}" = "0" || break
+    done
+  fi
+  test "${cln_ret}" = "0" || \
+    echo "${script_name}: Error: could not clean the source tree" >&2
+  exit "${cln_ret}"
+fi
+
+                    # ------------------------------------ #
+
+# Set build parameters
+test -n "${CC}" || CC="mpicc"
+test -n "${FC}" || FC="mpif90"
+export CC FC
+
+# Stop at first error
+set -e
+
+                    # ------------------------------------ #
+
+# Build Psp
+if test "${bld_psp}" = "yes"; then
+  if test -e "${psp_prefix}"; then
+    echo "${script_name}: Error: Psp install directory already exists" >&2
+    exit 2
+  fi
+  mkdir -p "${psp_builddir}"
+  cd "${psp_builddir}"
+  "${psp_srcdir}/configure" \
+    --srcdir="${psp_srcdir}" \
+    --prefix="${psp_prefix}" \
+    ${cfg_psp}
+  sleep 3
+  make -j4
+  if test "${run_chk}" = "yes"; then
+    make -j4 check
+  fi
+  make -j4 install
+fi
+
+                    # ------------------------------------ #
+
+# Build MatrixSwitch
+if test "${bld_msw}" = "yes"; then
+  if test -e "${msw_prefix}"; then
+    echo "${script_name}: Error: MatrixSwitch install directory already exists" >&2
+    exit 2
+  fi
+  if test ! -d "${psp_prefix}"; then
+    echo "${script_name}: Error: MatrixSwitch requires Psp" >&2
+    exit 3
+  fi
+  mkdir -p "${msw_builddir}"
+  cd "${msw_builddir}"
+  "${msw_srcdir}/configure" \
+    --srcdir="${msw_srcdir}" \
+    --prefix="${msw_prefix}" \
+    --with-psp="${psp_prefix}" \
+    ${cfg_msw}
+  sleep 3
+  make -j4
+  if test "${run_chk}" = "yes"; then
+    make -j4 check
+  fi
+  make -j4 install
+fi
+
+                    # ------------------------------------ #
+
+# Build LibOMM
+if test "${bld_omm}" = "yes"; then
+  if test -e "${omm_prefix}"; then
+    echo "${script_name}: Error: LibOMM install directory already exists" >&2
+    exit 2
+  fi
+  if test ! -d "${psp_prefix}"; then
+    echo "${script_name}: Error: LibOMM requires Psp" >&2
+    exit 3
+  fi
+  if test ! -d "${msw_prefix}"; then
+    echo "${script_name}: Error: LibOMM requires MatrixSwitch" >&2
+    exit 3
+  fi
+  mkdir -p "${omm_builddir}"
+  cd "${omm_builddir}"
+  "${omm_srcdir}/configure" \
+    --srcdir="${omm_srcdir}" \
+    --prefix="${omm_prefix}" \
+    --with-psp="${psp_prefix}" \
+    --with-matrixswitch="${msw_prefix}" \
+    ${cfg_omm}
+  sleep 3
+  make -j4
+  if test "${run_chk}" = "yes"; then
+    make -j4 check
+  fi
+  make -j4 install
+fi

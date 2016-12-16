@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module MatrixSwitch_wrapper
   use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &
@@ -17,7 +21,9 @@ module MatrixSwitch_wrapper
 #ifdef MPI
   use MatrixSwitch, only: &
     m_register_pdbc_orig => m_register_pdbc, &
+#ifdef SLAP
     ms_scalapack_setup, &
+#endif
     ms_lap_icontxt
 #endif
 #ifdef PSP
@@ -126,7 +132,9 @@ module MatrixSwitch_wrapper
   public :: m_convert
 #ifdef MPI
   public :: m_register_pdbc
+#ifdef SLAP
   public :: ms_scalapack_setup
+#endif
   public :: ms_lap_icontxt
 #endif
 #ifdef PSP

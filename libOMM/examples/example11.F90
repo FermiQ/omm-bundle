@@ -154,20 +154,27 @@ program example11
 
         if (mpi_rank==0) print('(a)'), 'up spin...'
 #ifdef MPI
-        call omm_pddbc_spm(m,n_up,H_dim,H_upsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min_up,D_min_dim,D_min_up,desc_D_min,&
-             .false.,eta,C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,&
+        call omm_pddbc_spm(m,n_up,H_dim,H_upsp,desc_H,.true.,S_dim,Ssp,&
+             desc_S,new_S,e_min_up,D_min_dim,D_min_up,desc_D_min,&
+             .false.,eta,C_min_up_dim,C_min_up,desc_C_min_up,.false.,&
+             .false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,&
              mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-        call omm_sdden_ref(m,n_up,H_up,.true.,S,new_S,e_min_up,D_min_up,.false.,eta,C_min_up,.false.,.false.,T,0.0_dp,0,2,1,-1.0_dp,&
+        call omm_sdden_ref(m,n_up,H_up,.true.,S,new_S,e_min_up,D_min_up,&
+             .false.,eta,C_min_up,.false.,.false.,T,0.0_dp,0,2,1,-1.0_dp,&
              .true.,.false.,mpi_rank)
 #endif
         if (mpi_rank==0) print('(a)'), 'down spin...'
 #ifdef MPI
-        call omm_pddbc_spm(m,n_down,H_dim,H_downsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min_down,D_min_dim,D_min_down,&
-             desc_D_min,.false.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,T,desc_T,1.0_dp,0,2,2,-1.0_dp,&
+        call omm_pddbc_spm(m,n_down,H_dim,H_downsp,desc_H,.true.,S_dim,Ssp,&
+             desc_S,new_S,e_min_down,D_min_dim,D_min_down,&
+             desc_D_min,.false.,eta,C_min_down_dim,C_min_down,&
+             desc_C_min_down,.false.,.false.,T_dim,T,desc_T,&
+             1.0_dp,0,2,2,-1.0_dp,&
              .true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-        call omm_sdden_ref(m,n_down,H_down,.true.,S,new_S,e_min_down,D_min_down,.false.,eta,C_min_down,.false.,.false.,T,1.0_dp,0,2,&
+        call omm_sdden_ref(m,n_down,H_down,.true.,S,new_S,e_min_down,&
+             D_min_down,.false.,eta,C_min_down,.false.,.false.,T,1.0_dp,0,2,&
              2,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
 
@@ -177,18 +184,22 @@ program example11
         end if
 
         if (mpi_rank==0) then
-           print('(a,f21.15,a,f21.15,a)'), 'D_11  : ', D_min_up(1,1), ' (up), ', D_min_down(1,1), ' (down)'
+           print('(a,f21.15,a,f21.15,a)'), 'D_11  : ', D_min_up(1,1), ' (up), ',&
+                D_min_down(1,1), ' (down)'
            print('()')
         end if
 
      end do
 
 #ifdef MPI
-     call omm_pddbc_spm(m,n_up,H_dim,H_upsp,desc_H,.true.,S_dim,Ssp,desc_S,.false.,e_min_up,ED_min_dim,ED_min_up,desc_ED_min,&
-          .true.,eta,C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,&
+     call omm_pddbc_spm(m,n_up,H_dim,H_upsp,desc_H,.true.,S_dim,Ssp,desc_S,&
+          .false.,e_min_up,ED_min_dim,ED_min_up,desc_ED_min,&
+          .true.,eta,C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,&
+          T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,&
           mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
 #else
-     call omm_sdden_ref(m,n_up,H_up,.true.,S,.false.,e_min_up,ED_min_up,.true.,eta,C_min_up,.false.,.false.,T,0.0_dp,0,2,1,-1.0_dp,&
+     call omm_sdden_ref(m,n_up,H_up,.true.,S,.false.,e_min_up,ED_min_up,&
+          .true.,eta,C_min_up,.false.,.false.,T,0.0_dp,0,2,1,-1.0_dp,&
           .true.,.false.,mpi_rank)
 #endif
      if (imd==2) then
@@ -197,16 +208,21 @@ program example11
         dealloc=.false.
      end if
 #ifdef MPI
-     call omm_pddbc_spm(m,n_down,H_dim,H_downsp,desc_H,.true.,S_dim,Ssp,desc_S,.false.,e_min_down,&
-          ED_min_dim,ED_min_down,desc_ED_min,.true.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,&
-          T,desc_T,0.0_dp,0,2,2,-1.0_dp,.true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
+     call omm_pddbc_spm(m,n_down,H_dim,H_downsp,desc_H,.true.,S_dim,Ssp,&
+          desc_S,.false.,e_min_down,&
+          ED_min_dim,ED_min_down,desc_ED_min,.true.,eta,C_min_down_dim,&
+          C_min_down,desc_C_min_down,.false.,.false.,T_dim,&
+          T,desc_T,0.0_dp,0,2,2,-1.0_dp,.true.,dealloc,mpi_rank,mpi_size,&
+          nprow,order,bs_def,icontxt)
 #else
-     call omm_sdden_ref(m,n_down,H_down,.true.,S,.false.,e_min_down,ED_min_down,.true.,eta,C_min_down,.false.,.false.,T,0.0_dp,0,2,&
+     call omm_sdden_ref(m,n_down,H_down,.true.,S,.false.,e_min_down,&
+          ED_min_down,.true.,eta,C_min_down,.false.,.false.,T,0.0_dp,0,2,&
           2,-1.0_dp,.true.,dealloc,mpi_rank)
 #endif
 
      if (mpi_rank==0) then
-        print('(a,f21.15,a,f21.15,a)'), 'ED_11 : ', ED_min_up(1,1), ' (up), ', ED_min_down(1,1), ' (down)'
+        print('(a,f21.15,a,f21.15,a)'), 'ED_11 : ', ED_min_up(1,1), ' (up), ',&
+             ED_min_down(1,1), ' (down)'
         print('()')
      end if
 

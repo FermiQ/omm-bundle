@@ -1,0 +1,6 @@
+Todo list for MatrixSwitch
+==========================
+
+[ ] The ms_scalapack_setup routine only works if both MPI and SLAP are defined.
+    Enclosed it within #ifdef SLAP ... #endif directives whenver it appears.
+    You might want to have a look at it and fix it in a more elegant way.
