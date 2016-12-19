@@ -12,60 +12,60 @@ clean_tests : clean_psp_test clean_MatrixSwitch_examples clean_libOMM_examples
 
 psp_lib :
 	cd psp; \
-	make; \
-	make install
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
 
 MatrixSwitch_lib :
 	cd MatrixSwitch/src; \
-	make; \
-	make install
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
 
 tomato_lib :
 	cd tomato/src; \
-	make; \
-	make install
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
 
 libOMM_lib :
 	cd libOMM/src; \
-	make; \
-	make install
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
 
 psp_test : psp_lib
 	cd psp/test; \
-	make
+	make -f Makefile.manual
 
 MatrixSwitch_examples : MatrixSwitch_lib
 	cd MatrixSwitch/examples; \
-	make
+	make -f Makefile.manual
 
 libOMM_examples : libOMM_lib
 	cd libOMM/examples; \
-	make
+	make -f Makefile.manual
 
 clean_psp :
 	cd psp; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_MatrixSwitch :
 	cd MatrixSwitch/src; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_tomato :
 	cd tomato/src; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_libOMM :
 	cd libOMM/src; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_psp_test :
 	cd psp/test; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_MatrixSwitch_examples :
 	cd MatrixSwitch/examples; \
-	make clean
+	make -f Makefile.manual clean
 
 clean_libOMM_examples :
 	cd libOMM/examples; \
-	make clean
+	make -f Makefile.manual clean

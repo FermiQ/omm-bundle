@@ -13,12 +13,12 @@ $(LIBNAME) : pspBLAS.o
 	$(RANLIB) $@
 
 update :
-	cd pspVariable; make; mv *.o ../; mv *.mod ../; cd ..;\
-	cd pspUtility; make; mv *.o ../; mv *.mod ../; cd ..;\
-	cd pspMPI; make; mv *.o ../; mv *.mod ../; cd ..;\
-	cd pspLevel1; make; mv *.o ../; mv *.mod ../; cd ..;\
-	cd pspLevel2; make; mv *.o ../; mv *.mod ../; cd ..;\
-	cd pspLevel3; make; mv *.o ../; mv *.mod ../; cd ..;
+	cd pspVariable; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspUtility; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspMPI; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspLevel1; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspLevel2; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;\
+	cd pspLevel3; make -f Makefile.manual; mv *.o ../; mv *.mod ../; cd ..;
 
 install :
 	if [ ! -d $(BUILDPATH) ]; then mkdir $(BUILDPATH); fi; \
