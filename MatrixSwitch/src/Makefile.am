@@ -18,15 +18,27 @@
 # Common source files
 msw_srcs = \
   MatrixSwitch.F90 \
-  MatrixSwitch_wrapper.F90 \
-  MatrixSwitch_wrapper_params.F90
+  MatrixSwitch_m_copy.F90 \
+  MatrixSwitch_m_register.F90 \
+  MatrixSwitch_ops.F90 \
+  MatrixSwitch_wrapper_params.F90 \
+  MatrixSwitch_m_add.F90 \
+  MatrixSwitch_mm_multiply.F90 \
+  MatrixSwitch_m_set.F90 \
+  MatrixSwitch_wrapper.F90
 
 # Fortran modules
 # TODO: support both lower-case and upper-case file names
 msw_f03_mods = \
   matrixswitch.$(MODEXT) \
-  matrixswitch_wrapper.$(MODEXT) \
-  matrixswitch_wrapper_params.$(MODEXT)
+  matrixswitch_m_copy.$(MODEXT) \
+  matrixswitch_m_register.$(MODEXT) \
+  matrixswitch_ops.$(MODEXT) \
+  matrixswitch_wrapper_params.$(MODEXT) \
+  matrixswitch_m_add.$(MODEXT) \
+  matrixswitch_mm_multiply.$(MODEXT) \
+  matrixswitch_m_set.$(MODEXT) \
+  matrixswitch_wrapper.$(MODEXT)
 
 # Libraries to install
 lib_LTLIBRARIES = libMatrixSwitch.la
