@@ -11,7 +11,7 @@ clean_libs : clean_psp clean_MatrixSwitch clean_tomato clean_libOMM
 clean_tests : clean_psp_test clean_MatrixSwitch_examples clean_libOMM_examples
 
 psp_lib :
-	cd psp; \
+	cd psp/src; \
 	make -f Makefile.manual; \
 	make -f Makefile.manual install
 
@@ -43,7 +43,7 @@ libOMM_examples : libOMM_lib
 	make -f Makefile.manual
 
 clean_psp :
-	cd psp; \
+	cd psp/src; \
 	make -f Makefile.manual clean
 
 clean_MatrixSwitch :
