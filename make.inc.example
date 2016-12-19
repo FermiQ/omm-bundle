@@ -6,13 +6,13 @@ ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib
 
-PSPLIBNAME = libpspblas.a
+PSPLIBNAME = libpspBLAS.a
 PSPBUILDPATH = $(ROOTDIR)/build_psp
 
-MSLIBNAME = MatrixSwitch.a
+MSLIBNAME = libMatrixSwitch.a
 MSBUILDPATH = $(ROOTDIR)/build_MatrixSwitch
 
-TOMATOLIBNAME = tomato.a
+TOMATOLIBNAME = libtomato.a
 TOMATOBUILDPATH = $(ROOTDIR)/build_tomato
 
 OMMLIBNAME = libOMM.a
