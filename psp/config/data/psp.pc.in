@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libpsp
+Description: Library providing basic linear alebra support
+Version: @VERSION@
+Libs: -L${libdir} -lpsp
+Cflags: -I${includedir}

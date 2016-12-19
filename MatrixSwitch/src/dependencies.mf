@@ -1,0 +1,6 @@
+MatrixSwitch_wrapper.$(LTOBJEXT): \
+  MatrixSwitch.$(LTOBJEXT) \
+  MatrixSwitch_wrapper_params.$(LTOBJEXT)
+
+MatrixSwitch_wrapper_params.$(LTOBJEXT): \
+  MatrixSwitch.$(LTOBJEXT)
