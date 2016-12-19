@@ -139,7 +139,7 @@ pspLevel3/pspMspm_tt.$(LTOBJEXT): \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
   pspVariable/pspMspm_nt.$(LTOBJEXT) \
-  pspVariable/pspMspm_tn.$(LTOBJEXT) \
+  pspVariable/pspMspm_tn.$(LTOBJEXT)
 
 pspLevel3/pspMspm.$(LTOBJEXT): \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
