@@ -47,11 +47,9 @@ psp_srcs = \
   pspUtility/psp_spBLAS_Level3.F90 \
   pspUtility/pspUtility.F90 \
   pspVariable/psp_dList.F90 \
-  pspVariable/pspLinkedlist.F90 \
   pspVariable/pspListType.F90 \
   pspVariable/pspMat.F90 \
   pspVariable/pspNode.F90 \
-  pspVariable/pspQueue.F90 \
   pspVariable/pspVariable.F90 \
   pspVariable/psp_zList.F90
 
@@ -59,41 +57,39 @@ psp_srcs = \
 # TODO: support both lower-case and upper-case file names
 psp_f03_mods = \
   psplevel3.$(MODEXT) \
-  pspMspm.$(MODEXT) \
-  pspMspm_nt.$(MODEXT) \
-  pspMspm_tt.$(MODEXT) \
-  pspSpmm_nn.$(MODEXT) \
-  pspSpmm_tn.$(MODEXT) \
-  pspSpmSpm.$(MODEXT) \
-  pspSpmSpm_nt.$(MODEXT) \
-  pspSpmSpm_tt.$(MODEXT) \
-  pspGemm.$(MODEXT) \
-  pspMatSum.$(MODEXT) \
-  pspMspm_nn.$(MODEXT) \
-  pspMspm_tn.$(MODEXT) \
-  pspSpmm.$(MODEXT) \
-  pspSpmm_nt.$(MODEXT) \
-  pspSpmm_tt.$(MODEXT) \
-  pspSpmSpm_nn.$(MODEXT) \
-  pspSpmSpm_tn.$(MODEXT) \
+  pspmspm.$(MODEXT) \
+  pspmspm_nt.$(MODEXT) \
+  pspmspm_tt.$(MODEXT) \
+  pspspmm_nn.$(MODEXT) \
+  pspspmm_tn.$(MODEXT) \
+  pspspmspm.$(MODEXT) \
+  pspspmspm_nt.$(MODEXT) \
+  pspspmspm_tt.$(MODEXT) \
+  pspgemm.$(MODEXT) \
+  pspmatsum.$(MODEXT) \
+  pspmspm_nn.$(MODEXT) \
+  pspmspm_tn.$(MODEXT) \
+  pspspmm.$(MODEXT) \
+  pspspmm_nt.$(MODEXT) \
+  pspspmm_tt.$(MODEXT) \
+  pspspmspm_nn.$(MODEXT) \
+  pspspmspm_tn.$(MODEXT) \
   pspmpi.$(MODEXT) \
   psplevel2.$(MODEXT) \
   pspblas.$(MODEXT) \
-  pspBasicTool.$(MODEXT) \
-  pspListTool.$(MODEXT) \
-  psp_spBLAS.$(MODEXT) \
-  psp_spBLAS_Level1.$(MODEXT) \
-  psp_spBLAS_Level2.$(MODEXT) \
-  psp_spBLAS_Level3.$(MODEXT) \
+  pspbasictool.$(MODEXT) \
+  psplisttool.$(MODEXT) \
+  psp_spblas.$(MODEXT) \
+  psp_spblas_level1.$(MODEXT) \
+  psp_spblas_level2.$(MODEXT) \
+  psp_spblas_level3.$(MODEXT) \
   psputility.$(MODEXT) \
-  psp_dList.$(MODEXT) \
-  pspLinkedlist.$(MODEXT) \
-  pspListType.$(MODEXT) \
-  pspMat.$(MODEXT) \
-  pspNode.$(MODEXT) \
-  pspQueue.$(MODEXT) \
-  pspVariable.$(MODEXT) \
-  psp_zList.$(MODEXT) \
+  psp_dlist.$(MODEXT) \
+  psplisttype.$(MODEXT) \
+  pspmat.$(MODEXT) \
+  pspnode.$(MODEXT) \
+  pspvariable.$(MODEXT) \
+  psp_zlist.$(MODEXT) \
   psplevel1.$(MODEXT)
 
 # Libraries to install

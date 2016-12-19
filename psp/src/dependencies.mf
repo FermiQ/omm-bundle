@@ -81,7 +81,7 @@ pspLevel3/pspSpmm_tn.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT)
 
 pspLevel3/pspSpmSpm_nn.$(LTOBJEXT): \
-  pspLevel1/pspMatSum.$(LTOBJEXT) \
+  pspLevel3/pspMatSum.$(LTOBJEXT) \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
   pspLevel2/pspLevel2.$(LTOBJEXT) \
   pspMPI/pspMPI.$(LTOBJEXT) \
@@ -89,7 +89,7 @@ pspLevel3/pspSpmSpm_nn.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT)
 
 pspLevel3/pspSpmSpm_nt.$(LTOBJEXT): \
-  pspLevel1/pspMatSum.$(LTOBJEXT) \
+  pspLevel3/pspMatSum.$(LTOBJEXT) \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
   pspLevel2/pspLevel2.$(LTOBJEXT) \
   pspMPI/pspMPI.$(LTOBJEXT) \
@@ -97,7 +97,7 @@ pspLevel3/pspSpmSpm_nt.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT)
 
 pspLevel3/pspSpmSpm_tn.$(LTOBJEXT): \
-  pspLevel1/pspMatSum.$(LTOBJEXT) \
+  pspLevel3/pspMatSum.$(LTOBJEXT) \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
   pspLevel2/pspLevel2.$(LTOBJEXT) \
   pspMPI/pspMPI.$(LTOBJEXT) \
@@ -105,7 +105,7 @@ pspLevel3/pspSpmSpm_tn.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT)
 
 pspLevel3/pspSpmSpm_tt.$(LTOBJEXT): \
-  pspLevel1/pspMatSum.$(LTOBJEXT) \
+  pspLevel3/pspMatSum.$(LTOBJEXT) \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
   pspLevel2/pspLevel2.$(LTOBJEXT) \
   pspMPI/pspMPI.$(LTOBJEXT) \
@@ -118,8 +118,8 @@ pspLevel3/pspSpmm_tt.$(LTOBJEXT): \
   pspMPI/pspMPI.$(LTOBJEXT) \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspSpmm_nt.$(LTOBJEXT) \
-  pspVariable/pspSpmm_tn.$(LTOBJEXT)
+  pspLevel3/pspSpmm_nt.$(LTOBJEXT) \
+  pspLevel3/pspSpmm_tn.$(LTOBJEXT)
 
 pspLevel3/pspSpmm.$(LTOBJEXT): \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
@@ -127,10 +127,10 @@ pspLevel3/pspSpmm.$(LTOBJEXT): \
   pspMPI/pspMPI.$(LTOBJEXT) \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspSpmm_nn.$(LTOBJEXT) \
-  pspVariable/pspSpmm_nt.$(LTOBJEXT) \
-  pspVariable/pspSpmm_tn.$(LTOBJEXT) \
-  pspVariable/pspSpmm_tt.$(LTOBJEXT)
+  pspLevel3/pspSpmm_nn.$(LTOBJEXT) \
+  pspLevel3/pspSpmm_nt.$(LTOBJEXT) \
+  pspLevel3/pspSpmm_tn.$(LTOBJEXT) \
+  pspLevel3/pspSpmm_tt.$(LTOBJEXT)
 
 pspLevel3/pspMspm_tt.$(LTOBJEXT): \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
@@ -138,8 +138,8 @@ pspLevel3/pspMspm_tt.$(LTOBJEXT): \
   pspMPI/pspMPI.$(LTOBJEXT) \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspMspm_nt.$(LTOBJEXT) \
-  pspVariable/pspMspm_tn.$(LTOBJEXT)
+  pspLevel3/pspMspm_nt.$(LTOBJEXT) \
+  pspLevel3/pspMspm_tn.$(LTOBJEXT)
 
 pspLevel3/pspMspm.$(LTOBJEXT): \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
@@ -147,45 +147,45 @@ pspLevel3/pspMspm.$(LTOBJEXT): \
   pspMPI/pspMPI.$(LTOBJEXT) \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspMspm_nn.$(LTOBJEXT) \
-  pspVariable/pspMspm_nt.$(LTOBJEXT) \
-  pspVariable/pspMspm_tn.$(LTOBJEXT) \
-  pspVariable/pspMspm_tt.$(LTOBJEXT)
+  pspLevel3/pspMspm_nn.$(LTOBJEXT) \
+  pspLevel3/pspMspm_nt.$(LTOBJEXT) \
+  pspLevel3/pspMspm_tn.$(LTOBJEXT) \
+  pspLevel3/pspMspm_tt.$(LTOBJEXT)
 
 pspLevel3/pspSpmSpm.$(LTOBJEXT): \
-  pspLevel1/pspMatSum.$(LTOBJEXT) \
+  pspLevel3/pspMatSum.$(LTOBJEXT) \
   pspLevel1/pspLevel1.$(LTOBJEXT) \
   pspLevel2/pspLevel2.$(LTOBJEXT) \
   pspMPI/pspMPI.$(LTOBJEXT) \
   pspUtility/pspUtility.$(LTOBJEXT) \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspSpmSpm_nn.$(LTOBJEXT) \
-  pspVariable/pspSpmSpm_nt.$(LTOBJEXT) \
-  pspVariable/pspSpmSpm_tn.$(LTOBJEXT) \
-  pspVariable/pspSpmSpm_tt.$(LTOBJEXT)
+  pspLevel3/pspSpmSpm_nn.$(LTOBJEXT) \
+  pspLevel3/pspSpmSpm_nt.$(LTOBJEXT) \
+  pspLevel3/pspSpmSpm_tn.$(LTOBJEXT) \
+  pspLevel3/pspSpmSpm_tt.$(LTOBJEXT)
 
 pspUtility/pspBasicTool.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT)
 
 pspUtility/pspListTool.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspBasicTool.$(LTOBJEXT)
+  pspUtility/pspBasicTool.$(LTOBJEXT)
 
 pspUtility/psp_spBLAS_Level1.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspBasicTool.$(LTOBJEXT) \
-  pspVariable/pspListTool.$(LTOBJEXT)
+  pspUtility/pspBasicTool.$(LTOBJEXT) \
+  pspUtility/pspListTool.$(LTOBJEXT)
 
 pspUtility/psp_spBLAS_Level2.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspBasicTool.$(LTOBJEXT) \
-  pspVariable/pspListTool.$(LTOBJEXT) \
+  pspUtility/pspBasicTool.$(LTOBJEXT) \
+  pspUtility/pspListTool.$(LTOBJEXT) \
   pspUtility/psp_spBLAS_Level1.$(LTOBJEXT)
 
 pspUtility/psp_spBLAS_Level3.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspBasicTool.$(LTOBJEXT) \
-  pspVariable/pspListTool.$(LTOBJEXT) \
+  pspUtility/pspBasicTool.$(LTOBJEXT) \
+  pspUtility/pspListTool.$(LTOBJEXT) \
   pspUtility/psp_spBLAS_Level1.$(LTOBJEXT) \
   pspUtility/psp_spBLAS_Level2.$(LTOBJEXT)
 
@@ -196,8 +196,8 @@ pspUtility/psp_spBLAS.$(LTOBJEXT): \
 
 pspUtility/pspUtility.$(LTOBJEXT): \
   pspVariable/pspVariable.$(LTOBJEXT) \
-  pspVariable/pspBasicTool.$(LTOBJEXT) \
-  pspVariable/pspListTool.$(LTOBJEXT) \
+  pspUtility/pspBasicTool.$(LTOBJEXT) \
+  pspUtility/pspListTool.$(LTOBJEXT) \
   pspUtility/psp_spBLAS.$(LTOBJEXT)
 
 pspVariable/psp_dList.$(LTOBJEXT): \
@@ -216,3 +216,6 @@ pspVariable/pspMat.$(LTOBJEXT): \
 pspVariable/pspVariable.$(LTOBJEXT): \
   pspVariable/pspListType.$(LTOBJEXT) \
   pspVariable/pspMat.$(LTOBJEXT)
+
+pspMPI/pspMPI.$(LTOBJEXT): \
+  pspUtility/pspUtility.$(LTOBJEXT)
