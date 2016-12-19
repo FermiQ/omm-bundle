@@ -1,5 +1,9 @@
 ! This code test the pzgemm in pspBLAS
 
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 program pzgemmScaling
   use pspBLAS
 

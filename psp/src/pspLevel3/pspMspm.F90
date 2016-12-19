@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 MODULE pspMspm
   use pspVariable
   use pspUtility

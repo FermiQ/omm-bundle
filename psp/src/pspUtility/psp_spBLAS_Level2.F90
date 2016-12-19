@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 MODULE psp_spBLAS_Level2
   use pspVariable
   use pspBasicTool

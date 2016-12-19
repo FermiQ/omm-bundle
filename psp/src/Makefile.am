@@ -20,26 +20,80 @@ psp_srcs = \
   pspBLAS.F90 \
   pspLevel1/pspLevel1.F90 \
   pspLevel2/pspLevel2.F90 \
-  pspLevel3/pspGemm.F90 \
   pspLevel3/pspLevel3.F90 \
   pspLevel3/pspMspm.F90 \
+  pspLevel3/pspMspm_nt.F90 \
+  pspLevel3/pspMspm_tt.F90 \
+  pspLevel3/pspSpmm_nn.F90 \
+  pspLevel3/pspSpmm_tn.F90 \
+  pspLevel3/pspSpmSpm.F90 \
+  pspLevel3/pspSpmSpm_nt.F90 \
+  pspLevel3/pspSpmSpm_tt.F90 \
+  pspLevel3/pspGemm.F90 \
+  pspLevel3/pspMatSum.F90 \
+  pspLevel3/pspMspm_nn.F90 \
+  pspLevel3/pspMspm_tn.F90 \
   pspLevel3/pspSpmm.F90 \
+  pspLevel3/pspSpmm_nt.F90 \
+  pspLevel3/pspSpmm_tt.F90 \
+  pspLevel3/pspSpmSpm_nn.F90 \
+  pspLevel3/pspSpmSpm_tn.F90 \
   pspMPI/pspMPI.F90 \
+  pspUtility/pspBasicTool.F90 \
+  pspUtility/pspListTool.F90 \
+  pspUtility/psp_spBLAS.F90 \
+  pspUtility/psp_spBLAS_Level1.F90 \
+  pspUtility/psp_spBLAS_Level2.F90 \
+  pspUtility/psp_spBLAS_Level3.F90 \
   pspUtility/pspUtility.F90 \
-  pspVariable/pspVariable.F90
+  pspVariable/psp_dList.F90 \
+  pspVariable/pspLinkedlist.F90 \
+  pspVariable/pspListType.F90 \
+  pspVariable/pspMat.F90 \
+  pspVariable/pspNode.F90 \
+  pspVariable/pspQueue.F90 \
+  pspVariable/pspVariable.F90 \
+  pspVariable/psp_zList.F90
 
 # Fortran modules
 # TODO: support both lower-case and upper-case file names
 psp_f03_mods = \
   psplevel3.$(MODEXT) \
-  pspgemm.$(MODEXT) \
-  pspspmm.$(MODEXT) \
-  pspmspm.$(MODEXT) \
+  pspMspm.$(MODEXT) \
+  pspMspm_nt.$(MODEXT) \
+  pspMspm_tt.$(MODEXT) \
+  pspSpmm_nn.$(MODEXT) \
+  pspSpmm_tn.$(MODEXT) \
+  pspSpmSpm.$(MODEXT) \
+  pspSpmSpm_nt.$(MODEXT) \
+  pspSpmSpm_tt.$(MODEXT) \
+  pspGemm.$(MODEXT) \
+  pspMatSum.$(MODEXT) \
+  pspMspm_nn.$(MODEXT) \
+  pspMspm_tn.$(MODEXT) \
+  pspSpmm.$(MODEXT) \
+  pspSpmm_nt.$(MODEXT) \
+  pspSpmm_tt.$(MODEXT) \
+  pspSpmSpm_nn.$(MODEXT) \
+  pspSpmSpm_tn.$(MODEXT) \
   pspmpi.$(MODEXT) \
   psplevel2.$(MODEXT) \
   pspblas.$(MODEXT) \
+  pspBasicTool.$(MODEXT) \
+  pspListTool.$(MODEXT) \
+  psp_spBLAS.$(MODEXT) \
+  psp_spBLAS_Level1.$(MODEXT) \
+  psp_spBLAS_Level2.$(MODEXT) \
+  psp_spBLAS_Level3.$(MODEXT) \
   psputility.$(MODEXT) \
-  pspvariable.$(MODEXT) \
+  psp_dList.$(MODEXT) \
+  pspLinkedlist.$(MODEXT) \
+  pspListType.$(MODEXT) \
+  pspMat.$(MODEXT) \
+  pspNode.$(MODEXT) \
+  pspQueue.$(MODEXT) \
+  pspVariable.$(MODEXT) \
+  psp_zList.$(MODEXT) \
   psplevel1.$(MODEXT)
 
 # Libraries to install

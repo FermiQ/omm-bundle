@@ -1,5 +1,9 @@
 ! This code test the pdgemm in pspBLAS
 
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 program pdgemmScaling
   use pspBLAS
 

@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
   ! linkedlist.f90 --
   !     Include file for defining linked lists where each element holds
   !     the same kind of data

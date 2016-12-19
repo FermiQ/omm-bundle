@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 MODULE pspBasicTool
   use pspVariable
   ! This module contains routines for indexing, generating, copying, transforming (sparse) data
