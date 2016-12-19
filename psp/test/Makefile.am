@@ -1,8 +1,5 @@
 check_PROGRAMS = pdgemmScaling.x \
   pzgemmScaling.x \
-  testMPI.x \
-  testMPI2.x \
-  testMPI3.x \
   testList.x \
   spBLAS.x \
   pdgemm.x \
@@ -15,18 +12,6 @@ pdgemmScaling_x_LDADD = ../src/libpspblas.la
 pzgemmScaling_x_SOURCES = pzgemmScaling.F90
 pzgemmScaling_x_FCFLAGS = -I../src
 pzgemmScaling_x_LDADD = ../src/libpspblas.la
-
-testMPI_x_SOURCES = testMPI.F90
-testMPI_x_FCFLAGS = -I../src
-testMPI_x_LDADD = ../src/libpspblas.la
-
-testMPI2_x_SOURCES = testMPI2.F90
-testMPI2_x_FCFLAGS = -I../src
-testMPI2_x_LDADD = ../src/libpspblas.la
-
-testMPI3_x_SOURCES = testMPI3.F90
-testMPI3_x_FCFLAGS = -I../src
-testMPI3_x_LDADD = ../src/libpspblas.la
 
 testList_x_SOURCES = testList.F90
 testList_x_FCFLAGS = -I../src
@@ -49,9 +34,6 @@ LOG_COMPILER = $(TESTS_CMD)
 TESTS = \
   pdgemmScaling.x \
   pzgemmScaling.x \
-  testMPI.x \
-  testMPI2.x \
-  testMPI3.x \
   testList.x \
   spBLAS.x \
   pdgemm.x \
@@ -65,5 +47,7 @@ CLEANFILES = \
   dspmm.txt \
   zmspm.txt \
   dlap.txt \
-  dmspm.txt
+  dmspm.txt \
+  dspmspm.txt \
+  zspmspm.txt
 
