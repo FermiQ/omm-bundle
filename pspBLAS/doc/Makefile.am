@@ -1,17 +1,17 @@
 #
-# Makefile for the documentation of Libpsp
+# Makefile for the documentation of pspBLAS
 #
 
 # Markdown sources
 psp_mddocs = \
-  configuring-psp.md \
-  contributing-to-psp.md \
+  configuring-pspBLAS.md \
+  contributing-to-pspBLAS.md \
   hacking-the-build-system.md
 
 # HTML documents
 psp_htmldocs = \
-  configuring-psp.html \
-  contributing-to-psp.html \
+  configuring-pspBLAS.html \
+  contributing-to-pspBLAS.html \
   hacking-the-build-system.html
 
                     ########################################

@@ -5,7 +5,7 @@
 # Copyright (C) 2016 Yann Pouillon
 #
 # This file is part of the pspBLAS software package. For license information,
-# please see the COPYING file in the top-level directory of the source
+# please see the COPYING file in the top-level directory of the pspBLAS source
 # distribution.
 #
 

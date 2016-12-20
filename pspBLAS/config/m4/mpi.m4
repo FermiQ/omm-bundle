@@ -1,10 +1,16 @@
 # -*- Autoconf -*-
 #
+# M4 macros for pspBLAS
+#
 # Copyright (C) 2015 Yann Pouillon
 #
 # This file is part of the pspBLAS software package. For license information,
-# please see the COPYING file in the top-level directory of the Libpspxc source
+# please see the COPYING file in the top-level directory of the pspBLAS source
 # distribution.
+#
+
+#
+# MPI support
 #
 
 

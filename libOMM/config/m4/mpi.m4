@@ -1,10 +1,16 @@
 # -*- Autoconf -*-
 #
+# M4 macros for libOMM
+#
 # Copyright (C) 2015 Yann Pouillon
 #
-# This file is part of the LibMatrixSwitchxc software package. For license information,
-# please see the COPYING file in the top-level directory of the LibMatrixSwitchxc source
+# This file is part of the libOMM software package. For license information,
+# please see the COPYING file in the top-level directory of the libOMM source
 # distribution.
+#
+
+#
+# MPI support
 #
 
 

@@ -19,7 +19,7 @@ Installation
 
 1.  Enter the `src` directory.
 2.  Copy `make.inc.example` to `make.inc` and modify it to suit your needs.
-    `MSLIBPATH` should point to the MatrixSwitch directory (default in
+    `MSWLIBPATH` should point to the MatrixSwitch directory (default in
     `make.inc.example` is for the version included in the distribution).
     MatrixSwitch should be compiled with the `-DCONV` flag. Available options
     for `FPPFLAGS` are:

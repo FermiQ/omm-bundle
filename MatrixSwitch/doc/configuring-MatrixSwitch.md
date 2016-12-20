@@ -1,5 +1,5 @@
 Configuring MatrixSwitch
-===============
+========================
 
 This document describes how to use the configure script of MatrixSwitch in various
 situations and tune the parameters of the build system.

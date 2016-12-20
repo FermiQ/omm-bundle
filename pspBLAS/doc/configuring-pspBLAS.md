@@ -26,11 +26,11 @@ Here is how to build pspBLAS with a build directory:
 Example:
 
     git clone http://www.e-cam2020.eu:10080/ESL/omm.git
-    cd omm/psp
+    cd omm/pspBLAS
     ./autogen.sh
     mkdir my-build-with-gcc
     cd my-build-with-gcc
-    ../configure --prefix="$HOME/my-libs/psp" CC="gcc" \
+    ../configure --prefix="$HOME/my-libs/pspBLAS" CC="gcc" \
       FC="gfortran" CFLAGS="-O3 -march=native" FCFLAGS="-g -O2"
     make -j4   # Run make using 4 processors
     make check
@@ -298,7 +298,7 @@ tree with the names of the components you want to use and store the
 corresponding parameters into files named after the component version numbers.
 
 Following is an example for pspBLAS. We will suppose that you have created a
-directory named *$HOME/modulefiles/psp* and have created a file named
+directory named *$HOME/modulefiles/pspBLAS* and have created a file named
 *git-version* there.
 
 Here is an example of what you can put in the *git-version* file:
@@ -308,7 +308,7 @@ Here is an example of what you can put in the *git-version* file:
     ##
     
     # Package parameters
-    set name    "psp"
+    set name    "pspBLAS"
     set version "git"
     set build   "gnu_4.9"
     set desc    "$name ($version, $build)"
@@ -327,7 +327,7 @@ Here is an example of what you can put in the *git-version* file:
     module-whatis  "Sets the environment for $desc"
     
     setenv PSP_INCLUDES "-I$root/include"
-    setenv PSP_LIBS "-L$root/lib -lpsp"
+    setenv PSP_LIBS "-L$root/lib -lpspBLAS"
     
     prepend-path LD_LIBRARY_PATH $root/lib
     prepend-path LIBRARY_PATH $root/lib
@@ -338,10 +338,10 @@ Once done, you can issue the following commands:
     module use $HOME/modulefiles
     module avail
 
-You should see *psp/git-version* appear among the listed packages. In this
-case, if you have built and installed pspBLAS in *$HOME/my_libs/psp-git*, you
-will be able to use it by typing `module load psp` and make it unavailable by
-typing `module unload psp`.
+You should see *pspBLAS/git-version* appear among the listed packages. In this
+case, if you have built and installed pspBLAS in *$HOME/my_libs/pspBLAS-git*,
+you will be able to use it by typing `module load pspBLAS` and make it
+unavailable by typing `module unload pspBLAS`.
 
 If you want your custom module files to be permanently available, just add the
 following to the *$HOME/.modulerc* file:

@@ -9,7 +9,7 @@ export LINALG_INCLUDES LINALG_LIBS
                     # ------------------------------------ #
 
 # Check that we are in an OMM source tree
-if test ! -s "psp/src/pspBLAS.F90" -o \
+if test ! -s "pspBLAS/src/pspBLAS.F90" -o \
         ! -s "MatrixSwitch/src/MatrixSwitch.F90" -o \
         ! -s "libOMM/src/omm.F90"; then
   echo "Error: this is not an OMM source tree" >&2
@@ -19,18 +19,18 @@ fi
                     # ------------------------------------ #
 
 # Set install dirs
-psp_prefix="${PWD}/build_psp"
+psp_prefix="${PWD}/build_pspBLAS"
 msw_prefix="${PWD}/build_MatrixSwitch"
 omm_prefix="${PWD}/build_libOMM"
 
 # Set build dirs
 root_builddir="${PWD}/tmp-objs"
-psp_builddir="${root_builddir}/psp"
+psp_builddir="${root_builddir}/pspBLAS"
 msw_builddir="${root_builddir}/MatrixSwitch"
 omm_builddir="${root_builddir}/libOMM"
 
 # Set source dirs
-psp_srcdir="${PWD}/psp"
+psp_srcdir="${PWD}/pspBLAS"
 msw_srcdir="${PWD}/MatrixSwitch"
 omm_srcdir="${PWD}/libOMM"
 
@@ -52,7 +52,7 @@ This script will install libraries under the following paths:
 Commands can be:
 
    * all      : build all libraries
-   * <lib>    : build library <lib> (psp, matrixswitch, and/or libomm)
+   * <lib>    : build library <lib> (pspblas, matrixswitch, and/or libomm)
    * check    : run test suites before installing libraries
    * clean    : remove temporary build directories (other commands are ignored)
    * examples : build examples along with the libraries

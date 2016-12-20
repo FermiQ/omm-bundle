@@ -1,17 +1,17 @@
 #
-# Makefile for the documentation of LibMatrixSwitch
+# Makefile for the documentation of libOMM
 #
 
 # Markdown sources
 omm_mddocs = \
-  configuring-libomm.md \
-  contributing-to-libomm.md \
+  configuring-libOMM.md \
+  contributing-to-libOMM.md \
   hacking-the-build-system.md
 
 # HTML documents
 omm_htmldocs = \
-  configuring-libomm.html \
-  contributing-to-libomm.html \
+  configuring-libOMM.html \
+  contributing-to-libOMM.html \
   hacking-the-build-system.html
 
                     ########################################

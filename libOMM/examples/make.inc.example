@@ -2,5 +2,5 @@ BLASLIB = -lblas
 LAPLIB  = -llapack
 SLAPLIB = -lscalapack
 
-PSPLIB = ../../psp/lib/libpspblas.a
-MSLIB = ../../MatrixSwitch/lib/MatrixSwitch.a
+PSPLIB = ../../pspBLAS/lib/libpspBLAS.a
+MSWLIB = ../../MatrixSwitch/lib/MatrixSwitch.a

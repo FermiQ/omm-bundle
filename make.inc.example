@@ -9,8 +9,8 @@ RANLIB    = ranlib
 PSPLIBNAME = libpspBLAS.a
 PSPBUILDPATH = $(ROOTDIR)/build_psp
 
-MSLIBNAME = libMatrixSwitch.a
-MSBUILDPATH = $(ROOTDIR)/build_MatrixSwitch
+MSWLIBNAME = libMatrixSwitch.a
+MSWBUILDPATH = $(ROOTDIR)/build_MatrixSwitch
 
 TOMATOLIBNAME = libtomato.a
 TOMATOBUILDPATH = $(ROOTDIR)/build_tomato

@@ -30,7 +30,7 @@ Example:
     ./autogen.sh
     mkdir my-build-with-gcc
     cd my-build-with-gcc
-    ../configure --prefix="$HOME/my-libs/libomm" CC="gcc" \
+    ../configure --prefix="$HOME/my-libs/libOMM" CC="gcc" \
       FC="gfortran" CFLAGS="-O3 -march=native" FCFLAGS="-g -O2"
     make -j4   # Run make using 4 processors
     make check
@@ -298,7 +298,7 @@ tree with the names of the components you want to use and store the
 corresponding parameters into files named after the component version numbers.
 
 Following is an example for libOMM. We will suppose that you have created a
-directory named *$HOME/modulefiles/libomm* and have created a file named
+directory named *$HOME/modulefiles/libOMM* and have created a file named
 *git-version* there.
 
 Here is an example of what you can put in the *git-version* file:
@@ -308,7 +308,7 @@ Here is an example of what you can put in the *git-version* file:
     ##
     
     # Package parameters
-    set name    "libomm"
+    set name    "libOMM"
     set version "git"
     set build   "gnu_4.9"
     set desc    "$name ($version, $build)"
@@ -327,7 +327,7 @@ Here is an example of what you can put in the *git-version* file:
     module-whatis  "Sets the environment for $desc"
     
     setenv MSW_INCLUDES "-I$root/include"
-    setenv MSW_LIBS "-L$root/lib -llibomm"
+    setenv MSW_LIBS "-L$root/lib -lOMM"
     
     prepend-path LD_LIBRARY_PATH $root/lib
     prepend-path LIBRARY_PATH $root/lib
@@ -338,11 +338,11 @@ Once done, you can issue the following commands:
     module use $HOME/modulefiles
     module avail
 
-You should see *libomm/git-version* appear among the listed packages. In
+You should see *libOMM/git-version* appear among the listed packages. In
 this case, if you have built and installed libOMM in
-*$HOME/my_libs/libomm-git*, you will be able to use it by typing `module
-load libomm` and make it unavailable by typing `module unload
-libomm`.
+*$HOME/my_libs/libOMM-git*, you will be able to use it by typing `module
+load libOMM` and make it unavailable by typing `module unload
+libOMM`.
 
 If you want your custom module files to be permanently available, just add the
 following to the *$HOME/.modulerc* file:

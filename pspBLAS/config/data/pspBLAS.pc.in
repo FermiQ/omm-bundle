@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libomm
-Description: Library solving the Kohn-Sham equation for a fixed Hamiltonian.
+Name: pspBLAS
+Description: Library providing sparse matrix storage and operations.
 Version: @VERSION@
-Libs: -L${libdir} -lomm
+Libs: -L${libdir} -lpspBLAS
 Cflags: -I${includedir}

@@ -8,5 +8,5 @@ RANLIB    = ranlib
 
 LIBNAME = tomato.a
 BUILDPATH = ..
-PSPINCLUDEPATH = ../../psp/include
-MSINCLUDEPATH = ../../MatrixSwitch/include
+PSPINCLUDEPATH = ../../pspBLAS/include
+MSWINCLUDEPATH = ../../MatrixSwitch/include

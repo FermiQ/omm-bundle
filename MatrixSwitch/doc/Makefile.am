@@ -1,5 +1,5 @@
 #
-# Makefile for the documentation of LibMatrixSwitch
+# Makefile for the documentation of MatrixSwitch
 #
 
 # Markdown sources

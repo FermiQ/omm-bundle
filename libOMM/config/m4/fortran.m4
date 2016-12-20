@@ -1,11 +1,11 @@
 # -*- Autoconf -*-
 #
-# M4 macros for MatrixSwitch
+# M4 macros for libOMM
 #
 # Copyright (C) 2016 Yann Pouillon
 #
-# This file is part of the MatrixSwitch software package. For license information,
-# please see the COPYING file in the top-level directory of the MatrixSwitch source
+# This file is part of the libOMM software package. For license information,
+# please see the COPYING file in the top-level directory of the libOMM source
 # distribution.
 #
 

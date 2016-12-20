@@ -9,4 +9,4 @@ RANLIB    = ranlib
 LIBNAME = MatrixSwitch.a
 BUILDPATH = ..
 
-PSPINCLUDEPATH = ../../psp/include
+PSPINCLUDEPATH = ../../pspBLAS/include

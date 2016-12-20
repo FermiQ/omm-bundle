@@ -6,5 +6,5 @@ ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib
 
-LIBNAME = libpspblas.a
+LIBNAME = libpspBLAS.a
 BUILDPATH = $(PSPDIR)

@@ -2,4 +2,4 @@ BLASLIB = -lblas
 LAPLIB  = -llapack
 SLAPLIB = -lscalapack
 
-PSPLIB = ../../psp/lib/libpspblas.a
+PSPLIB = ../../pspBLAS/lib/libpspBLAS.a

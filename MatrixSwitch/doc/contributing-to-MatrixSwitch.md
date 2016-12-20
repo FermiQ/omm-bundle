@@ -1,5 +1,5 @@
 Contributing to MatrixSwitch
-===================
+============================
 
 MatrixSwitch follows the GNU Coding Standards as much as permitted by the
 experience of its developers. If you are planning to contribute, we thus

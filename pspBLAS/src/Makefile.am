@@ -93,7 +93,7 @@ psp_f03_mods = \
   psplevel1.$(MODEXT)
 
 # Libraries to install
-lib_LTLIBRARIES = libpspblas.la
+lib_LTLIBRARIES = libpspBLAS.la
 
 libpspblas_la_SOURCES = $(psp_srcs)
 libpspblas_la_LDFLAGS = -version-info 0:0:0
