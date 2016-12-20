@@ -465,7 +465,7 @@ fi
                     # ------------------------------------ #
 
 # Write down YAML configuration now (allows full report with deferred errors)
-AC_OUTPUT([config/data/psp-config.yaml])
+AC_OUTPUT([config/data/pspBLAS-config.yaml])
 
 # Report configuration
 AC_MSG_NOTICE([])
@@ -497,7 +497,7 @@ AC_MSG_NOTICE([])
 #
 
 AC_CONFIG_FILES([
-  config/data/psp.pc
+  config/data/pspBLAS.pc
   Makefile
   doc/Makefile
   src/Makefile

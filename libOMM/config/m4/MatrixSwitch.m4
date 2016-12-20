@@ -22,15 +22,15 @@
 #
 AC_DEFUN([OMM_MSW_DETECT],[
   dnl Init
-  omm_matrixswitch_ok="unknown"
+  omm_msw_ok="unknown"
 
   dnl Prepare environment
   saved_CPPFLAGS="${CPPFLAGS}"
   saved_FCFLAGS="${FCFLAGS}"
   saved_LIBS="${LIBS}"
-  CPPFLAGS="${CPPFLAGS} ${omm_matrixswitch_incs}"
-  FCFLAGS="${FCFLAGS} ${omm_matrixswitch_incs}"
-  LIBS="${omm_matrixswitch_libs} ${LIBS}"
+  CPPFLAGS="${CPPFLAGS} ${omm_msw_incs}"
+  FCFLAGS="${FCFLAGS} ${omm_msw_incs}"
+  LIBS="${omm_msw_libs} ${LIBS}"
 
   dnl Check MatrixSwitch routine
   AC_LANG_PUSH([Fortran])
@@ -42,8 +42,8 @@ AC_DEFUN([OMM_MSW_DETECT],[
       double precision :: x_min
       type(matrix) :: HW, HWd
       call m_add(HWd, 'c', HW, x_min, 1.0d0, m_operation)
-    ]])], [omm_matrixswitch_ok="yes"], [omm_matrixswitch_ok="no"])
-  AC_MSG_RESULT([${omm_matrixswitch_ok}])
+    ]])], [omm_msw_ok="yes"], [omm_msw_ok="no"])
+  AC_MSG_RESULT([${omm_msw_ok}])
   AC_LANG_POP([Fortran])
 
   dnl Restore environment

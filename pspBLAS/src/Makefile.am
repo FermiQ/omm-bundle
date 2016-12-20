@@ -95,8 +95,8 @@ psp_f03_mods = \
 # Libraries to install
 lib_LTLIBRARIES = libpspBLAS.la
 
-libpspblas_la_SOURCES = $(psp_srcs)
-libpspblas_la_LDFLAGS = -version-info 0:0:0
+libpspBLAS_la_SOURCES = $(psp_srcs)
+libpspBLAS_la_LDFLAGS = -version-info 0:0:0
 
 # Fortran modules to install
 f03moddir = $(includedir)

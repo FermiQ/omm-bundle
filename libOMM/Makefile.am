@@ -22,12 +22,12 @@ endif
 
 # Support for pkg-config (see http://pkg-config.freedesktop.org/wiki/)
 pkgconfigdir = $(prefix)/lib/pkgconfig
-pkgconfig_DATA = config/data/libomm.pc
+pkgconfig_DATA = config/data/libOMM.pc
 
 # Files to explicitly distribute in the source package
 EXTRA_DIST = \
-  config/data/libomm.pc.in \
-  config/data/libomm-config.yaml.in \
+  config/data/libOMM.pc.in \
+  config/data/libOMM-config.yaml.in \
   config/scripts/markdown
 
 # Custom targets

@@ -232,7 +232,7 @@ AC_ARG_WITH([psp],
       msw_psp_enable="yes"
       msw_psp_type="dir"
       msw_psp_incs="-I${withval}/include"
-      msw_psp_libs="-L${withval}/lib -lpspblas"
+      msw_psp_libs="-L${withval}/lib -lpspBLAS"
     fi],
   [msw_psp_enable="${msw_psp_enable_def}"; msw_psp_type="def";
     msw_psp_incs=""; msw_psp_libs=""])

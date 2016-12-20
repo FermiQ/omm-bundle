@@ -7,7 +7,7 @@ ARCHFLAGS = cr
 RANLIB    = ranlib
 
 PSPLIBNAME = libpspBLAS.a
-PSPBUILDPATH = $(ROOTDIR)/build_psp
+PSPBUILDPATH = $(ROOTDIR)/build_pspBLAS
 
 MSWLIBNAME = libMatrixSwitch.a
 MSWBUILDPATH = $(ROOTDIR)/build_MatrixSwitch

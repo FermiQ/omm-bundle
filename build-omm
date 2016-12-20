@@ -8,11 +8,11 @@ export LINALG_INCLUDES LINALG_LIBS
 
                     # ------------------------------------ #
 
-# Check that we are in an OMM source tree
+# Check that we are in an omm-bundle source tree
 if test ! -s "pspBLAS/src/pspBLAS.F90" -o \
         ! -s "MatrixSwitch/src/MatrixSwitch.F90" -o \
         ! -s "libOMM/src/omm.F90"; then
-  echo "Error: this is not an OMM source tree" >&2
+  echo "Error: this is not an omm-bundle source tree" >&2
   exit 1
 fi
 
@@ -231,7 +231,7 @@ if test "${bld_omm}" = "yes"; then
     --srcdir="${omm_srcdir}" \
     --prefix="${omm_prefix}" \
     --with-psp="${psp_prefix}" \
-    --with-matrixswitch="${msw_prefix}" \
+    --with-msw="${msw_prefix}" \
     ${cfg_omm}
   sleep 3
   make -j4

@@ -6,7 +6,7 @@ ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib
 
-LIBNAME = MatrixSwitch.a
+LIBNAME = libMatrixSwitch.a
 BUILDPATH = ..
 
 PSPINCLUDEPATH = ../../pspBLAS/include

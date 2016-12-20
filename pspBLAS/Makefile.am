@@ -19,12 +19,12 @@ SUBDIRS = src test doc
 
 # Support for pkg-config (see http://pkg-config.freedesktop.org/wiki/)
 pkgconfigdir = $(prefix)/lib/pkgconfig
-pkgconfig_DATA = config/data/psp.pc
+pkgconfig_DATA = config/data/pspBLAS.pc
 
 # Files to explicitly distribute in the source package
 EXTRA_DIST = \
-  config/data/psp.pc.in \
-  config/data/psp-config.yaml.in \
+  config/data/pspBLAS.pc.in \
+  config/data/pspBLAS-config.yaml.in \
   config/scripts/markdown
 
 # Custom targets

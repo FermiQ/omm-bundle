@@ -33,10 +33,10 @@ omm_f03_mods = \
   omm_rand.$(MODEXT)
 
 # Libraries to install
-lib_LTLIBRARIES = libomm.la
+lib_LTLIBRARIES = libOMM.la
 
-libomm_la_SOURCES = $(omm_srcs)
-libomm_la_LDFLAGS = -version-info 0:0:0
+libOMM_la_SOURCES = $(omm_srcs)
+libOMM_la_LDFLAGS = -version-info 0:0:0
 
 # Fortran modules to install
 f03moddir = $(includedir)

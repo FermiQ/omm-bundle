@@ -63,7 +63,7 @@ AC_PROG_GREP
 #   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
 omm_cfg_switches="debug examples randseed"
-omm_cfg_extdeps="linalg mpi psp matrixswitch"
+omm_cfg_extdeps="linalg mpi psp msw"
 
 # Optional features
 omm_debug_enable_def="yes"
@@ -88,9 +88,9 @@ omm_psp_incs_def=""
 omm_psp_libs_def=""
 
 # MatrixSwitch
-omm_matrixswitch_enable_def="yes"
-omm_matrixswitch_incs_def=""
-omm_matrixswitch_libs_def=""
+omm_msw_enable_def="yes"
+omm_msw_incs_def=""
+omm_msw_libs_def=""
 
                     # ------------------------------------ #
 
@@ -237,7 +237,7 @@ AC_ARG_WITH([psp],
       omm_psp_enable="yes"
       omm_psp_type="dir"
       omm_psp_incs="-I${withval}/include"
-      omm_psp_libs="-L${withval}/lib -lpspblas"
+      omm_psp_libs="-L${withval}/lib -lpspBLAS"
     fi],
   [omm_psp_enable="${omm_psp_enable_def}"; omm_psp_type="def";
     omm_psp_incs=""; omm_psp_libs=""])
@@ -257,33 +257,33 @@ if test -n "${PSP_LIBS}"; then
 fi
 
 # MatrixSwitch (optional)
-AC_ARG_WITH([matrixswitch],
-  [AS_HELP_STRING([--with-matrixswitch],
-    [Install prefix of the MatrixSwitch library (e.g. /usr/local). MatrixSwitch support will be enabled only if you use this option. You may use --with-matrixswitch without argument if MatrixSwitch is installed as a system library, and --without-matrixswitch to disable MatrixSwitch support completely.])],
+AC_ARG_WITH([msw],
+  [AS_HELP_STRING([--with-msw],
+    [Install prefix of the MatrixSwitch library (e.g. /usr/local). MatrixSwitch support will be enabled only if you use this option. You may use --with-msw without argument if MatrixSwitch is installed as a system library, and --without-msw to disable MatrixSwitch support completely.])],
   [ if test "${withval}" = "no" -o "${withval}" = "yes"; then
-      omm_matrixswitch_enable="${withval}"
-      omm_matrixswitch_type="yon"
+      omm_msw_enable="${withval}"
+      omm_msw_type="yon"
     else
-      omm_matrixswitch_enable="yes"
-      omm_matrixswitch_type="dir"
-      omm_matrixswitch_incs="-I${withval}/include"
-      omm_matrixswitch_libs="-L${withval}/lib -lMatrixSwitch"
+      omm_msw_enable="yes"
+      omm_msw_type="dir"
+      omm_msw_incs="-I${withval}/include"
+      omm_msw_libs="-L${withval}/lib -lMatrixSwitch"
     fi],
-  [omm_matrixswitch_enable="${omm_matrixswitch_enable_def}"; omm_matrixswitch_type="def";
-    omm_matrixswitch_incs=""; omm_matrixswitch_libs=""])
-AC_SUBST(with_matrixswitch)
+  [omm_msw_enable="${omm_msw_enable_def}"; omm_msw_type="def";
+    omm_msw_incs=""; omm_msw_libs=""])
+AC_SUBST(with_msw)
 
 AC_ARG_VAR([MSW_INCLUDES],
-  [Include flags for MatrixSwitch. Please note that this variable conflicts with the --with-matrixswitch option.])
+  [Include flags for MatrixSwitch. Please note that this variable conflicts with the --with-msw option.])
 if test -n "${MSW_INCLUDES}"; then
-  omm_matrixswitch_enable="yes"
-  omm_matrixswitch_type="env"
+  omm_msw_enable="yes"
+  omm_msw_type="env"
 fi
 AC_ARG_VAR([MSW_LIBS],
-    [Library flags for MatrixSwitch. Please note that this variable conflicts with the --with-matrixswitch option.])
+    [Library flags for MatrixSwitch. Please note that this variable conflicts with the --with-msw option.])
 if test -n "${MSW_LIBS}"; then
-  omm_matrixswitch_enable="yes"
-  omm_matrixswitch_type="env"
+  omm_msw_enable="yes"
+  omm_msw_type="env"
 fi
 
                     # ------------------------------------ #
@@ -323,8 +323,8 @@ if test -n "${tmp_psp_vars}" -a \
 fi
 
 # All MatrixSwitch environment variables must be provided at once
-tmp_matrixswitch_vars="${MSW_INCLUDES}${MSW_LIBS}"
-if test -n "${tmp_matrixswitch_vars}" -a \
+tmp_msw_vars="${MSW_INCLUDES}${MSW_LIBS}"
+if test -n "${tmp_msw_vars}" -a \
         \( -z "${MSW_INCLUDES}" -o -z "${MSW_LIBS}" \); then
   AC_MSG_ERROR([MSW_INCLUDES and MSW_LIBS must both be set])
 fi
@@ -360,9 +360,9 @@ if test -n "${tmp_psp_vars}"; then
   omm_psp_enable="yes"
   omm_psp_type="env"
 fi
-if test -n "${tmp_matrixswitch_vars}"; then
-  omm_matrixswitch_enable="yes"
-  omm_matrixswitch_type="env"
+if test -n "${tmp_msw_vars}"; then
+  omm_msw_enable="yes"
+  omm_msw_type="env"
 fi
 
 # pspBLAS requires MPI
@@ -395,9 +395,9 @@ AC_SUBST(omm_linalg_libs_def)
 AC_SUBST(omm_psp_enable_def)
 AC_SUBST(omm_psp_incs_def)
 AC_SUBST(omm_psp_libs_def)
-AC_SUBST(omm_matrixswitch_enable_def)
-AC_SUBST(omm_matrixswitch_incs_def)
-AC_SUBST(omm_matrixswitch_libs_def)
+AC_SUBST(omm_msw_enable_def)
+AC_SUBST(omm_msw_incs_def)
+AC_SUBST(omm_msw_libs_def)
 
 # Triggers
 AC_SUBST(omm_debug_enable)
@@ -406,7 +406,7 @@ AC_SUBST(omm_randseed_enable)
 AC_SUBST(omm_mpi_enable)
 AC_SUBST(omm_linalg_enable)
 AC_SUBST(omm_psp_enable)
-AC_SUBST(omm_matrixswitch_enable)
+AC_SUBST(omm_msw_enable)
 
 # Initialization types
 AC_SUBST(omm_debug_type)
@@ -415,7 +415,7 @@ AC_SUBST(omm_randseed_type)
 AC_SUBST(omm_mpi_type)
 AC_SUBST(omm_linalg_type)
 AC_SUBST(omm_psp_type)
-AC_SUBST(omm_matrixswitch_type)
+AC_SUBST(omm_msw_type)
 
 # Internal MPI parameters
 AC_SUBST(omm_mpi_cc_set)
@@ -432,8 +432,8 @@ AC_SUBST(omm_linalg_has_lapack)
 AC_SUBST(omm_linalg_has_scalapack)
 AC_SUBST(omm_psp_incs)
 AC_SUBST(omm_psp_libs)
-AC_SUBST(omm_matrixswitch_incs)
-AC_SUBST(omm_matrixswitch_libs)
+AC_SUBST(omm_msw_incs)
+AC_SUBST(omm_msw_libs)
 
                     # ------------------------------------ #
 
@@ -624,37 +624,37 @@ if test "${omm_psp_enable}" = "yes"; then
 fi
 
 # Set MatrixSwitch includes
-if test "${omm_matrixswitch_type}" != "dir"; then
+if test "${omm_msw_type}" != "dir"; then
   if test -n "${MSW_INCLUDES}"; then
-    omm_matrixswitch_incs="${MSW_INCLUDES}"
+    omm_msw_incs="${MSW_INCLUDES}"
   else
-    omm_matrixswitch_incs="${omm_matrixswitch_incs_def}"
+    omm_msw_incs="${omm_msw_incs_def}"
   fi
 fi
 
 # Set MatrixSwitch libraries
-if test "${omm_matrixswitch_type}" != "dir"; then
+if test "${omm_msw_type}" != "dir"; then
   if test -n "${MSW_LIBS}"; then
-    omm_matrixswitch_libs="${MSW_LIBS}"
+    omm_msw_libs="${MSW_LIBS}"
   else
-    omm_matrixswitch_libs="${omm_matrixswitch_libs_def}"
+    omm_msw_libs="${omm_msw_libs_def}"
   fi
 fi
 
 # Look for MatrixSwitch
 AC_MSG_CHECKING([whether to look for MatrixSwitch])
-AC_MSG_RESULT([${omm_matrixswitch_enable}])
-if test "${omm_matrixswitch_enable}" = "yes"; then
+AC_MSG_RESULT([${omm_msw_enable}])
+if test "${omm_msw_enable}" = "yes"; then
   AC_MSG_CHECKING([how MatrixSwitch parameters have been set])
-  AC_MSG_RESULT([${omm_matrixswitch_type}])
+  AC_MSG_RESULT([${omm_msw_type}])
   AC_MSG_CHECKING([for MatrixSwitch include flags])
-  AC_MSG_RESULT([${omm_matrixswitch_incs}])
+  AC_MSG_RESULT([${omm_msw_incs}])
   AC_MSG_CHECKING([for MatrixSwitch library flags])
-  AC_MSG_RESULT([${omm_matrixswitch_libs}])
+  AC_MSG_RESULT([${omm_msw_libs}])
   OMM_MSW_DETECT
-  if test "${omm_matrixswitch_ok}" = "yes"; then
-    CPPFLAGS="${CPPFLAGS} ${omm_matrixswitch_incs}"
-    LIBS="${omm_matrixswitch_libs} ${LIBS}"
+  if test "${omm_msw_ok}" = "yes"; then
+    CPPFLAGS="${CPPFLAGS} ${omm_msw_incs}"
+    LIBS="${omm_msw_libs} ${LIBS}"
   else
     AC_MSG_FAILURE([MatrixSwitch is missing or incomplete])
   fi
@@ -703,7 +703,7 @@ fi
                     # ------------------------------------ #
 
 # Write down YAML configuration now (allows full report with deferred errors)
-AC_OUTPUT([config/data/libomm-config.yaml])
+AC_OUTPUT([config/data/libOMM-config.yaml])
 
                     # ------------------------------------ #
 
@@ -740,7 +740,7 @@ AC_MSG_NOTICE([])
 #
 
 AC_CONFIG_FILES([
-  config/data/libomm.pc
+  config/data/libOMM.pc
   Makefile
   doc/Makefile
   src/Makefile

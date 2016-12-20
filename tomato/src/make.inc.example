@@ -6,7 +6,7 @@ ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib
 
-LIBNAME = tomato.a
+LIBNAME = libtomato.a
 BUILDPATH = ..
 PSPINCLUDEPATH = ../../pspBLAS/include
 MSWINCLUDEPATH = ../../MatrixSwitch/include
