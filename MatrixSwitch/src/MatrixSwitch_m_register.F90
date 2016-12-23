@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module MatrixSwitch_m_register
   use MatrixSwitch_ops
 

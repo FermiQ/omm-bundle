@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module MatrixSwitch_wrapper
   use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &
