@@ -9,16 +9,7 @@ implement them or not is purely yours.
 Remarks for the 3 libraries
 ---------------------------
 
-01. A very common practice for optional code is to prefix CPP option names
-    with "HAVE_", e.g. "HAVE_MPI".
-
-02. For CPP options, it is better to have self-explanatory names, e.g.:
-      - LAP  ---> HAVE_LAPACK;
-      - SLAP ---> HAVE_SCALAPACK.
-    This makes it much easier for occasional contributors to understand
-    the code and greatly reduces the probability of name clashing.
-
-03. ISO C bindings are now supported by 99.99% of the compilers and can be
+01. ISO C bindings are now supported by 99.99% of the compilers and can be
     enabled all the time, which means that the "CBIND" CPP option is not
     necessary anymore.
 
