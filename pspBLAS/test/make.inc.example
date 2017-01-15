@@ -1,3 +1,2 @@
-BLASLIB = -lblas
-LAPLIB  = -llapack
-SLAPLIB = -lscalapack
+LINALG_INCLUDES =
+LINALG_LIBS = -lscalapack -llapack -lblas

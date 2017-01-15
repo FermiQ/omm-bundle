@@ -18,6 +18,5 @@ TOMBUILDPATH = $(ROOTDIR)/build_tomato
 OMMLIBNAME = libOMM.a
 OMMBUILDPATH = $(ROOTDIR)/build_libOMM
 
-BLASLIB = -lblas
-LAPLIB  = -llapack
-SLAPLIB = -lscalapack
+LINALG_INCLUDES =
+LINALG_LIBS = -lscalapack -llapack -lblas

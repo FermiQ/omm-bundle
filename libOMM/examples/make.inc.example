@@ -1,6 +1,5 @@
-BLASLIB = -lblas
-LAPLIB  = -llapack
-SLAPLIB = -lscalapack
+LINALG_INCLUDES =
+LINALG_LIBS = -lscalapack -llapack -lblas
 
 PSPLIB = ../../pspBLAS/lib/libpspBLAS.a
 MSWLIB = ../../MatrixSwitch/lib/libMatrixSwitch.a

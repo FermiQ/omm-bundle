@@ -28,7 +28,7 @@ spBLAS.x : spBLAS.F90
 clean :
 	rm -f *.x
 
-LINK_MACRO = $< -I$(BUILDPATH)/include $(BUILDPATH)/lib/$(LIBNAME) $(SLAPLIB) $(LAPLIB) $(BLASLIB) -o $@
+LINK_MACRO = $< -I$(BUILDPATH)/include $(LINALG_INCLUDES) $(BUILDPATH)/lib/$(LIBNAME) $(LINALG_LIBS) -o $@
 
 .F90.x :
 	$(FORTRAN) $(OPTS) $(FPPFLAGS) $(LINK_MACRO)
