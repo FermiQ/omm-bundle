@@ -696,8 +696,8 @@ if test "${omm_linalg_has_scalapack}" = "yes"; then
   omm_cpp_options="${omm_cpp_options} HAVE_SCALAPACK"
 fi
 if test "${omm_psp_ok}" = "yes"; then
-  AC_DEFINE([PSP], 1, [Define to 1 if you have the pspBLAS library available.])
-  omm_cpp_options="${omm_cpp_options} PSP"
+  AC_DEFINE([HAVE_PSPBLAS], 1, [Define to 1 if you have the pspBLAS library available.])
+  omm_cpp_options="${omm_cpp_options} HAVE_PSPBLAS"
 fi
 
                     # ------------------------------------ #

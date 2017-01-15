@@ -9,7 +9,7 @@ module MatrixSwitch
   use MatrixSwitch_m_set
   use MatrixSwitch_m_copy
   use MatrixSwitch_m_register
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   use pspBLAS
 #endif
 
@@ -80,7 +80,7 @@ module MatrixSwitch
   public :: ms_scalapack_setup
   public :: ms_lap_icontxt
 #endif
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   public :: m_register_psp_thre
   public :: m_register_psp_st
 #endif
@@ -260,7 +260,7 @@ contains
        end if
     end if
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
     if (((m_name%str_type .eq. 'coo') .or. &
          (m_name%str_type .eq. 'csc')) .and. &
         (.not. m_name%is_serial)) call psp_deallocate_spm(m_name%spm)
@@ -540,7 +540,7 @@ contains
           if (present(threshold_is_soft) .and. (threshold_is_soft)) then
              call die('m_copy: soft thresholding not yet implemented')
           else
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
              if (A%is_real) then
                 call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'coo',threshold)
              else
@@ -558,7 +558,7 @@ contains
           if (present(threshold_is_soft) .and. (threshold_is_soft)) then
              call die('m_copy: soft thresholding not yet implemented')
           else
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
              if (A%is_real) then
                 call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'csc',threshold)
              else
@@ -908,7 +908,7 @@ contains
        call die('mm_dmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trA) then
           i=A%dim1
        else
@@ -919,7 +919,7 @@ contains
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
     case (5)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trA) then
           i=A%dim1
        else
@@ -930,7 +930,7 @@ contains
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
     case (6)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trB) then
           call die('mm_dmultiply: not implemented for transposed B')
        else
@@ -940,7 +940,7 @@ contains
        call die('mm_dmultiply: compile with pspBLAS')
 #endif
     case (7)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trA) then
           call die('mm_dmultiply: not implemented for transposed A')
        else
@@ -962,7 +962,7 @@ contains
     case (13)
        call mm_multiply_sddensddensdcsrref(A,trA,B,trB,C,alpha,beta)
     case (14)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trA .eqv. trB) then
           call die('mm_dmultiply: not implemented for combination of op(A) and op(B)')
        else
@@ -1241,7 +1241,7 @@ contains
        call die('mm_zmultiply: compile with ScaLAPACK')
 #endif
     case (4)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (tcA>0) then
           i=A%dim1
        else
@@ -1252,7 +1252,7 @@ contains
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
     case (5)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (tcA>0) then
           i=A%dim1
        else
@@ -1263,7 +1263,7 @@ contains
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
     case (6)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (tcB>0) then
           call die('mm_zmultiply: not implemented for transposed B')
        else
@@ -1273,7 +1273,7 @@ contains
        call die('mm_zmultiply: compile with pspBLAS')
 #endif
     case (7)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (tcA>0) then
           call die('mm_zmultiply: not implemented for transposed A')
        else
@@ -1295,7 +1295,7 @@ contains
     case (13)
        call mm_multiply_szdenszdenszcsrref(A,tcA,B,tcB,C,alpha,beta)
     case (14)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if ((tcA==tcB) .or. (tcA+tcB>2)) then
           call die('mm_zmultiply: not implemented for combination of op(A) and op(B)')
        else
@@ -1449,7 +1449,7 @@ contains
        call die('m_dadd: compile with ScaLAPACK')
 #endif
     case (3)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (trA) call die('m_dadd: implementation only valid for opA=''n''')
        if ((A%spm%loc_dim1/=C%iaux2(1)) .or. &
            (A%spm%loc_dim2/=C%iaux2(2))) call die('m_dadd: matrices A and C must have identical parallel distributions')
@@ -1599,7 +1599,7 @@ contains
        call die('m_zadd: compile with ScaLAPACK')
 #endif
     case (3)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
        if (tcA>0) call die('m_zadd: implementation only valid for opA=''n''')
        if ((A%spm%loc_dim1/=C%iaux2(1)) .or. &
            (A%spm%loc_dim2/=C%iaux2(2))) call die('m_zadd: matrices A and C must have identical parallel distributions')
@@ -3061,7 +3061,7 @@ contains
        call blacs_gridinit(ms_lap_icontxt,ms_lap_order,ms_lap_nprow,ms_lap_npcol)
     end if
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
     ! initialized grid information in pspBLAS
     call psp_gridinit_2D(ms_mpi_comm,ms_mpi_size,ms_lap_nprow,ms_lap_order,ms_lap_bs_def,ms_lap_bs_def,ms_lap_icontxt)
 #endif

@@ -1243,7 +1243,7 @@ contains
   ! implementation: sparse-dense 1D distributed    !
   !================================================!
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine mm_multiply_pddbcpdcscpddbct1D(A,B,trB,C,alpha,beta)
     implicit none
     include 'mpif.h'

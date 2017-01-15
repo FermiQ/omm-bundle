@@ -607,8 +607,8 @@ if test "${msw_linalg_has_scalapack}" = "yes"; then
   msw_cpp_options="${msw_cpp_options} HAVE_SCALAPACK"
 fi
 if test "${msw_psp_ok}" = "yes"; then
-  AC_DEFINE([PSP], 1, [Define to 1 if you have the pspBLAS library available.])
-  msw_cpp_options="${msw_cpp_options} PSP"
+  AC_DEFINE([HAVE_PSPBLAS], 1, [Define to 1 if you have the pspBLAS library available.])
+  msw_cpp_options="${msw_cpp_options} HAVE_PSPBLAS"
 fi
 
                     # ------------------------------------ #

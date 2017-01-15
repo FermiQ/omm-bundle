@@ -13,7 +13,7 @@ contains
   ! implementation: reference                      !
   !================================================!
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine m_add_pdcscpddbcref(A,C,alpha,beta)
     implicit none
     include 'mpif.h'

@@ -1273,7 +1273,7 @@ subroutine dcalc_PW_precon(T,scale_T,P)
 
   select case (ot)
     case (1)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
       do i=1,T%spm%nnz
         !P%spm%dval(i)=1.0_dp/(1.0_dp+T%spm%dval(i)/scale_T)
         s=2.0_dp*T%spm%dval(i)/scale_T
@@ -1318,7 +1318,7 @@ subroutine zcalc_PW_precon(T,scale_T,P)
 
   select case (ot)
     case (1)
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
       do i=1,T%spm%nnz
         P%spm%zval(i)=1.0_dp/(1.0_dp+abs(T%spm%zval(i))/scale_T)
       end do

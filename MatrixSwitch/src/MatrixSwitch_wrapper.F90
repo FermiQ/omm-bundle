@@ -24,7 +24,7 @@ module MatrixSwitch_wrapper
     ms_scalapack_setup, &
     ms_lap_icontxt
 #endif
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   use MatrixSwitch, only: &
     m_register_psp_thre_orig => m_register_psp_thre, &
     m_register_psp_st_orig => m_register_psp_st
@@ -92,7 +92,7 @@ module MatrixSwitch_wrapper
   end interface m_register_pdbc
 #endif
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   interface m_register_psp_thre
      module procedure m_register_pdsp_thre
      module procedure m_register_pzsp_thre
@@ -133,7 +133,7 @@ module MatrixSwitch_wrapper
   public :: ms_scalapack_setup
   public :: ms_lap_icontxt
 #endif
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   public :: m_register_psp_thre
   public :: m_register_psp_st
 #endif
@@ -799,7 +799,7 @@ contains
   ! register matrix by thresholding                      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
@@ -823,7 +823,7 @@ contains
   end subroutine m_register_pdsp_thre
 #endif
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
@@ -851,7 +851,7 @@ contains
   ! register matrix using the Sparse Triplet format      !
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine m_register_pdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 
@@ -873,7 +873,7 @@ contains
   end subroutine m_register_pdsp_st
 #endif
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   subroutine m_register_pzsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
     implicit none
 

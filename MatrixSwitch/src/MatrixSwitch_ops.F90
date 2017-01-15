@@ -3,7 +3,7 @@
 #endif
 
 module MatrixSwitch_ops
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
   use pspBLAS
 #endif
 
@@ -64,7 +64,7 @@ module MatrixSwitch_ops
 
      complex(dp), pointer :: zval(:,:) => null() ! matrix elements for a complex matrix
 
-#ifdef PSP
+#ifdef HAVE_PSPBLAS
      type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
 #endif
   end type matrix
