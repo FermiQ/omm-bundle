@@ -103,7 +103,7 @@ while test "${#}" -gt 0; do
     [Mm]atrix[Ss]witch)
       bld_msw="yes"
       ;;
-    [Pp]sp)
+    [Pp]sp[Bb][Ll][Aa][Ss])
       bld_psp="yes"
       ;;
     wipe)

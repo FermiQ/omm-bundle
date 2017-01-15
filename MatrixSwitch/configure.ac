@@ -599,12 +599,12 @@ AM_CONDITIONAL([DO_BUILD_EXAMPLES], [test "${enable_examples}" = "yes"])
 
 # External dependencies (alphabetical order)
 if test "${msw_linalg_has_lapack}" = "yes"; then
-  AC_DEFINE([LAP], 1, [Define to 1 if you have LAPACK libraries available.])
-  msw_cpp_options="${msw_cpp_options} LAP"
+  AC_DEFINE([HAVE_LAPACK], 1, [Define to 1 if you have LAPACK libraries available.])
+  msw_cpp_options="${msw_cpp_options} HAVE_LAPACK"
 fi
 if test "${msw_linalg_has_scalapack}" = "yes"; then
-  AC_DEFINE([SLAP], 1, [Define to 1 if you have ScaLAPACK libraries available.])
-  msw_cpp_options="${msw_cpp_options} SLAP"
+  AC_DEFINE([HAVE_SCALAPACK], 1, [Define to 1 if you have ScaLAPACK libraries available.])
+  msw_cpp_options="${msw_cpp_options} HAVE_SCALAPACK"
 fi
 if test "${msw_psp_ok}" = "yes"; then
   AC_DEFINE([PSP], 1, [Define to 1 if you have the pspBLAS library available.])

@@ -293,14 +293,14 @@ subroutine m_dfactorize(C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call dpotrf('u',C%dim1,C%dval,C%dim1,info)
       if (info/=0) call die('m_dfactorize: error in dpotrf')
 #else
       call die('m_dfactorize: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pdpotrf('u',C%dim1,C%dval,1,1,C%iaux1,info)
       if (info/=0) call die('m_dfactorize: error in pdpotrf')
 #else
@@ -362,14 +362,14 @@ subroutine m_zfactorize(C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call zpotrf('u',C%dim1,C%zval,C%dim1,info)
       if (info/=0) call die('m_zfactorize: error in zpotrf')
 #else
       call die('m_zfactorize: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pzpotrf('u',C%dim1,C%zval,1,1,C%iaux1,info)
       if (info/=0) call die('m_zfactorize: error in pzpotrf')
 #else
@@ -473,7 +473,7 @@ subroutine m_dreduce(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call dsygst(1,'u',C%dim1,C%dval,C%dim1,A%dval,A%dim1,info)
       if (info/=0) call die('m_dreduce: error in dsygst')
       do i=1,C%dim1-1
@@ -485,7 +485,7 @@ subroutine m_dreduce(A,C,label)
       call die('m_dreduce: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pdsygst(1,'u',C%dim1,C%dval,1,1,C%iaux1,A%dval,1,1,A%iaux1,scale_Cholesky,info)
       if (info/=0) call die('m_dreduce: error in pdsygst')
       if (C%is_serial) then
@@ -580,7 +580,7 @@ subroutine m_zreduce(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call zhegst(1,'u',C%dim1,C%zval,C%dim1,A%zval,A%dim1,info)
       if (info/=0) call die('m_zreduce: error in zhegst')
       do i=1,C%dim1-1
@@ -592,7 +592,7 @@ subroutine m_zreduce(A,C,label)
       call die('m_zreduce: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pzhegst(1,'u',C%dim1,C%zval,1,1,C%iaux1,A%zval,1,1,A%iaux1,scale_Cholesky,info)
       if (info/=0) call die('m_zreduce: error in pzhegst')
       if (C%is_serial) then
@@ -710,13 +710,13 @@ subroutine m_dtransform(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call dtrmm('r','u','t','n',C%dim1,C%dim2,1.0_dp,A%dval,A%dim1,C%dval,C%dim1)
 #else
       call die('m_dtransform: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pdtrmm('r','u','t','n',C%dim1,C%dim2,1.0_dp,A%dval,1,1,A%iaux1,C%dval,1,1,C%iaux1)
 #else
       call die('m_dtransform: compile with ScaLAPACK')
@@ -778,13 +778,13 @@ subroutine m_ztransform(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call ztrmm('r','u','c','n',C%dim1,C%dim2,cmplx_1,A%zval,A%dim1,C%zval,C%dim1)
 #else
       call die('m_ztransform: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pztrmm('r','u','c','n',C%dim1,C%dim2,cmplx_1,A%zval,1,1,A%iaux1,C%zval,1,1,C%iaux1)
 #else
       call die('m_ztransform: compile with ScaLAPACK')
@@ -877,13 +877,13 @@ subroutine m_dback_transform(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call dtrsm('r','u','t','n',C%dim1,C%dim2,1.0_dp,A%dval,A%dim1,C%dval,C%dim1)
 #else
       call die('m_dback_transform: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pdtrsm('r','u','t','n',C%dim1,C%dim2,1.0_dp,A%dval,1,1,A%iaux1,C%dval,1,1,C%iaux1)
 #else
       call die('m_dback_transform: compile with ScaLAPACK')
@@ -945,13 +945,13 @@ subroutine m_zback_transform(A,C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       call ztrsm('r','u','c','n',C%dim1,C%dim2,cmplx_1,A%zval,A%dim1,C%zval,C%dim1)
 #else
       call die('m_zback_transform: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       call pztrsm('r','u','c','n',C%dim1,C%dim2,cmplx_1,A%zval,1,1,A%iaux1,C%zval,1,1,C%iaux1)
 #else
       call die('m_zback_transform: compile with ScaLAPACK')
@@ -1002,7 +1002,7 @@ subroutine m_dinverse(C,label)
 
   integer :: ot, lwork, i, j, info
   integer, allocatable :: ipiv(:)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
   integer :: liwork
   integer, allocatable :: iwork(:)
 #endif
@@ -1011,7 +1011,7 @@ subroutine m_dinverse(C,label)
 
   !**** EXTERNAL ********************************!
 
-#ifdef LAP
+#ifdef HAVE_LAPACK
   integer, external :: ilaenv
 #endif
 
@@ -1054,7 +1054,7 @@ subroutine m_dinverse(C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       allocate(ipiv(C%dim1))
       lwork=C%dim1*ilaenv(1,'dsytrf','u',C%dim1,-1,-1,-1)
       allocate(work(lwork))
@@ -1075,7 +1075,7 @@ subroutine m_dinverse(C,label)
       call die('m_dinverse: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       allocate(ipiv(C%iaux1(3)+C%iaux1(5)))
       call pdgetrf(C%dim1,C%dim2,C%dval,1,1,C%iaux1,ipiv,info)
       if (info/=0) call die('m_dinverse: error in pdgetrf')
@@ -1116,7 +1116,7 @@ subroutine m_zinverse(C,label)
 
   integer :: ot, lwork, i, j, info
   integer, allocatable :: ipiv(:)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
   integer :: liwork
   integer, allocatable :: iwork(:)
 #endif
@@ -1125,7 +1125,7 @@ subroutine m_zinverse(C,label)
 
   !**** EXTERNAL ********************************!
 
-#ifdef LAP
+#ifdef HAVE_LAPACK
   integer, external :: ilaenv
 #endif
 
@@ -1168,7 +1168,7 @@ subroutine m_zinverse(C,label)
 
   select case (ot)
     case (1)
-#ifdef LAP
+#ifdef HAVE_LAPACK
       allocate(ipiv(C%dim1))
       lwork=C%dim1*ilaenv(1,'zhetrf','u',C%dim1,-1,-1,-1)
       allocate(work(lwork))
@@ -1189,7 +1189,7 @@ subroutine m_zinverse(C,label)
       call die('m_zinverse: compile with LAPACK')
 #endif
     case (2)
-#ifdef SLAP
+#ifdef HAVE_SCALAPACK
       allocate(ipiv(C%iaux1(3)+C%iaux1(5)))
       call pzgetrf(C%dim1,C%dim2,C%zval,1,1,C%iaux1,ipiv,info)
       if (info/=0) call die('m_zinverse: error in pzgetrf')

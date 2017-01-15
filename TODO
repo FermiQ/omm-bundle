@@ -26,9 +26,6 @@ Remarks for the 3 libraries
 Psp
 ---
 
-01. The name "Psp" is very short and can be confused with
-    pseudopotential-related projects. Could be renamed e.g. "PspBLAS".
-
 
 MatrixSwitch
 ------------
@@ -37,9 +34,5 @@ MatrixSwitch
 LibOMM
 ------
 
-01. There are stand-alone routines in the source tree, which could be integrated into
-    Fortran modules.
-
-02. Examples 10, 11 and 12 had lines longer than 120 characters, causing
+01. Examples 10, 11 and 12 had lines longer than 120 characters, causing
     portability issues.
-

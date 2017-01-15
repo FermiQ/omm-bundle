@@ -184,7 +184,7 @@ contains
           m_name%zval=cmplx_0
        end if
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call ms_scalapack_allocate(m_name)
 #else
        call die('m_allocate: compile with ScaLAPACK')
@@ -886,7 +886,7 @@ contains
     case (1)
        call mm_multiply_sddenref(A,trA,B,trB,C,alpha,beta)
     case (2)
-#ifdef LAP
+#ifdef HAVE_LAPACK
        if (trA) then
           i=A%dim1
        else
@@ -897,7 +897,7 @@ contains
        call die('mm_dmultiply: compile with LAPACK')
 #endif
     case (3)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        if (trA) then
           i=A%dim1
        else
@@ -1219,7 +1219,7 @@ contains
     case (1)
        call mm_multiply_szdenref(A,tcA,B,tcB,C,alpha,beta)
     case (2)
-#ifdef LAP
+#ifdef HAVE_LAPACK
        if (tcA>0) then
           i=A%dim1
        else
@@ -1230,7 +1230,7 @@ contains
        call die('mm_zmultiply: compile with LAPACK')
 #endif
     case (3)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        if (tcA>0) then
           i=A%dim1
        else
@@ -1443,7 +1443,7 @@ contains
     case (1)
        call m_add_sddenref(A,trA,C,alpha,beta)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pdgeadd(opA,C%dim1,C%dim2,alpha,A%dval,1,1,A%iaux1,beta,C%dval,1,1,C%iaux1)
 #else
        call die('m_dadd: compile with ScaLAPACK')
@@ -1593,7 +1593,7 @@ contains
     case (1)
        call m_add_szdenref(A,tcA,C,alpha,beta)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pzgeadd(opA,C%dim1,C%dim2,alpha,A%zval,1,1,A%iaux1,beta,C%zval,1,1,C%iaux1)
 #else
        call die('m_zadd: compile with ScaLAPACK')
@@ -1642,7 +1642,7 @@ contains
 
     !**** EXTERNAL ********************************!
 
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
     real(dp), external :: pdlatra
 #endif
 
@@ -1699,7 +1699,7 @@ contains
           alpha=alpha+A%dval(i,i)
        end do
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        alpha=pdlatra(A%dim1,A%dval,1,1,A%iaux1)
 #else
        call die('m_dtrace: compile with ScaLAPACK')
@@ -1731,7 +1731,7 @@ contains
 
     !**** EXTERNAL ********************************!
 
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
     complex(dp), external :: pzlatra
 #endif
 
@@ -1788,7 +1788,7 @@ contains
           alpha=alpha+A%zval(i,i)
        end do
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        alpha=pzlatra(A%dim1,A%zval,1,1,A%iaux1)
 #else
        call die('m_ztrace: compile with ScaLAPACK')
@@ -1833,7 +1833,7 @@ contains
 
     real(dp) :: alpha_loc
 #endif
-#ifdef LAP
+#ifdef HAVE_LAPACK
     real(dp), external :: ddot
 #endif
 
@@ -1897,13 +1897,13 @@ contains
           end do
        end do
     case (2)
-#ifdef LAP
+#ifdef HAVE_LAPACK
        alpha=ddot(A%dim1*A%dim2,A%dval,1,B%dval,1)
 #else
        call die('mm_dtrace: compile with LAPACK')
 #endif
     case (3)
-#if defined(MPI) && defined(LAP)
+#if defined(MPI) && defined(HAVE_LAPACK)
        if ((A%iaux2(1)/=B%iaux2(1)) .or. &
            (A%iaux2(2)/=B%iaux2(2))) call die('mm_dtrace: matrices A and B must have identical parallel distributions')
        alpha_loc=ddot(A%iaux2(1)*A%iaux2(2),A%dval,1,B%dval,1)
@@ -2345,7 +2345,7 @@ contains
     case (1)
        call m_set_sddenref(C,seC,alpha,beta)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pdlaset(seC,C%dim1,C%dim2,alpha,beta,C%dval,1,1,C%iaux1)
 #else
        call die('m_dset: compile with ScaLAPACK')
@@ -2427,7 +2427,7 @@ contains
     case (1)
        call m_set_szdenref(C,seC,alpha,beta)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pzlaset(seC,C%dim1,C%dim2,alpha,beta,C%zval,1,1,C%iaux1)
 #else
        call die('m_zset: compile with ScaLAPACK')
@@ -2540,7 +2540,7 @@ contains
     case (1)
        C%dval(i,j)=alpha+beta*C%dval(i,j)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        if (beta==0.0_dp) then
           call pdelset(C%dval,i,j,C%iaux1,alpha)
        else
@@ -2711,7 +2711,7 @@ contains
     case (1)
        C%zval(i,j)=alpha+beta*C%zval(i,j)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        if (beta==cmplx_0) then
           call pzelset(C%zval,i,j,C%iaux1,alpha)
        else
@@ -2878,7 +2878,7 @@ contains
     case (1)
        alpha=C%dval(i,j)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pdelget('a',' ',alpha,C%dval,i,j,C%iaux1)
 #else
        call die('m_dget_element: compile with ScaLAPACK')
@@ -2988,7 +2988,7 @@ contains
     case (1)
        alpha=C%zval(i,j)
     case (2)
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
        call pzelget('a',' ',alpha,C%zval,i,j,C%iaux1)
 #else
        call die('m_zget_element: compile with ScaLAPACK')
@@ -3009,7 +3009,7 @@ contains
   !================================================!
   ! implementation: ScaLAPACK                      !
   !================================================!
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
   subroutine ms_scalapack_setup(mpi_comm,nprow,order,bs_def,bs_list,icontxt)
     implicit none
     include 'mpif.h'
@@ -3069,7 +3069,7 @@ contains
   end subroutine ms_scalapack_setup
 #endif
 
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
   subroutine ms_scalapack_allocate(A)
     implicit none
 

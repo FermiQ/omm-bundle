@@ -24,9 +24,9 @@ Installation
     MatrixSwitch should be compiled with the `-DCONV` flag. Available options
     for `FPPFLAGS` are:
     * `-DMPI`: enable MPI parallel routines
-    * `-DLAP`: enable LAPACK routines (currently necessary for preconditioning/
+    * `-DHAVE_LAPACK`: enable LAPACK routines (currently necessary for preconditioning/
       Cholesky factorization)
-    * `-DSLAP`: enable ScaLAPACK routines (requires `-DMPI`)
+    * `-DHAVE_SCALAPACK`: enable ScaLAPACK routines (requires `-DMPI`)
     * `-DNORAND`: fixed seed for the random number generator. Enable for testing
       purposes.
     * `-DCBIND`: use ISO_C_BINDING for LOGICAL inputs in the wrapper interfaces.

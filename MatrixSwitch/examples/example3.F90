@@ -31,7 +31,7 @@ program example3
   use MatrixSwitch
 
   implicit none
-#if defined(MPI) && defined(SLAP)
+#if defined(MPI) && defined(HAVE_SCALAPACK)
   include 'mpif.h'
 
   !**** PARAMS **********************************!
