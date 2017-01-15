@@ -29,7 +29,7 @@ AC_DEFUN([OMM_MSW_DETECT],[
   saved_FCFLAGS="${FCFLAGS}"
   saved_LIBS="${LIBS}"
   CPPFLAGS="${CPPFLAGS} ${omm_msw_incs}"
-  FCFLAGS="${FCFLAGS} ${omm_msw_incs}"
+  FCFLAGS="${FCFLAGS} ${CPPFLAGS}"
   LIBS="${omm_msw_libs} ${LIBS}"
 
   dnl Check MatrixSwitch routine

@@ -29,7 +29,7 @@ AC_DEFUN([MSW_PSP_DETECT],[
   saved_FCFLAGS="${FCFLAGS}"
   saved_LIBS="${LIBS}"
   CPPFLAGS="${CPPFLAGS} ${msw_psp_incs}"
-  FCFLAGS="${FCFLAGS} ${msw_psp_incs}"
+  FCFLAGS="${FCFLAGS} ${CPPFLAGS}"
   LIBS="${msw_psp_libs} ${LIBS}"
 
   dnl Check pspBLAS routine
