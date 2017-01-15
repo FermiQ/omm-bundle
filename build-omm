@@ -1,10 +1,14 @@
 #!/bin/sh
 
-# Set external dependencies
-#LINALG_INCLUDES="-I/usr/local/include"
-LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas"
-
-export LINALG_INCLUDES LINALG_LIBS
+# Set external dependencies if necessary
+if test ! -n "${LINALG_INCLUDES}"; then
+  LINALG_INCLUDES=""
+  export LINALG_INCLUDES
+fi
+if test ! -n "${LINALG_LIBS}"; then
+  LINALG_LIBS="-lscalapack -llapack -lblas"
+  export LINALG_LIBS
+fi
 
                     # ------------------------------------ #
 
