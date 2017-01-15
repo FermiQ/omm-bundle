@@ -14,16 +14,26 @@ matrix operations.
 Installation
 ------------
 
+There are two build systems provided for the library. The first is based on
+Autotools and is explained in INSTALL. The second is a manual build system
+which makes use of the files named Makefile.manual. The manual installation is
+explained below.
+
+To install the library manually:
+
 1.  Enter the `src` directory.
 2.  Copy `make.inc.example` to `make.inc` and modify it to suit your needs.
     Available options for `FPPFLAGS` are:
     * `-DHAVE_MPI`: enable MPI parallel routines
     * `-DHAVE_LAPACK`: enable LAPACK routines
     * `-DHAVE_SCALAPACK`: enable ScaLAPACK routines (requires MPI)
+    * `-DHAVE_PSPBLAS`: enable pspBLAS routines (requires MPI, LAPACK and
+      ScaLAPACK)
     * `-DCONV`: enable automatic conversion of scalar types (real/complex) to
       agree with matrix definitions (real/complex). Note that conversions from
       complex to real will simply discard the imaginary part.
-3.  Type `make`.
+3.  Type `make -f Makefile.manual`.
+4.  Type `make -f Makefile.manual install`.
 
 Testing
 -------
@@ -35,23 +45,13 @@ learning how to use the library. To compile them:
 1.   Enter the `examples` directory.
 2.   Copy `make.inc.example` to `make.inc` and modify it to suit your needs. Be
      aware that `make.inc` in the `src` directory will also be used.
-3.   Type `make`.
+3.   Type `make -f Makefile.manual`.
 
 Each example contains a header explaining what the program does and providing
 sample output to compare against.
 
-Usage
------
-
-`MatrixSwitch` is a module that you can `use` in Fortran routines. Note that
-both the `.a` and `.mod` files need to be available. An example compilation
-command for a code using MatrixSwitch is: `gfortran MyCode.f90
-/path/to/MatrixSwitch-x.y.z/src/MatrixSwitch.a
--I/path/to/MatrixSwitch-x.y.z/src/ -llapack -lblas`
-
 Documentation
 -------------
 
-A complete documentation is maintained at:
-<http://esl.cecam.org/mediawiki/index.php/MatrixSwitch>. Also see the examples
-in the `examples` directory.
+A complete documentation is maintained at: <http://esl.cecam.org/MatrixSwitch>.
+Also see the examples in the `examples` directory.

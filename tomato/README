@@ -1,0 +1,35 @@
+tomato
+======
+
+Description
+-----------
+
+tomato (toy matrices on-the-fly) generates realistic Hamiltonian and overlap
+matrices to use as test cases for Kohn-Sham ground-state solvers.
+
+Installation
+------------
+
+For the moment, there is only a manual build system which makes use of the files
+named Makefile.manual. The manual installation is explained below.
+
+To install the library manually:
+
+1.  Enter the `src` directory.
+2.  Copy `make.inc.example` to `make.inc` and modify it to suit your needs.
+    Available options for `FPPFLAGS` are:
+    * `-DHAVE_MPI`: enable MPI parallel routines
+    * `-DNORAND`: fixed seed for the random number generator. Enable for testing
+      purposes.
+3.  Type `make -f Makefile.manual`.
+4.  Type `make -f Makefile.manual install`.
+
+Testing
+-------
+
+Coming soon.
+
+Documentation
+-------------
+
+Coming soon.
