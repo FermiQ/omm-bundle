@@ -367,7 +367,7 @@ AC_SUBST(LTOBJEXT)
 if test "${psp_mpi_enable}" != "no"; then
   PSP_MPI_DETECT
   if test "${psp_mpi_ok}" = "yes"; then
-    AC_DEFINE([MPI], 1, [Define to 1 to enable MPI support.])
+    AC_DEFINE([HAVE_MPI], 1, [Define to 1 to enable MPI support.])
     psp_mpi_enable="yes"
   else
     if test "${psp_mpi_enable}" = "auto"; then
@@ -454,12 +454,12 @@ fi
 
 # External dependencies (alphabetical order)
 if test "${psp_linalg_has_lapack}" = "yes"; then
-  AC_DEFINE([LAP], 1, [Define to 1 if you have LAPACK libraries available.])
-  psp_cpp_options="${psp_cpp_options} LAP"
+  AC_DEFINE([HAVE_LAPACK], 1, [Define to 1 if you have LAPACK libraries available.])
+  psp_cpp_options="${psp_cpp_options} HAVE_LAPACK"
 fi
 if test "${psp_linalg_has_scalapack}" = "yes"; then
-  AC_DEFINE([SLAP], 1, [Define to 1 if you have ScaLAPACK libraries available.])
-  psp_cpp_options="${psp_cpp_options} SLAP"
+  AC_DEFINE([HAVE_SCALAPACK], 1, [Define to 1 if you have ScaLAPACK libraries available.])
+  psp_cpp_options="${psp_cpp_options} HAVE_SCALAPACK"
 fi
 
                     # ------------------------------------ #

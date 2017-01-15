@@ -8,7 +8,7 @@ MODULE pspLevel2
   use pspMPI
   use pspLevel1
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

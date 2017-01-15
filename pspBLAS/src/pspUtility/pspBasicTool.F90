@@ -6,7 +6,7 @@ MODULE pspBasicTool
   use pspVariable
   ! This module contains routines for indexing, generating, copying, transforming (sparse) data
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -139,7 +139,7 @@ contains
     integer, external :: numroc ! it is a function to compute local size
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -230,7 +230,7 @@ contains
     integer, allocatable :: idx2(:)
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -339,7 +339,7 @@ contains
     integer, allocatable :: idx2(:)
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -437,7 +437,7 @@ contains
     integer :: cnt, cnt2
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -493,7 +493,7 @@ contains
     integer :: cnt, cnt2
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -1435,7 +1435,7 @@ contains
     use iso_fortran_env, only: int64
     implicit none
 
-#ifdef MPI
+#ifdef HAVE_MPI
     include 'mpif.h'
 #endif
 

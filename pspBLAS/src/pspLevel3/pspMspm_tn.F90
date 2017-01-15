@@ -9,7 +9,7 @@ MODULE pspMspm_tn
   use pspLevel1
   use pspLevel2
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -74,7 +74,7 @@ contains
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -198,7 +198,7 @@ contains
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world

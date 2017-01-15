@@ -457,7 +457,7 @@ AC_SUBST(LTOBJEXT)
 if test "${msw_mpi_enable}" != "no"; then
   MSW_MPI_DETECT
   if test "${msw_mpi_ok}" = "yes"; then
-    AC_DEFINE([MPI], 1, [Define to 1 to enable MPI support.])
+    AC_DEFINE([HAVE_MPI], 1, [Define to 1 to enable MPI support.])
     msw_mpi_enable="yes"
   else
     if test "${msw_mpi_enable}" = "auto"; then

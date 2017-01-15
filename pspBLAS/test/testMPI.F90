@@ -3,7 +3,7 @@ program testMPI
 
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -49,7 +49,7 @@ program testMPI
   integer, external :: numroc ! it is a function to compute local size
 
   !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
   character(1) :: psp_proc_order
 
   integer :: psp_mpi_comm_world

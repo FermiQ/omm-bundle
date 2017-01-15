@@ -18,7 +18,7 @@ module MatrixSwitch_wrapper
     m_deallocate_orig => m_deallocate, &
     m_copy_orig => m_copy, &
     m_convert_orig => m_convert
-#ifdef MPI
+#ifdef HAVE_MPI
   use MatrixSwitch, only: &
     m_register_pdbc_orig => m_register_pdbc, &
     ms_scalapack_setup, &
@@ -85,7 +85,7 @@ module MatrixSwitch_wrapper
      module procedure m_register_szden
   end interface m_register_sden
 
-#ifdef MPI
+#ifdef HAVE_MPI
   interface m_register_pdbc
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
@@ -128,7 +128,7 @@ module MatrixSwitch_wrapper
   public :: m_deallocate
   public :: m_copy
   public :: m_convert
-#ifdef MPI
+#ifdef HAVE_MPI
   public :: m_register_pdbc
   public :: ms_scalapack_setup
   public :: ms_lap_icontxt
@@ -502,7 +502,7 @@ contains
   !================================================!
   subroutine mm_dtrace(A,B,alpha,label)
     implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
     include 'mpif.h'
 #endif
 
@@ -525,7 +525,7 @@ contains
 
   subroutine mm_ztrace(A,B,alpha,label)
     implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
     include 'mpif.h'
 #endif
 
@@ -757,7 +757,7 @@ contains
   !================================================!
   ! register matrix: dense block cyclic parallel   !
   !================================================!
-#ifdef MPI
+#ifdef HAVE_MPI
   subroutine m_register_pddbc(m_name,A,desc)
     implicit none
 
@@ -776,7 +776,7 @@ contains
   end subroutine m_register_pddbc
 #endif
 
-#ifdef MPI
+#ifdef HAVE_MPI
   subroutine m_register_pzdbc(m_name,A,desc)
     implicit none
 

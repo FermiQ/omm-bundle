@@ -13,7 +13,7 @@ use pspMspm_nt, only: psp_gemspm_nt
 use pspMspm_tn, only: psp_gemspm_tn
 use pspMspm_tt, only: psp_gemspm_tt
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

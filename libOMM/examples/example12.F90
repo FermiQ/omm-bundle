@@ -22,7 +22,7 @@ program example12
   use MatrixSwitch
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -61,7 +61,7 @@ program example12
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
@@ -85,7 +85,7 @@ program example12
   allocate(e_min(nk))
   allocate(he(2*nk))
   allocate(se(2*nk))
-#ifdef MPI
+#ifdef HAVE_MPI
   call blacs_gridinfo(icontxt,i,j,k,l)
   H_dim(1)=numroc(m,bs_def,k,0,nprow)
   H_dim(2)=numroc(m,bs_def,l,0,npcol)
@@ -141,7 +141,7 @@ program example12
            do j=1,nk
               cmplx_se=cmplx(se(2*j-1),se(2*j),dp)
               cmplx_he=cmplx(he(2*j-1),he(2*j),dp)-eta*cmplx_se
-#ifdef MPI
+#ifdef HAVE_MPI
               call pzelset(H(1,1,j),k,l,desc_H,cmplx_he)
               if (iscf==1) call pzelset(S(1,1,j),k,l,desc_S,cmplx_se)
 #else
@@ -160,7 +160,7 @@ program example12
         do i=1,nk
            if (mpi_rank==0) print('(a,1x,i1,a,1x,i1,a)'), 'k point', i, ' of', nk, '...'
            if ((imd>0) .and. (iscf==1) .and. (i>1)) then
-#ifdef MPI
+#ifdef HAVE_MPI
               ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
               call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
               call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
@@ -174,7 +174,7 @@ program example12
                    0.0_dp,flavour,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
            else
-#ifdef MPI
+#ifdef HAVE_MPI
               call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
               call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
               call omm_pzdbc_spm(m,n,H_dim,Hsp,desc_H,.true.,S_dim,Ssp,desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
@@ -206,7 +206,7 @@ program example12
         else
            dealloc=.false.
         end if
-#ifdef MPI
+#ifdef HAVE_MPI
         ! If the sparse matrix is not stored locally in a CSC format, then convert it into a CSC format and input it in omm_pddbc_spm
         call m_register_psp_thre(Hsp,H(:,:,i),desc_H,'csc',0.0_dp)
         call m_register_psp_thre(Ssp,S(:,:,i),desc_S,'csc',0.0_dp)
@@ -238,7 +238,7 @@ program example12
   call m_deallocate(Hsp)
   call m_deallocate(Ssp)
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_finalize(mpi_err)
 #endif
 

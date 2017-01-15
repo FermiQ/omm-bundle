@@ -17,7 +17,7 @@ Installation
 1.  Enter the `src` directory.
 2.  Copy `make.inc.example` to `make.inc` and modify it to suit your needs.
     Available options for `FPPFLAGS` are:
-    * `-DMPI`: enable MPI parallel routines
+    * `-DHAVE_MPI`: enable MPI parallel routines
     * `-DHAVE_LAPACK`: enable LAPACK routines
     * `-DHAVE_SCALAPACK`: enable ScaLAPACK routines (requires MPI)
     * `-DCONV`: enable automatic conversion of scalar types (real/complex) to

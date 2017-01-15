@@ -9,7 +9,7 @@ MODULE pspMatSum
   use pspLevel1
   use pspLevel2
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

@@ -8,7 +8,7 @@
 program example6
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -46,7 +46,7 @@ program example6
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
@@ -68,7 +68,7 @@ program example6
   allocate(e_min(nk))
   allocate(he(2*nk))
   allocate(se(2*nk))
-#ifdef MPI
+#ifdef HAVE_MPI
   call blacs_gridinfo(icontxt,i,j,k,l)
   H_dim(1)=numroc(m,bs_def,k,0,nprow)
   H_dim(2)=numroc(m,bs_def,l,0,npcol)
@@ -124,7 +124,7 @@ program example6
         do j=1,nk
           cmplx_se=cmplx(se(2*j-1),se(2*j),dp)
           cmplx_he=cmplx(he(2*j-1),he(2*j),dp)-eta*cmplx_se
-#ifdef MPI
+#ifdef HAVE_MPI
         call pzelset(H(1,1,j),k,l,desc_H,cmplx_he)
         if (iscf==1) call pzelset(S(1,1,j),k,l,desc_S,cmplx_se)
 #else
@@ -143,7 +143,7 @@ program example6
       do i=1,nk
         if (mpi_rank==0) print('(a,1x,i1,a,1x,i1,a)'), 'k point', i, ' of', nk, '...'
         if ((imd>0) .and. (iscf==1) .and. (i>1)) then
-#ifdef MPI
+#ifdef HAVE_MPI
           C_min(1:C_min_dim(1),1:C_min_dim(2),i)=C_min(1:C_min_dim(1),1:C_min_dim(2),i-1)
           call omm_pzdbc_lap(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.true.,.false.,T_dim,T,desc_T,0.0_dp,1,nk,i,-1.0_dp,&
@@ -154,7 +154,7 @@ program example6
                    0.0_dp,1,nk,i,-1.0_dp,.true.,.false.,mpi_rank)
 #endif
         else
-#ifdef MPI
+#ifdef HAVE_MPI
           call omm_pzdbc_lap(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,new_S,e_min(i),D_min_dim,D_min(1,1,i),&
                    desc_D_min,.false.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,1,nk,i,-1.0_dp,&
                    .true.,.false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
@@ -184,7 +184,7 @@ program example6
       else
         dealloc=.false.
       end if
-#ifdef MPI
+#ifdef HAVE_MPI
       call omm_pzdbc_lap(m,n,H_dim,H(1,1,i),desc_H,.true.,S_dim,S(1,1,i),desc_S,.false.,e_min(i),ED_min_dim,ED_min(1,1,i),&
                desc_ED_min,.true.,eta,C_min_dim,C_min(1,1,i),desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,1,nk,i,-1.0_dp,&
                .true.,dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
@@ -210,7 +210,7 @@ program example6
   deallocate(he)
   deallocate(e_min)
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_finalize(mpi_err)
 #endif
 

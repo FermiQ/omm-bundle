@@ -509,7 +509,7 @@ AC_SUBST(LTOBJEXT)
 if test "${omm_mpi_enable}" != "no"; then
   OMM_MPI_DETECT
   if test "${omm_mpi_ok}" = "yes"; then
-    AC_DEFINE([MPI], 1, [Define to 1 to enable MPI support.])
+    AC_DEFINE([HAVE_MPI], 1, [Define to 1 to enable MPI support.])
     omm_mpi_enable="yes"
   else
     if test "${omm_mpi_enable}" = "auto"; then

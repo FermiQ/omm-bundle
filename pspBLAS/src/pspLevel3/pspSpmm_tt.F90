@@ -11,7 +11,7 @@ MODULE pspSpmm_tt
   use pspSpmm_nt, only: psp_gespmm_nt
   use pspSpmm_tn, only: psp_gespmm_tn
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -72,7 +72,7 @@ contains
     integer :: desc_before(9), desc_after(9)
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -153,7 +153,7 @@ contains
     integer :: trA, trB
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world

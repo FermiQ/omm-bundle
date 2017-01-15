@@ -394,7 +394,7 @@ subroutine omm_szden_lap(m,n,H_vals,S_present,S_vals,new_S,e_min,D_min_vals,calc
 
 end subroutine omm_szden_lap
 
-#ifdef MPI
+#ifdef HAVE_MPI
 subroutine omm_pddbc_lap(m,n,H_dim,H_vals,desc_H,S_present,S_dim,S_vals,desc_S,new_S,e_min,D_min_dim,D_min_vals,desc_D_min,&
                calc_ED,eta,C_min_dim,C_min_vals,desc_C_min,init_C,T_present,T_dim,T_vals,desc_T,scale_T,flavour,np,ip,cg_tol,&
                long_out,dealloc,nprow,order,bs_def,icontxt)

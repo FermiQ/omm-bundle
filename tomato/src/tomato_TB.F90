@@ -8,12 +8,12 @@ subroutine tomato_TB(template_basedir,system_label,&
                      H,S,m_storage,&
                      build_matrix)
   use MatrixSwitch
-#ifdef MPI
+#ifdef HAVE_MPI
   use MatrixSwitch_ops, only : ms_mpi_comm, ms_mpi_size, ms_mpi_rank
 #endif
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -78,7 +78,7 @@ subroutine tomato_TB(template_basedir,system_label,&
   logical :: is_subset
   logical :: overlap_present
 
-#ifdef MPI
+#ifdef HAVE_MPI
   integer :: mpi_comm
 #endif
   integer :: mpi_err, mpi_size, mpi_rank
@@ -113,7 +113,7 @@ subroutine tomato_TB(template_basedir,system_label,&
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   mpi_comm=ms_mpi_comm
   mpi_size=ms_mpi_size
   mpi_rank=ms_mpi_rank
@@ -127,20 +127,20 @@ subroutine tomato_TB(template_basedir,system_label,&
                     trim(adjustl(system_label))//'_template.info'
   if (mpi_rank==0) open(10,file=trim(adjustl(template_filename)))
     if (mpi_rank==0) read(10,*) num_periodic_dims
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(num_periodic_dims,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     if (mpi_rank==0) read(10,*) num_atoms_per_cell
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(num_atoms_per_cell,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     if (mpi_rank==0) read(10,*) num_occ_states_per_atom
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(num_occ_states_per_atom,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     num_occ_states_per_cell=num_occ_states_per_atom*num_atoms_per_cell
     if (mpi_rank==0) read(10,*) template_num_cutoffs
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(template_num_cutoffs,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     allocate(template_cutoffs(template_num_cutoffs))
@@ -149,18 +149,18 @@ subroutine tomato_TB(template_basedir,system_label,&
         read(10,*) template_cutoffs(i)
       end do
     end if
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(template_cutoffs,template_num_cutoffs,mpi_int,0,mpi_comm,mpi_err)
 #endif
     if (mpi_rank==0) read(10,*) template_num_basis_sizes
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(template_num_basis_sizes,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     allocate(template_basis_sizes(template_num_basis_sizes))
     allocate(basis_subset(template_num_basis_sizes))
     do i=1,template_num_basis_sizes
       if (mpi_rank==0) read(10,'(a)') line
-#ifdef MPI
+#ifdef HAVE_MPI
       call mpi_bcast(line,200,mpi_char,0,mpi_comm,mpi_err)
 #endif
       read(line,*,iostat=j) template_basis_sizes(i), basis_subset(i)%ref
@@ -178,7 +178,7 @@ subroutine tomato_TB(template_basedir,system_label,&
         basis_subset(i)%ref=template_basis_sizes(i)
       end if
     end do
-#ifdef MPI
+#ifdef HAVE_MPI
   close(10)
 #endif
 
@@ -276,7 +276,7 @@ subroutine tomato_TB(template_basedir,system_label,&
         close(10)
         if (is_subset) num_template=num_template*num_orbs_per_atom**2/basis_subset(template_index)%ref**2
       end if
-#ifdef MPI
+#ifdef HAVE_MPI
       call mpi_bcast(num_template,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
       d2=1.0_dp-real(num_template,dp)*real(num_cells,dp)/(real(num_orbs,dp)**2)
@@ -313,7 +313,7 @@ subroutine tomato_TB(template_basedir,system_label,&
       close(10)
       if (is_subset) num_template=num_template*num_orbs_per_atom**2/basis_subset(template_index)%ref**2
     end if
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(num_template,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     sparsity=1.0_dp-real(num_template,dp)*real(num_cells,dp)/(real(num_orbs,dp)**2)
@@ -339,12 +339,12 @@ subroutine tomato_TB(template_basedir,system_label,&
       open(10,file=trim(adjustl(template_filename)))
     end if
       if (mpi_rank==0) read(10,'(2x,i10)') num_template
-#ifdef MPI
+#ifdef HAVE_MPI
       call mpi_bcast(num_template,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
       allocate(template_i(5,num_template))
       if (mpi_rank==0) read(10,'(a)') line
-#ifdef MPI
+#ifdef HAVE_MPI
       call mpi_bcast(line,200,mpi_char,0,mpi_comm,mpi_err)
 #endif
       if (mpi_rank==0) backspace(10)
@@ -357,7 +357,7 @@ subroutine tomato_TB(template_basedir,system_label,&
             read(10,'(i3,4(1x,i3),2(1x,es10.3e2))') template_i(1:5,i), template_d(1:2,i)
           end do
         end if
-#ifdef MPI
+#ifdef HAVE_MPI
         call mpi_bcast(template_i,5*num_template,mpi_int,0,mpi_comm,mpi_err)
         call mpi_bcast(template_d,2*num_template,mpi_double_precision,0,mpi_comm,mpi_err)
 #endif
@@ -369,7 +369,7 @@ subroutine tomato_TB(template_basedir,system_label,&
             read(10,'(i3,4(1x,i3),1(1x,es10.3e2))') template_i(1:5,i), template_d(1,i)
           end do
         end if
-#ifdef MPI
+#ifdef HAVE_MPI
         call mpi_bcast(template_i,5*num_template,mpi_int,0,mpi_comm,mpi_err)
         call mpi_bcast(template_d,num_template,mpi_double_precision,0,mpi_comm,mpi_err)
 #endif
@@ -556,7 +556,7 @@ subroutine tomato_TB(template_basedir,system_label,&
     ! calculate a better estimate of the sparsity by randomly sampling the
     ! matrix
     if (mpi_rank==0) seed=omm_rand_seed()
-#ifdef MPI
+#ifdef HAVE_MPI
     call mpi_bcast(seed,1,mpi_int,0,mpi_comm,mpi_err)
 #endif
     nzel=0

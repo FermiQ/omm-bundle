@@ -9,7 +9,7 @@ program pdgemmScaling
 
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

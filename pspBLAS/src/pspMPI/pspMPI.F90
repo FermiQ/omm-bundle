@@ -5,7 +5,7 @@
 MODULE pspMPI
   use pspUtility
 
-#ifdef MPI
+#ifdef HAVE_MPI
   use mpi
 #endif
 
@@ -108,7 +108,7 @@ contains
     logical :: isAlloc
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -391,7 +391,7 @@ contains
     logical :: isAlloc
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -678,7 +678,7 @@ contains
     integer :: psp_MPI_datatype_spm
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -934,7 +934,7 @@ contains
     integer :: psp_MPI_datatype_spm
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -1185,7 +1185,7 @@ contains
     integer :: mpi_rank, dims(2), coords(2)
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -1272,7 +1272,7 @@ contains
     integer :: mpi_rank, dims(3), coords(3)
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -1366,7 +1366,7 @@ contains
     integer, external :: numroc ! it is a function to compute local size
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -1455,7 +1455,7 @@ contains
     integer, external :: numroc ! it is a function to compute local size
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world

@@ -38,7 +38,7 @@ program example2
   use MatrixSwitch
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -67,7 +67,7 @@ program example2
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
@@ -181,7 +181,7 @@ program example2
   call m_deallocate(H_down)
   call m_deallocate(H_up)
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_finalize(mpi_err)
 #endif
 

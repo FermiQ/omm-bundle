@@ -11,7 +11,7 @@ MODULE psp_spBLAS_Level3
 
   ! This module contains sequential sparse BLAS
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

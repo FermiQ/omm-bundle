@@ -8,7 +8,7 @@
 program example5
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -44,7 +44,7 @@ program example5
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
@@ -63,7 +63,7 @@ program example5
   n_up=131
   n_down=125
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call blacs_gridinfo(icontxt,i,j,k,l)
   H_dim(1)=numroc(m,bs_def,k,0,nprow)
   H_dim(2)=numroc(m,bs_def,l,0,npcol)
@@ -125,7 +125,7 @@ program example5
       do i=1,m*m
         read(10,'(2(1x,i5),3(1x,f21.15))',iostat=iostat) k, l, hue, hde, se
         if (iostat/=0) exit
-#ifdef MPI
+#ifdef HAVE_MPI
         call pdelset(H_up,k,l,desc_H,hue-eta*se)
         call pdelset(H_down,k,l,desc_H,hde-eta*se)
         if (iscf==1) call pdelset(S,k,l,desc_S,se)
@@ -143,7 +143,7 @@ program example5
         new_S=.false.
       end if
       if (mpi_rank==0) print('(a)'), 'up spin...'
-#ifdef MPI
+#ifdef HAVE_MPI
       call omm_pddbc_lap(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_up,D_min_dim,D_min_up,desc_D_min,.false.,eta,&
                C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,mpi_rank,&
                mpi_size,nprow,order,bs_def,icontxt)
@@ -152,7 +152,7 @@ program example5
                .true.,.false.,mpi_rank)
 #endif
       if (mpi_rank==0) print('(a)'), 'down spin...'
-#ifdef MPI
+#ifdef HAVE_MPI
       call omm_pddbc_lap(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,new_S,e_min_down,D_min_dim,D_min_down,desc_D_min,&
                .false.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,T,desc_T,1.0_dp,0,2,2,-1.0_dp,.true.,&
                .false.,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
@@ -173,7 +173,7 @@ program example5
 
     end do
 
-#ifdef MPI
+#ifdef HAVE_MPI
     call omm_pddbc_lap(m,n_up,H_dim,H_up,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_up,ED_min_dim,ED_min_up,desc_ED_min,.true.,eta,&
              C_min_up_dim,C_min_up,desc_C_min_up,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,1,-1.0_dp,.true.,.false.,mpi_rank,&
              mpi_size,nprow,order,bs_def,icontxt)
@@ -186,7 +186,7 @@ program example5
     else
       dealloc=.false.
     end if
-#ifdef MPI
+#ifdef HAVE_MPI
     call omm_pddbc_lap(m,n_down,H_dim,H_down,desc_H,.true.,S_dim,S,desc_S,.false.,e_min_down,ED_min_dim,ED_min_down,desc_ED_min,&
              .true.,eta,C_min_down_dim,C_min_down,desc_C_min_down,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,2,2,-1.0_dp,.true.,&
              dealloc,mpi_rank,mpi_size,nprow,order,bs_def,icontxt)
@@ -213,7 +213,7 @@ program example5
   deallocate(H_down)
   deallocate(H_up)
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_finalize(mpi_err)
 #endif
 

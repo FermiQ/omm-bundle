@@ -10,7 +10,7 @@ MODULE pspSpmSpm_nt
   use pspLevel2
   use pspMatSum
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -75,7 +75,7 @@ contains
     logical :: listCreated
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world
@@ -250,7 +250,7 @@ contains
     logical :: listCreated
 
     !**** GLOBAL **********************************!
-#ifdef MPI
+#ifdef HAVE_MPI
     character(1) :: psp_proc_order
 
     integer :: psp_mpi_comm_world

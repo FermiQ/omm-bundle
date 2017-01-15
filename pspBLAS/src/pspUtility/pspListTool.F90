@@ -6,7 +6,7 @@ MODULE pspListTool
   use pspVariable
   use pspBasicTool
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

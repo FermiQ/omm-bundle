@@ -3,7 +3,7 @@ subroutine omm_callback(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,sca
   use omm_ops
   use MatrixSwitch
   use omm_rand
-#ifdef MPI
+#ifdef HAVE_MPI
   use MatrixSwitch_ops, only : ms_mpi_size, ms_mpi_rank
 #endif
 
@@ -112,7 +112,7 @@ subroutine omm_callback(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,sca
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   mpi_size=ms_mpi_size
   mpi_rank=ms_mpi_rank
 #else

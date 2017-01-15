@@ -14,7 +14,7 @@ MODULE pspSpmSpm
   use pspSpmSpm_tn, only: psp_gespmspm_tn
   use pspSpmSpm_tt, only: psp_gespmspm_tt
 
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 

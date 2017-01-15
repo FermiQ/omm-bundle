@@ -14,7 +14,7 @@ module MatrixSwitch_m_register
      module procedure m_register_szden
   end interface m_register_sden
 
-#ifdef MPI
+#ifdef HAVE_MPI
   interface m_register_pdbc
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
@@ -115,7 +115,7 @@ contains
   !================================================!
   ! register matrix: dense block cyclic parallel   !
   !================================================!
-#ifdef MPI
+#ifdef HAVE_MPI
   subroutine m_register_pddbc(m_name,A,desc)
     implicit none
 
@@ -160,7 +160,7 @@ contains
   end subroutine m_register_pddbc
 #endif
 
-#ifdef MPI
+#ifdef HAVE_MPI
   subroutine m_register_pzdbc(m_name,A,desc)
     implicit none
 

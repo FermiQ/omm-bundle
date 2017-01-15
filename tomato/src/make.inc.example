@@ -1,7 +1,7 @@
 SHELL     = /bin/sh
 FORTRAN   = mpif90
 OPTS      = -O3
-FPPFLAGS  = -DMPI
+FPPFLAGS  = -DHAVE_MPI
 ARCH      = ar
 ARCHFLAGS = cr
 RANLIB    = ranlib

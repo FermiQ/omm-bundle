@@ -9,7 +9,7 @@
 program example7
 
   implicit none
-#ifdef MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
 #endif
 
@@ -43,7 +43,7 @@ program example7
 
   !**********************************************!
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
@@ -61,7 +61,7 @@ program example7
   m=832
   n=128
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call blacs_gridinfo(icontxt,i,j,k,l)
   H_dim(1)=numroc(m,bs_def,k,0,nprow)
   H_dim(2)=numroc(m,bs_def,l,0,npcol)
@@ -111,7 +111,7 @@ program example7
       do i=1,m*m
         read(10,'(2(1x,i5),2(1x,f21.15))',iostat=iostat) k, l, he, se
         if (iostat/=0) exit
-#ifdef MPI
+#ifdef HAVE_MPI
         call pdelset(H,k,l,desc_H,he-eta*se)
         if (iscf==1) call pdelset(S,k,l,desc_S,se)
 #else
@@ -126,7 +126,7 @@ program example7
       else
         new_S=.false.
       end if
-#ifdef MPI
+#ifdef HAVE_MPI
       call omm_pddbc2pdcsc_psp(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,new_S,e_min,D_min_dim,D_min,desc_D_min,.false.,eta,&
                C_min_dim,C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,.false.,mpi_rank,&
                mpi_size,nprow,order,bs_def,icontxt)
@@ -151,7 +151,7 @@ program example7
     else
       dealloc=.false.
     end if
-#ifdef MPI
+#ifdef HAVE_MPI
     call omm_pddbc2pdcsc_psp(m,n,H_dim,H,desc_H,.true.,S_dim,S,desc_S,.false.,e_min,ED_min_dim,ED_min,desc_ED_min,.true.,eta,&
              C_min_dim,C_min,desc_C_min,.false.,.false.,T_dim,T,desc_T,0.0_dp,0,1,1,-1.0_dp,.true.,dealloc,mpi_rank,&
              mpi_size,nprow,order,bs_def,icontxt)
@@ -174,7 +174,7 @@ program example7
   deallocate(S)
   deallocate(H)
 
-#ifdef MPI
+#ifdef HAVE_MPI
   call mpi_finalize(mpi_err)
 #endif
 
