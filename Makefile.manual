@@ -1,0 +1,71 @@
+all : libs tests
+
+libs : pspBLAS_lib MatrixSwitch_lib tomato_lib libOMM_lib
+
+tests : pspBLAS_test MatrixSwitch_examples libOMM_examples
+
+clean : clean_libs clean_tests
+
+clean_libs : clean_pspBLAS clean_MatrixSwitch clean_tomato clean_libOMM
+
+clean_tests : clean_pspBLAS_test clean_MatrixSwitch_examples clean_libOMM_examples
+
+pspBLAS_lib :
+	cd pspBLAS/src; \
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
+
+MatrixSwitch_lib :
+	cd MatrixSwitch/src; \
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
+
+tomato_lib :
+	cd tomato/src; \
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
+
+libOMM_lib :
+	cd libOMM/src; \
+	make -f Makefile.manual; \
+	make -f Makefile.manual install
+
+pspBLAS_test : pspBLAS_lib
+	cd pspBLAS/test; \
+	make -f Makefile.manual
+
+MatrixSwitch_examples : MatrixSwitch_lib
+	cd MatrixSwitch/examples; \
+	make -f Makefile.manual
+
+libOMM_examples : libOMM_lib
+	cd libOMM/examples; \
+	make -f Makefile.manual
+
+clean_pspBLAS :
+	cd pspBLAS/src; \
+	make -f Makefile.manual clean
+
+clean_MatrixSwitch :
+	cd MatrixSwitch/src; \
+	make -f Makefile.manual clean
+
+clean_tomato :
+	cd tomato/src; \
+	make -f Makefile.manual clean
+
+clean_libOMM :
+	cd libOMM/src; \
+	make -f Makefile.manual clean
+
+clean_pspBLAS_test :
+	cd pspBLAS/test; \
+	make -f Makefile.manual clean
+
+clean_MatrixSwitch_examples :
+	cd MatrixSwitch/examples; \
+	make -f Makefile.manual clean
+
+clean_libOMM_examples :
+	cd libOMM/examples; \
+	make -f Makefile.manual clean

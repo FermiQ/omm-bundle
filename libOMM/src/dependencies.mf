@@ -1,0 +1,11 @@
+omm.$(LTOBJEXT): omm_ops.$(LTOBJEXT) omm_rand.$(LTOBJEXT)
+
+omm_callback.$(LTOBJEXT): omm_ops.$(LTOBJEXT) omm_rand.$(LTOBJEXT)
+
+omm_ops.$(LTOBJEXT): omm_params.$(LTOBJEXT)
+
+omm_quartic.$(LTOBJEXT): omm_params.$(LTOBJEXT)
+
+omm_rand.$(LTOBJEXT): omm_params.$(LTOBJEXT)
+
+omm_wrappers.$(LTOBJEXT): omm_params.$(LTOBJEXT)

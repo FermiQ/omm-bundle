@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libOMM
+Description: Library solving the Kohn-Sham equation for a fixed Hamiltonian using the orbital minimization method.
+Version: @VERSION@
+Libs: -L${libdir} -lOMM
+Cflags: -I${includedir}

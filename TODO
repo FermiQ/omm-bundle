@@ -1,0 +1,29 @@
+Suggestions to upgrade the coding standards
+===========================================
+
+The following are only suggestions that will facilitate collaborations and
+handing over specific development tasks to third parties. The choice to
+implement them or not is purely yours.
+
+
+Remarks for the 3 libraries
+---------------------------
+
+01. ISO C bindings are now supported by 99.99% of the compilers and can be
+    enabled all the time, which means that the "CBIND" CPP option is not
+    necessary anymore.
+
+
+Psp
+---
+
+
+MatrixSwitch
+------------
+
+
+LibOMM
+------
+
+01. Examples 10, 11 and 12 had lines longer than 120 characters, causing
+    portability issues.
