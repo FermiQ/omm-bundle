@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 !================================================!
 ! calculate the coeffs. of the quartic line      !
 ! search equation from three energy points and   !

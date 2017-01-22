@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 module omm_ops
 use MatrixSwitch
 use omm_params

@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 subroutine omm_sdden_ref(m,n,H_vals,S_present,S_vals,new_S,e_min,D_min_vals,calc_ED,eta,C_min_vals,init_C,T_present,T_vals,scale_T,&
                flavour,np,ip,cg_tol,long_out,dealloc)
   use omm_params, only : dp
