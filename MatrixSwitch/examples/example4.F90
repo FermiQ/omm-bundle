@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 !==================================================================================================!
 ! example4 : parallel program with complex matrices                                                !
 !                                                                                                  !

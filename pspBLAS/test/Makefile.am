@@ -1,4 +1,5 @@
-check_PROGRAMS = pdgemmScaling.x \
+check_PROGRAMS = \
+  pdgemmScaling.x \
   pzgemmScaling.x \
   testList.x \
   spBLAS.x \
