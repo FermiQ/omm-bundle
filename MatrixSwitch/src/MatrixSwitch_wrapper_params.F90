@@ -4,6 +4,7 @@
 
 module MatrixSwitch_wrapper_params
   use MatrixSwitch, only: matrix
+  use MatrixSwitch_ops, only : die
 
   implicit none
 
@@ -48,12 +49,16 @@ contains
 
     !**********************************************!
 
+    ms_lookup=0
+
     do i=1,ms_num_matrices
       if (key .eq. ms_keys(i)) then
         ms_lookup=i
         exit
       end if
     end do
+
+    if (ms_lookup==0) call die('ms_lookup: key not found')
 
   end function ms_lookup
 

@@ -1353,7 +1353,7 @@ subroutine die(message)
   write(err_unit,'(a,1x,i5)'), 'MPI rank:', mpi_rank
 #endif
   close(err_unit)
-  stop
+  stop 1
 
 end subroutine die
 

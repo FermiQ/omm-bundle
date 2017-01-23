@@ -97,15 +97,15 @@ program example_gamma_unpolarized
   m=num_pairs*2
   n=num_pairs
 
-  num_matrices=5
+  num_matrices=6
   allocate(keys(num_matrices))
-  keys=(/'H','S','D_min','ED_min','C_min'/)
+  keys=(/'H','S','D','E','C','T'/)
   call ms_wrapper_open(num_matrices,keys)
 
   call m_allocate('H',m,m,m_storage)
-  call m_allocate('D_min',m,m,m_storage)
-  call m_allocate('ED_min',m,m,m_storage)
-  call m_allocate('C_min',n,m,m_storage)
+  call m_allocate('D',m,m,m_storage)
+  call m_allocate('E',m,m,m_storage)
+  call m_allocate('C',n,m,m_storage)
 
   do i=1,2
 
@@ -138,10 +138,10 @@ program example_gamma_unpolarized
                      'S', &       ! S
                      .false., &   ! new_S
                      e_min, &     ! e_min
-                     'D_min', &   ! D_min
+                     'D', &       ! D_min
                      .false., &   ! calc_ED
                      0.0_dp, &    ! eta
-                     'C_min', &   ! C_min
+                     'C', &       ! C_min
                      .false., &   ! init_C
                      'T', &       ! T
                      0.0_dp, &    ! scale_T
@@ -157,7 +157,7 @@ program example_gamma_unpolarized
     if (mpi_rank==0) print('(a,f21.15)'), 'e_min : ', e_min
     call assert_equal_dp(e_min, e_min_check(i))
 
-    call m_get_element('D_min',1,1,el)
+    call m_get_element('D',1,1,el)
     if (mpi_rank==0) print('(a,f21.15)'), 'D_11  : ', el
     call assert_equal_dp(el, D_el_check(i))
 
@@ -169,10 +169,10 @@ program example_gamma_unpolarized
                    'S', &       ! S
                    .false., &   ! new_S
                    e_min, &     ! e_min
-                   'ED_min', &  ! D_min
+                   'E', &       ! D_min
                    .true., &    ! calc_ED
                    0.0_dp, &    ! eta
-                   C_min, &     ! C_min
+                   'C', &       ! C_min
                    .false., &   ! init_C
                    'T', &       ! T
                    0.0_dp, &    ! scale_T
@@ -185,7 +185,7 @@ program example_gamma_unpolarized
                    m_storage, & ! m_storage
                    m_operation) ! m_operation
 
-  call m_get_element('ED_min',1,1,el)
+  call m_get_element('E',1,1,el)
   if (mpi_rank==0) print('(a,f21.15)'), 'ED_11 : ', el
   call assert_equal_dp(el, ED_el_check)
 

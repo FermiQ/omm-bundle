@@ -11,7 +11,7 @@ example_gamma_unpolarized_overlap_x_SOURCES = example_gamma_unpolarized_overlap.
 example_gamma_unpolarized_overlap_x_FCFLAGS = -I../src
 example_gamma_unpolarized_overlap_x_LDADD = ../src/libomm.la
 
-example_gamma_unpolarized_wrapper_x_SOURCES = example_gamma_unpolarized.F90
+example_gamma_unpolarized_wrapper_x_SOURCES = example_gamma_unpolarized_wrapper.F90
 example_gamma_unpolarized_wrapper_x_FCFLAGS = -I../src
 example_gamma_unpolarized_wrapper_x_LDADD = ../src/libomm.la
 
