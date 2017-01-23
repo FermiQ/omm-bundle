@@ -6,11 +6,14 @@ include make.inc
 
 all : \
   example_gamma_unpolarized.x \
-  example_gamma_unpolarized_overlap.x
+  example_gamma_unpolarized_overlap.x \
+  example_gamma_unpolarized_wrapper.x
 
 example_gamma_unpolarized.x : example_gamma_unpolarized.F90
 
 example_gamma_unpolarized_overlap.x : example_gamma_unpolarized_overlap.F90
+
+example_gamma_unpolarized_wrapper.x : example_gamma_unpolarized_wrapper.F90
 
 clean : 
 	rm -f *.x
