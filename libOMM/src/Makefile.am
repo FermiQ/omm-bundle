@@ -23,7 +23,7 @@ omm_srcs = \
   omm_params.F90 \
   omm_quartic.F90 \
   omm_rand.F90 \
-  omm_wrappers.F90
+  omm_wrapper.F90
 
 # Fortran modules
 # TODO: support both lower-case and upper-case file names

@@ -8,4 +8,4 @@ omm_quartic.$(LTOBJEXT): omm_params.$(LTOBJEXT)
 
 omm_rand.$(LTOBJEXT): omm_params.$(LTOBJEXT)
 
-omm_wrappers.$(LTOBJEXT): omm_params.$(LTOBJEXT)
+omm_wrapper.$(LTOBJEXT): omm_params.$(LTOBJEXT)
