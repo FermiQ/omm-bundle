@@ -4,9 +4,6 @@ check_PROGRAMS = \
   example_gamma_wrapper.x \
   example_kpoints_wrapper.x
 
-EXTRA_DIST = example_gamma.dat \
-  example_kpoints.dat
-
 example_gamma_x_SOURCES = example_gamma.F90
 example_gamma_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
 example_gamma_x_LDADD = ../src/libomm.la
@@ -30,3 +27,6 @@ TESTS = \
   example_kpoints.x \
   example_gamma_wrapper.x \
   example_kpoints_wrapper.x
+
+CLEANFILES = \
+  libOMM.log
