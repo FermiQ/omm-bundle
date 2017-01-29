@@ -1,23 +1,32 @@
 check_PROGRAMS = \
-  example_gamma_unpolarized.x \
-  example_gamma_unpolarized_overlap.x \
-  example_gamma_unpolarized_wrapper.x
+  example_gamma.x \
+  example_kpoints.x \
+  example_gamma_wrapper.x \
+  example_kpoints_wrapper.x
 
-example_gamma_unpolarized_x_SOURCES = example_gamma_unpolarized.F90
-example_gamma_unpolarized_x_FCFLAGS = -I../src
-example_gamma_unpolarized_x_LDADD = ../src/libomm.la
+EXTRA_DIST = example_gamma.dat \
+  example_kpoints.dat
 
-example_gamma_unpolarized_overlap_x_SOURCES = example_gamma_unpolarized_overlap.F90
-example_gamma_unpolarized_overlap_x_FCFLAGS = -I../src
-example_gamma_unpolarized_overlap_x_LDADD = ../src/libomm.la
+example_gamma_x_SOURCES = example_gamma.F90
+example_gamma_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_gamma_x_LDADD = ../src/libomm.la
 
-example_gamma_unpolarized_wrapper_x_SOURCES = example_gamma_unpolarized_wrapper.F90
-example_gamma_unpolarized_wrapper_x_FCFLAGS = -I../src
-example_gamma_unpolarized_wrapper_x_LDADD = ../src/libomm.la
+example_kpoints_x_SOURCES = example_kpoints.F90
+example_kpoints_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_kpoints_x_LDADD = ../src/libomm.la
+
+example_gamma_wrapper_x_SOURCES = example_gamma_wrapper.F90
+example_gamma_wrapper_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_gamma_wrapper_x_LDADD = ../src/libomm.la
+
+example_kpoints_wrapper_x_SOURCES = example_kpoints_wrapper.F90
+example_kpoints_wrapper_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_kpoints_wrapper_x_LDADD = ../src/libomm.la
 
 LOG_COMPILER = $(TESTS_CMD)
 
 TESTS = \
-  example_gamma_unpolarized.x \
-  example_gamma_unpolarized_overlap.x \
-  example_gamma_unpolarized_wrapper.x
+  example_gamma.x \
+  example_kpoints.x \
+  example_gamma_wrapper.x \
+  example_kpoints_wrapper.x
