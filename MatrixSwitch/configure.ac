@@ -62,13 +62,12 @@ AC_PROG_GREP
 #   * switches (--enable-*) must be set to "yes" or "no"
 #   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
-msw_cfg_switches="conv debug examples"
+msw_cfg_switches="conv debug"
 msw_cfg_extdeps="linalg mpi psp"
 
 # Optional features
 msw_conv_enable_def="no"
 msw_debug_enable_def="yes"
-msw_examples_enable_def="no"
 
 # Linear algebra
 # Note: default libraries must be empty because some compilers have
@@ -139,12 +138,6 @@ AC_ARG_ENABLE([debug],
   [msw_debug_enable="${enableval}"; msw_debug_type="yon"],
   [msw_debug_enable="${msw_debug_enable_def}"; msw_debug_type="def"])
 AC_SUBST(enable_debug)
-AC_ARG_ENABLE([examples],
-  [AS_HELP_STRING([--enable-examples],
-    [Build usage examples of MatrixSwitch])],
-  [msw_examples_enable="${enableval}"; msw_examples_type="yon"],
-  [msw_examples_enable="${msw_examples_enable_def}"; msw_examples_type="def"])
-AC_SUBST(enable_examples)
 
                     # ------------------------------------ #
 
@@ -340,7 +333,6 @@ unset tmp_psp_vars
 # Defaults
 AC_SUBST(msw_conv_enable_def)
 AC_SUBST(msw_debug_enable_def)
-AC_SUBST(msw_examples_enable_def)
 AC_SUBST(msw_mpi_enable_def)
 AC_SUBST(msw_mpi_incs_def)
 AC_SUBST(msw_mpi_libs_def)
@@ -354,7 +346,6 @@ AC_SUBST(msw_psp_libs_def)
 # Triggers
 AC_SUBST(msw_conv_enable)
 AC_SUBST(msw_debug_enable)
-AC_SUBST(msw_examples_enable)
 AC_SUBST(msw_mpi_enable)
 AC_SUBST(msw_linalg_enable)
 AC_SUBST(msw_psp_enable)
@@ -362,7 +353,6 @@ AC_SUBST(msw_psp_enable)
 # Initialization types
 AC_SUBST(msw_conv_type)
 AC_SUBST(msw_debug_type)
-AC_SUBST(msw_examples_type)
 AC_SUBST(msw_mpi_type)
 AC_SUBST(msw_linalg_type)
 AC_SUBST(msw_psp_type)
@@ -595,7 +585,6 @@ if test "${msw_debug_enable}" = "yes"; then
     [Define to 1 if you want to enable enhanced debugging information.])
   msw_cpp_options="${msw_cpp_options} DEBUG_MODE"
 fi
-AM_CONDITIONAL([DO_BUILD_EXAMPLES], [test "${enable_examples}" = "yes"])
 
 # External dependencies (alphabetical order)
 if test "${msw_linalg_has_lapack}" = "yes"; then
@@ -627,7 +616,6 @@ AC_MSG_NOTICE([TSTAMP     = ${msw_timestamp}])
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([CONVERT  = ${msw_conv_enable} (init: ${msw_conv_type})])
 AC_MSG_NOTICE([DEBUG    = ${msw_debug_enable} (init: ${msw_debug_type})])
-AC_MSG_NOTICE([EXAMPLES = ${msw_examples_enable} (init: ${msw_examples_type})])
 AC_MSG_NOTICE([MPI      = ${msw_mpi_enable} (init: ${msw_mpi_type})])
 AC_MSG_NOTICE([LINALG   = ${msw_linalg_enable} (init: ${msw_linalg_type})])
 AC_MSG_NOTICE([PSP      = ${msw_psp_enable} (init: ${msw_psp_type})])

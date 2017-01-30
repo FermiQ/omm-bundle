@@ -62,12 +62,11 @@ AC_PROG_GREP
 #   * switches (--enable-*) must be set to "yes" or "no"
 #   * external dependencies (--with-*) must be set to "yes", "no", or "auto"
 #
-omm_cfg_switches="debug examples randseed"
+omm_cfg_switches="debug randseed"
 omm_cfg_extdeps="linalg mpi psp msw"
 
 # Optional features
 omm_debug_enable_def="yes"
-omm_examples_enable_def="no"
 omm_randseed_enable_def="yes"
 
 # Linear algebra
@@ -138,12 +137,6 @@ AC_ARG_ENABLE([debug],
   [omm_debug_enable="${enableval}"; omm_debug_type="yon"],
   [omm_debug_enable="${omm_debug_enable_def}"; omm_debug_type="def"])
 AC_SUBST(enable_debug)
-AC_ARG_ENABLE([examples],
-  [AS_HELP_STRING([--enable-examples],
-    [Build usage examples of libOMM])],
-  [omm_examples_enable="${enableval}"; omm_examples_type="yon"],
-  [omm_examples_enable="${omm_examples_enable_def}"; omm_examples_type="def"])
-AC_SUBST(enable_examples)
 AC_ARG_ENABLE([randseed],
   [AS_HELP_STRING([--enable-randseed],
     [Enable time-based random seed, or else 123456])],
@@ -384,7 +377,6 @@ unset tmp_psp_vars
 
 # Defaults
 AC_SUBST(omm_debug_enable_def)
-AC_SUBST(omm_examples_enable_def)
 AC_SUBST(omm_randseed_enable_def)
 AC_SUBST(omm_mpi_enable_def)
 AC_SUBST(omm_mpi_incs_def)
@@ -401,7 +393,6 @@ AC_SUBST(omm_msw_libs_def)
 
 # Triggers
 AC_SUBST(omm_debug_enable)
-AC_SUBST(omm_examples_enable)
 AC_SUBST(omm_randseed_enable)
 AC_SUBST(omm_mpi_enable)
 AC_SUBST(omm_linalg_enable)
@@ -410,7 +401,6 @@ AC_SUBST(omm_msw_enable)
 
 # Initialization types
 AC_SUBST(omm_debug_type)
-AC_SUBST(omm_examples_type)
 AC_SUBST(omm_randseed_type)
 AC_SUBST(omm_mpi_type)
 AC_SUBST(omm_linalg_type)
@@ -684,7 +674,6 @@ if test "${omm_randseed_enable}" = "no"; then
     [Define to 1 if you want a deterministic random seed.])
   omm_cpp_options="${omm_cpp_options} NORAND"
 fi
-AM_CONDITIONAL([DO_BUILD_EXAMPLES], [test "${enable_examples}" = "yes"])
 
 # External dependencies (alphabetical order)
 if test "${omm_linalg_has_lapack}" = "yes"; then
@@ -715,7 +704,6 @@ AC_MSG_NOTICE([])
 AC_MSG_NOTICE([TSTAMP     = ${omm_timestamp}])
 AC_MSG_NOTICE([])
 AC_MSG_NOTICE([DEBUG    = ${omm_debug_enable} (init: ${omm_debug_type})])
-AC_MSG_NOTICE([EXAMPLES = ${omm_examples_enable} (init: ${omm_examples_type})])
 AC_MSG_NOTICE([RANDSEED = ${omm_randseed_enable} (init: ${omm_randseed_type})])
 AC_MSG_NOTICE([MPI      = ${omm_mpi_enable} (init: ${omm_mpi_type})])
 AC_MSG_NOTICE([LINALG   = ${omm_linalg_enable} (init: ${omm_linalg_type})])
