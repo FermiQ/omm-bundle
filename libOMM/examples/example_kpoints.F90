@@ -3,42 +3,52 @@
 #endif
 
 !==================================================================================================!
-! example1 : Gamma-point only, spin unpolarized                                                    !
+! example : k-points program with complex matrices in simple dense (serial)/dense block cyclic     !
+!           (parallel) format                                                                      !
 !                                                                                                  !
-! This example demonstrates a typical calculation with an outer loop of two MD iterations, and an  !
-! inner loop of five SCF iterations per MD step. For convenience, the Hamiltonian and overlap      !
-! matrices at each point have been pre-generated and are read in from file; in a real code,        !
-! however, they should be calculated at each step based on the output density matrix given by      !
-! libOMM.                                                                                          !
+! This example demonstrates how to calculate the first two iterations in an SCF loop using a toy   !
+! system. At the end of the loop, the energy-weighted density matrix is build from the current     !
+! coefficients matrix.                                                                             !
 !                                                                                                  !
-! This example is for a system with 832 basis orbitals and 128 occupied states (generated from a   !
-! 64-atom supercell of bulk Si). At the end of each SCF iteration, the Kohn-Sham energy 2*e_min is !
-! printed out, together with the first element of the density matrix as an extra check. At the end !
-! of each MD iteration, the energy-weighted density matrix is also calculated, and its first       !
-! element is printed out.                                                                          !
-!                                                                                                  !
-! Things to note:                                                                                  !
-!   1. The eigenspectrum shift parameter eta has to be set larger than 0 for convergence, since    !
-!      the occupied spectrum extends beyond 0 (this is typically a sign of a poor basis). Try      !
-!      changing eta to see how the convergence speed is affected. However, also take into account: !
-!   2. The Hamiltonian has to be provided to libOMM *already shifted by eta* (H -> H-eta*S)        !
-!   3. There are no optional arguments in the call to libOMM. Therefore, matrices which are not    !
-!      needed should simpy be passed without having been allocated by MatrixSwitch (m_allocate     !
-!      routine). Other variables which are not needed will be ignored by libOMM.                   !
-!   4. Try enabling Cholesky factorization (precon=1) or preconditioning (precon=3) in the call to !
-!      libOMM to see how the convergence speed is affected. Preconditioning is even more effective !
-!      if a T matrix is provided (scale_T should be set around 10 Ry). Take care that, for         !
-!      Cholesky factorization, S and H will be overwritten by U and U^(-T)*H*U^(-1).               !
-!   5. The dealloc variable should only be .true. for the very last call. This is because libOMM   !
-!      stores and reuses internal information from one call to the next.                           !
+! The calculation is repeat three times with different flavours of the OMM functional:             !
+!   1. basic                                                                                       !
+!   2. Cholesky factorization with S matrix provided                                               !
+!   3. preconditioning                                                                             !
+! All three give the same output, but require different numbers of line searches to reach          !
+! convergence.                                                                                     !
 !                                                                                                  !
 ! Sample output:                                                                                   !
 !--------------------------------------------------------------------------------------------------!
-! e_min :   -63.812664276045751                                                                    !
-! D_11  :     0.500000000325070                                                                    !
-! e_min :   -65.685566689065666                                                                    !
-! D_11  :     0.500000000000009                                                                    !
-! ED_11 :    -1.642139167231525                                                                    !
+! e_min [1,1] :   -24.438247160429732                                                              !
+! D_11 [1,1]  :     0.375377483297582 ,     0.000000000000000                                      !
+! e_min [1,2] :   -24.439407709245497                                                              !
+! D_11 [1,2]  :     0.375749209342561 ,     0.000000000000001                                      !
+! e_min [2,1] :   -24.458493007195187                                                              !
+! D_11 [2,1]  :     0.376080260196555 ,     0.000000000000000                                      !
+! e_min [2,2] :   -24.459653177099920                                                              !
+! D_11 [2,2]  :     0.376459485442674 ,     0.000000000000000                                      !
+! ED_11 [1]   :    -0.432156333927393 ,     0.000000000000000                                      !
+! ED_11 [2]   :    -0.432206615291383 ,     0.000000022059879                                      !
+! e_min [1,1] :   -24.438247217643770                                                              !
+! D_11 [1,1]  :     0.375337718596713 ,     0.000000000000000                                      !
+! e_min [1,2] :   -24.439407743114266                                                              !
+! D_11 [1,2]  :     0.375728512130585 ,     0.000000000000000                                      !
+! e_min [2,1] :   -24.458493048128950                                                              !
+! D_11 [2,1]  :     0.376091548122563 ,     0.000000000000000                                      !
+! e_min [2,2] :   -24.459653240735623                                                              !
+! D_11 [2,2]  :     0.376484735402255 ,    -0.000000000000000                                      !
+! ED_11 [1]   :    -0.432151213609361 ,     0.000000000000000                                      !
+! ED_11 [2]   :    -0.432213581623650 ,     0.000000032422733                                      !
+! e_min [1,1] :   -24.438247213825832                                                              !
+! D_11 [1,1]  :     0.375339080166898 ,     0.000000000000000                                      !
+! e_min [1,2] :   -24.439407744010055                                                              !
+! D_11 [1,2]  :     0.375729823323893 ,     0.000000000000002                                      !
+! e_min [2,1] :   -24.458493047871432                                                              !
+! D_11 [2,1]  :     0.376091841685942 ,     0.000000000000000                                      !
+! e_min [2,2] :   -24.459653240818803                                                              !
+! D_11 [2,2]  :     0.376484732604453 ,     0.000000000000000                                      !
+! ED_11 [1]   :    -0.432152723765824 ,     0.000000000000000                                      !
+! ED_11 [2]   :    -0.432213268573766 ,    -0.000000034527781                                      !
 !--------------------------------------------------------------------------------------------------!
 !==================================================================================================!
 program example_kpoints
@@ -244,7 +254,7 @@ program example_kpoints
         call assert_equal_dp(e_min, e_min_check((k-1)*2+i))
 
         call m_get_element(D_min(k),1,1,el)
-        if (mpi_rank==0) print('(2(a,i1),2(a,f21.15))'), 'D_11 [', i, ',', k, '] : ', real(el,dp), ' , ', aimag(el)
+        if (mpi_rank==0) print('(2(a,i1),2(a,f21.15))'), 'D_11 [', i, ',', k, ']  : ', real(el,dp), ' , ', aimag(el)
         call assert_equal_dp(real(el,dp), D_el_check((k-1)*2+i))
         call assert_equal_dp(aimag(el), 0.0_dp)
 
@@ -285,7 +295,7 @@ program example_kpoints
                m_operation) ! m_operation
 
       call m_get_element(ED_min(k),1,1,el)
-      if (mpi_rank==0) print('(a,i1,2(a,f21.15))'), 'ED_11 [', k, '] : ', real(el,dp), ' , ', aimag(el)
+      if (mpi_rank==0) print('(a,i1,2(a,f21.15))'), 'ED_11 [', k, ']   : ', real(el,dp), ' , ', aimag(el)
       call assert_equal_dp(real(el,dp), ED_el_check(k))
       call assert_equal_dp(aimag(el), 0.0_dp)
 

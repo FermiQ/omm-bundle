@@ -3,42 +3,37 @@
 #endif
 
 !==================================================================================================!
-! example1 : Gamma-point only, spin unpolarized                                                    !
+! example : Gamma-point only program with wrapped real matrices in simple dense (serial)/dense     !
+!           block cyclic (parallel) format                                                         !
 !                                                                                                  !
-! This example demonstrates a typical calculation with an outer loop of two MD iterations, and an  !
-! inner loop of five SCF iterations per MD step. For convenience, the Hamiltonian and overlap      !
-! matrices at each point have been pre-generated and are read in from file; in a real code,        !
-! however, they should be calculated at each step based on the output density matrix given by      !
-! libOMM.                                                                                          !
+! This example demonstrates how to calculate the first two iterations in an SCF loop using a toy   !
+! system. At the end of the loop, the energy-weighted density matrix is build from the current     !
+! coefficients matrix.                                                                             !
 !                                                                                                  !
-! This example is for a system with 832 basis orbitals and 128 occupied states (generated from a   !
-! 64-atom supercell of bulk Si). At the end of each SCF iteration, the Kohn-Sham energy 2*e_min is !
-! printed out, together with the first element of the density matrix as an extra check. At the end !
-! of each MD iteration, the energy-weighted density matrix is also calculated, and its first       !
-! element is printed out.                                                                          !
-!                                                                                                  !
-! Things to note:                                                                                  !
-!   1. The eigenspectrum shift parameter eta has to be set larger than 0 for convergence, since    !
-!      the occupied spectrum extends beyond 0 (this is typically a sign of a poor basis). Try      !
-!      changing eta to see how the convergence speed is affected. However, also take into account: !
-!   2. The Hamiltonian has to be provided to libOMM *already shifted by eta* (H -> H-eta*S)        !
-!   3. There are no optional arguments in the call to libOMM. Therefore, matrices which are not    !
-!      needed should simpy be passed without having been allocated by MatrixSwitch (m_allocate     !
-!      routine). Other variables which are not needed will be ignored by libOMM.                   !
-!   4. Try enabling Cholesky factorization (precon=1) or preconditioning (precon=3) in the call to !
-!      libOMM to see how the convergence speed is affected. Preconditioning is even more effective !
-!      if a T matrix is provided (scale_T should be set around 10 Ry). Take care that, for         !
-!      Cholesky factorization, S and H will be overwritten by U and U^(-T)*H*U^(-1).               !
-!   5. The dealloc variable should only be .true. for the very last call. This is because libOMM   !
-!      stores and reuses internal information from one call to the next.                           !
+! The calculation is repeat three times with different flavours of the OMM functional:             !
+!   1. basic                                                                                       !
+!   2. Cholesky factorization with S matrix provided                                               !
+!   3. preconditioning                                                                             !
+! All three give the same output, but require different numbers of line searches to reach          !
+! convergence.                                                                                     !
 !                                                                                                  !
 ! Sample output:                                                                                   !
 !--------------------------------------------------------------------------------------------------!
-! e_min :   -63.812664276045751                                                                    !
-! D_11  :     0.500000000325070                                                                    !
-! e_min :   -65.685566689065666                                                                    !
-! D_11  :     0.500000000000009                                                                    !
-! ED_11 :    -1.642139167231525                                                                    !
+! e_min [1] :   -24.438247165207933                                                                !
+! D_11 [1]  :     0.375373030916752                                                                !
+! e_min [2] :   -24.458492988091574                                                                !
+! D_11 [2]  :     0.376073904787868                                                                !
+! ED_11     :    -0.432150986741063                                                                !
+! e_min [1] :   -24.438247214944731                                                                !
+! D_11 [1]  :     0.375337656047806                                                                !
+! e_min [2] :   -24.458493047887327                                                                !
+! D_11 [2]  :     0.376091689034213                                                                !
+! ED_11     :    -0.432152431346589                                                                !
+! e_min [1] :   -24.438247217082530                                                                !
+! D_11 [1]  :     0.375338986730707                                                                !
+! e_min [2] :   -24.458493048136315                                                                !
+! D_11 [2]  :     0.376091631495715                                                                !
+! ED_11     :    -0.432151505859273                                                                !
 !--------------------------------------------------------------------------------------------------!
 !==================================================================================================!
 program example_gamma_wrapper
@@ -220,7 +215,7 @@ program example_gamma_wrapper
       call assert_equal_dp(e_min, e_min_check(i))
 
       call m_get_element('D',1,1,el)
-      if (mpi_rank==0) print('(a,i1,a,f21.15)'), 'D_11 [', i, '] : ', el
+      if (mpi_rank==0) print('(a,i1,a,f21.15)'), 'D_11 [', i, ']  : ', el
       call assert_equal_dp(el, D_el_check(i))
 
     end do
@@ -249,7 +244,7 @@ program example_gamma_wrapper
                      m_operation) ! m_operation
 
     call m_get_element('E',1,1,el)
-    if (mpi_rank==0) print('(a,f21.15)'), 'ED_11 : ', el
+    if (mpi_rank==0) print('(a,f21.15)'), 'ED_11     : ', el
     call assert_equal_dp(el, ED_el_check)
 
     call m_deallocate('C')
