@@ -4,15 +4,30 @@ include make.inc
 .SUFFIXES:
 .SUFFIXES: .x .f90 .F90
 
-all : example1.x example2.x example3.x example4.x
+all : example_sdden.x \
+      example_szden.x \
+      example_pddbc.x \
+      example_pzdbc.x \
+      example_sdden_wrapper.x \
+      example_szden_wrapper.x \
+      example_pddbc_wrapper.x \
+      example_pzdbc_wrapper.x
 
-example1.x : example1.F90
+example_sdden.x : example_sdden.F90
 
-example2.x : example2.F90
+example_szden.x : example_szden.F90
 
-example3.x : example3.F90
+example_pddbc.x : example_pddbc.F90
 
-example4.x : example4.F90
+example_pzdbc.x : example_pzdbc.F90
+
+example_sdden_wrapper.x : example_sdden_wrapper.F90
+
+example_szden_wrapper.x : example_szden_wrapper.F90
+
+example_pddbc_wrapper.x : example_pddbc_wrapper.F90
+
+example_pzdbc_wrapper.x : example_pzdbc_wrapper.F90
 
 clean : 
 	rm -f *.x

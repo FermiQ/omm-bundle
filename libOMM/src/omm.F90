@@ -1,3 +1,7 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flavour,np,ip,cg_tol,long_out,dealloc,&
                m_storage,m_operation)
   use omm_ops
@@ -422,6 +426,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
     if (long_out) write(log_unit,'(a)'), '|             e_min            e_diff         |'
   end if
   icg=0
+  conv=.false.
   do i=1,n_step_max
     lambda=0.0_dp
     do j=1,m*n-1

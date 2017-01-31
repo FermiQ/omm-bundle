@@ -1,61 +1,32 @@
-noinst_PROGRAMS = \
-  example1.x \
-  example2.x \
-  example3.x \
-  example4.x \
-  example5.x \
-  example6.x \
-  example7.x \
-  example8.x \
-  example9.x \
-  example10.x \
-  example11.x \
-  example12.x
+check_PROGRAMS = \
+  example_gamma.x \
+  example_kpoints.x \
+  example_gamma_wrapper.x \
+  example_kpoints_wrapper.x
 
-example1_x_SOURCES = example1.F90
-example1_x_FCFLAGS = -I../src
-example1_x_LDADD = ../src/libomm.la
+example_gamma_x_SOURCES = example_gamma.F90
+example_gamma_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_gamma_x_LDADD = ../src/libOMM.la
 
-example2_x_SOURCES = example2.F90
-example2_x_FCFLAGS = -I../src
-example2_x_LDADD = ../src/libomm.la
+example_kpoints_x_SOURCES = example_kpoints.F90
+example_kpoints_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_kpoints_x_LDADD = ../src/libOMM.la
 
-example3_x_SOURCES = example3.F90
-example3_x_FCFLAGS = -I../src
-example3_x_LDADD = ../src/libomm.la
+example_gamma_wrapper_x_SOURCES = example_gamma_wrapper.F90
+example_gamma_wrapper_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_gamma_wrapper_x_LDADD = ../src/libOMM.la
 
-example4_x_SOURCES = example4.F90
-example4_x_FCFLAGS = -I../src
-example4_x_LDADD = ../src/libomm.la
+example_kpoints_wrapper_x_SOURCES = example_kpoints_wrapper.F90
+example_kpoints_wrapper_x_FCFLAGS = -I../src -DSRCDIR=\'$(srcdir)\'
+example_kpoints_wrapper_x_LDADD = ../src/libOMM.la
 
-example5_x_SOURCES = example5.F90
-example5_x_FCFLAGS = -I../src
-example5_x_LDADD = ../src/libomm.la
+LOG_COMPILER = $(TESTS_CMD)
 
-example6_x_SOURCES = example6.F90
-example6_x_FCFLAGS = -I../src
-example6_x_LDADD = ../src/libomm.la
+TESTS = \
+  example_gamma.x \
+  example_kpoints.x \
+  example_gamma_wrapper.x \
+  example_kpoints_wrapper.x
 
-example7_x_SOURCES = example7.F90
-example7_x_FCFLAGS = -I../src
-example7_x_LDADD = ../src/libomm.la
-
-example8_x_SOURCES = example8.F90
-example8_x_FCFLAGS = -I../src
-example8_x_LDADD = ../src/libomm.la
-
-example9_x_SOURCES = example9.F90
-example9_x_FCFLAGS = -I../src
-example9_x_LDADD = ../src/libomm.la
-
-example10_x_SOURCES = example10.F90
-example10_x_FCFLAGS = -I../src
-example10_x_LDADD = ../src/libomm.la
-
-example11_x_SOURCES = example11.F90
-example11_x_FCFLAGS = -I../src
-example11_x_LDADD = ../src/libomm.la
-
-example12_x_SOURCES = example12.F90
-example12_x_FCFLAGS = -I../src
-example12_x_LDADD = ../src/libomm.la
+CLEANFILES = \
+  libOMM.log

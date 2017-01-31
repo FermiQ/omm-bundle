@@ -1,5 +1,9 @@
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 !==================================================================================================!
-! example3 : parallel program with real matrices                                                   !
+! example : parallel program with real matrices in dense block cyclic format                       !
 !                                                                                                  !
 ! This example demonstrates how to calculate:                                                      !
 !   alpha = tr(A^T*B)                                                                              !
@@ -27,7 +31,7 @@
 ! E_11 :     2.779421970931733                                                                     !
 !--------------------------------------------------------------------------------------------------!
 !==================================================================================================!
-program example3
+program example_pddbc
   use MatrixSwitch
 
   implicit none
@@ -37,6 +41,9 @@ program example3
   !**** PARAMS **********************************!
 
   integer, parameter :: dp=selected_real_kind(15,300)
+
+  real(dp), parameter :: res_check=31.194861937321846_dp
+  real(dp), parameter :: el_check=2.779421970931733_dp
 
   complex(dp), parameter :: cmplx_1=(1.0_dp,0.0_dp)
   complex(dp), parameter :: cmplx_i=(0.0_dp,1.0_dp)
@@ -107,18 +114,21 @@ program example3
   call mm_trace(A,B,res1,m_operation)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'res1 : ', res1
+  call assert_equal_dp(res1, res_check)
 
   call mm_multiply(A,'t',B,'n',D,1.0_dp,0.0_dp,m_operation)
 
   call m_trace(D,res2,m_operation)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'res2 : ', res2
+  call assert_equal_dp(res2, res_check)
 
   call mm_multiply(B,'n',A,'t',E,1.0_dp,0.0_dp,m_operation)
 
   call m_trace(E,res3,m_operation)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'res3 : ', res3
+  call assert_equal_dp(res3, res_check)
 
   call m_add(A,'t',C,1.0_dp,0.0_dp,m_operation)
 
@@ -127,6 +137,7 @@ program example3
   call m_trace(D,res4,m_operation)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'res4 : ', res4
+  call assert_equal_dp(res4, res_check)
 
   call m_add(A,'t',C,1.0_dp,0.0_dp,m_operation)
 
@@ -135,10 +146,12 @@ program example3
   call m_trace(E,res5,m_operation)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'res5 : ', res5
+  call assert_equal_dp(res5, res_check)
 
   call m_get_element(E,1,1,el)
 
   if (mpi_rank==0) print('(a,f21.15)'), 'E_11 : ', el
+  call assert_equal_dp(el, el_check)
 
   call m_deallocate(E)
   call m_deallocate(D)
@@ -146,11 +159,33 @@ program example3
   call m_deallocate(B)
   call m_deallocate(A)
 
+  deallocate(MyMatrix)
+
   call blacs_gridexit(icontxt)
   call blacs_exit(1)
   call mpi_finalize(mpi_err)
+
+  contains
+
+  subroutine assert_equal_dp(value1, value2)
+    implicit none
+
+    !**** PARAMS **********************************!
+
+    real(dp), parameter :: tolerance=1.0d-10
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in) :: value1
+    real(dp), intent(in) :: value2
+
+    !**********************************************!
+
+    if (abs(value1-value2)>tolerance) stop 1
+
+  end subroutine assert_equal_dp
 #else
   print('(a,f21.15)'), 'To run this example, compile with ScaLAPACK.'
 #endif
 
-end program example3
+end program example_pddbc

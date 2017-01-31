@@ -15,10 +15,7 @@
 ACLOCAL_AMFLAGS = -I config/m4
 
 # Subdirectories containing makefiles
-SUBDIRS = src doc
-if DO_BUILD_EXAMPLES
-SUBDIRS += examples
-endif
+SUBDIRS = src examples doc
 
 # Support for pkg-config (see http://pkg-config.freedesktop.org/wiki/)
 pkgconfigdir = $(prefix)/lib/pkgconfig

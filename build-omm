@@ -59,7 +59,6 @@ Commands can be:
    * <lib>    : build library <lib> (pspblas, matrixswitch, and/or libomm)
    * check    : run test suites before installing libraries
    * clean    : remove temporary build directories (other commands are ignored)
-   * examples : build examples along with the libraries
    * wipe     : remove both build and install directories (other commands are ignored)
 
 EOF
@@ -96,10 +95,6 @@ while test "${#}" -gt 0; do
       ;;
     clean)
       cln_bld="yes"
-      ;;
-    examples)
-      cfg_msw="${cfg_msw} --enable-examples"
-      cfg_omm="${cfg_omm} --enable-examples"
       ;;
     [Ll]ib[Oo][Mm][Mm])
       bld_omm="yes"
