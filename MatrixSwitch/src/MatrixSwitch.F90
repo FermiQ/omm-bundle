@@ -3294,9 +3294,9 @@ contains
 
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
   !============================================================================!
-  !> @brief Allocate matrix (\c p?dbc).
+  !> @brief Allocate matrix (dense block cyclic, parallel distribution).
   !!
-  !! Initializes a TYPE(MATRIX) variable for the p?dbc storage format. Note
+  !! Initializes a TYPE(MATRIX) variable for the \c p?dbc storage format. Note
   !! that all the common metadata for the matrix must already have been set,
   !! and \a ms_scalapack_setup must have been called.
   !!

@@ -12,10 +12,10 @@ module MatrixSwitch_mm_multiply
 
 contains
 
-  !================================================!
-  ! implementation: reference                      !
-  !================================================!
-
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (simple dense, serial distribution,
+  !!        reference implementation, real version).
+  !============================================================================!
   subroutine mm_multiply_sddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -78,6 +78,10 @@ contains
 
   end subroutine mm_multiply_sddenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (simple dense, serial distribution,
+  !!        reference implementation, complex version).
+  !============================================================================!
   subroutine mm_multiply_szdenref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -180,6 +184,11 @@ contains
 
   end subroutine mm_multiply_szdenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse column,
+  !!        {B, C} = simple dense, serial distribution, reference
+  !!        implementation, real version).
+  !============================================================================!
   subroutine mm_multiply_sdcscsddensddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -246,6 +255,11 @@ contains
 
   end subroutine mm_multiply_sdcscsddensddenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = simple dense, B = compressed
+  !!        sparse column, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_sddensdcscsddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -312,6 +326,11 @@ contains
 
   end subroutine mm_multiply_sddensdcscsddenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = simple dense, C = compressed
+  !!        sparse column, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_sddensddensdcscref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -378,6 +397,11 @@ contains
 
   end subroutine mm_multiply_sddensddensdcscref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse row, {B, C} =
+  !!        simple dense, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_sdcsrsddensddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -444,6 +468,11 @@ contains
 
   end subroutine mm_multiply_sdcsrsddensddenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = simple dense, B = compressed
+  !!        sparse row, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_sddensdcsrsddenref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -510,6 +539,11 @@ contains
 
   end subroutine mm_multiply_sddensdcsrsddenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = simple dense, C = compressed
+  !!        sparse row, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_sddensddensdcsrref(A,trA,B,trB,C,alpha,beta)
     implicit none
 
@@ -576,6 +610,11 @@ contains
 
   end subroutine mm_multiply_sddensddensdcsrref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse column,
+  !!        {B, C} = simple dense, serial distribution, reference
+  !!        implementation, complex version).
+  !============================================================================!
   subroutine mm_multiply_szcscszdenszdenref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -687,6 +726,11 @@ contains
 
   end subroutine mm_multiply_szcscszdenszdenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = simple dense, B = compressed
+  !!        sparse column, serial distribution, reference implementation,
+  !!        complex version).
+  !============================================================================!
   subroutine mm_multiply_szdenszcscszdenref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -798,6 +842,11 @@ contains
 
   end subroutine mm_multiply_szdenszcscszdenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = simple dense, C = compressed
+  !!        sparse column, serial distribution, reference implementation,
+  !!        complex version).
+  !============================================================================!
   subroutine mm_multiply_szdenszdenszcscref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -909,6 +958,11 @@ contains
 
   end subroutine mm_multiply_szdenszdenszcscref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse row, {B, C} =
+  !!        simple dense, serial distribution, reference implementation,
+  !!        complex version).
+  !============================================================================!
   subroutine mm_multiply_szcsrszdenszdenref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -1020,6 +1074,11 @@ contains
 
   end subroutine mm_multiply_szcsrszdenszdenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = simple dense, B = compressed
+  !!        sparse row, serial distribution, reference implementation, complex
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_szdenszcsrszdenref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -1131,6 +1190,11 @@ contains
 
   end subroutine mm_multiply_szdenszcsrszdenref
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = simple dense, C = compressed
+  !!        sparse row, serial distribution, reference implementation, complex
+  !!        version).
+  !============================================================================!
   subroutine mm_multiply_szdenszdenszcsrref(A,tcA,B,tcB,C,alpha,beta)
     implicit none
 
@@ -1242,11 +1306,14 @@ contains
 
   end subroutine mm_multiply_szdenszdenszcsrref
 
-  !================================================!
-  ! implementation: sparse-dense 1D distributed    !
-  !================================================!
-
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = dense block cyclic, B =
+  !!        compressed sparse row, parallel distribution, t1D reference
+  !!        implementation, real version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(A) = A.
+  !============================================================================!
   subroutine mm_multiply_pddbcpdcscpddbct1D(A,B,trB,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -1321,6 +1388,12 @@ contains
 
   end subroutine mm_multiply_pddbcpdcscpddbct1D
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse row, {B, C} =
+  !!        parallel distribution, t1D reference implementation, real version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(B) = B.
+  !============================================================================!
   subroutine mm_multiply_pdcscpddbcpddbct1D(A,trA,B,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -1397,6 +1470,13 @@ contains
 
   end subroutine mm_multiply_pdcscpddbcpddbct1D
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = dense block cyclic, C =
+  !!        compressed sparse row, parallel distribution, t1D reference
+  !!        implementation, real version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(A) /= op(B).
+  !============================================================================!
   subroutine mm_multiply_pddbcpddbcpdcsct1D(A,trA,B,trB,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -1480,6 +1560,13 @@ contains
 
   end subroutine mm_multiply_pddbcpddbcpdcsct1D
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, C} = dense block cyclic, B =
+  !!        compressed sparse row, parallel distribution, t1D reference
+  !!        implementation, complex version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(A) = A.
+  !============================================================================!
   subroutine mm_multiply_pzdbcpzcscpzdbct1D(A,B,tcB,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -1561,6 +1648,13 @@ contains
 
   end subroutine mm_multiply_pzdbcpzcscpzdbct1D
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (A = compressed sparse row, {B, C} =
+  !!        parallel distribution, t1D reference implementation, complex
+  !!        version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(B) = B.
+  !============================================================================!
   subroutine mm_multiply_pzcscpzdbcpzdbct1D(A,tcA,B,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -1645,6 +1739,14 @@ contains
 
   end subroutine mm_multiply_pzcscpzdbcpzdbct1D
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication ({A, B} = dense block cyclic, C =
+  !!        compressed sparse row, parallel distribution, t1D reference
+  !!        implementation, complex version).
+  !!
+  !! Note: requires a 1D parallel distribution and op(A) /= op(B) (counting M^T
+  !! and M^H as equivalent).
+  !============================================================================!
   subroutine mm_multiply_pzdbcpzdbcpzcsct1D(A,tcA,B,tcB,C,alpha,beta)
     implicit none
     include 'mpif.h'
