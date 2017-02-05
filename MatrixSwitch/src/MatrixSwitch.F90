@@ -23,7 +23,7 @@ module MatrixSwitch
   !> @brief Matrix-matrix multiplication.
   !!
   !! Performs the operation:
-  !! C := alpha*op(A)*op(B) + beta*C, where op(M) = {M, M^T, M^H}.
+  !! C := alpha*op(A)*op(B) + beta*C, where op(M) = {M, M^T, M^H}
   !!
   !! @param[in]    A     Matrix A. Note that the definition of the matrix
   !!                     (real/complex) needs to be the same as for the other
@@ -65,7 +65,7 @@ module MatrixSwitch
   !> @brief Matrix addition.
   !!
   !! Performs the operation:
-  !! C := alpha*op(A) + beta*C, where op(M) = {M, M^T, M^H}.
+  !! C := alpha*op(A) + beta*C, where op(M) = {M, M^T, M^H}
   !!
   !! @param[in]    A     Matrix A. Note that the definition of the matrix
   !!                     (real/complex) needs to be the same as for the other
@@ -96,16 +96,63 @@ module MatrixSwitch
      module procedure m_zadd
   end interface m_add
 
+  !============================================================================!
+  !> @brief Matrix trace.
+  !!
+  !! Performs the operation:
+  !! alpha := tr(A)
+  !!
+  !! @param[in]  A     Matrix A.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_trace
      module procedure m_dtrace
      module procedure m_ztrace
   end interface m_trace
 
+  !============================================================================!
+  !> @brief Matrix product trace.
+  !!
+  !! Performs the operation:
+  !! alpha := tr(A^H*B) = tr(B*A^H)
+  !!
+  !! @param[in]  A     Matrix A. Note that the definition of the matrix
+  !!                   (real/complex) needs to be the same as for the other
+  !!                   matrix.
+  !! @param[in]  B     Matrix B. Note that the definition of the matrix
+  !!                   (real/complex) needs to be the same as for the other
+  !!                   matrix.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface mm_trace
      module procedure mm_dtrace
      module procedure mm_ztrace
   end interface mm_trace
 
+  !============================================================================!
+  !> @brief Scale matrix.
+  !!
+  !! Performs the operation:
+  !! C := beta*C
+  !!
+  !! @param[in]  C     Matrix C.
+  !! @param[out] beta  Scalar beta. If the library is compiler without the
+  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_scale
      module procedure m_dscale
      module procedure m_zscale
@@ -1390,9 +1437,9 @@ contains
 
   end subroutine mm_zmultiply
 
-  !================================================!
+  !============================================================================!
   !> @brief Matrix addition (real version).
-  !================================================!
+  !============================================================================!
   subroutine m_dadd(A,opA,C,alpha,beta,label)
     implicit none
 
@@ -1545,9 +1592,9 @@ contains
 
   end subroutine m_dadd
 
-  !================================================!
+  !============================================================================!
   !> @brief Matrix addition (complex version).
-  !================================================!
+  !============================================================================!
   subroutine m_zadd(A,opA,C,alpha,beta,label)
     implicit none
 
@@ -1698,22 +1745,21 @@ contains
 
   end subroutine m_zadd
 
-  !================================================!
-  ! matrix trace                                   !
-  ! alpha := tr(A)                                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix trace (real version).
+  !============================================================================!
   subroutine m_dtrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1791,18 +1837,21 @@ contains
 
   end subroutine m_dtrace
 
+  !============================================================================!
+  !> @brief Matrix trace (complex version).
+  !============================================================================!
   subroutine m_ztrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1880,10 +1929,9 @@ contains
 
   end subroutine m_ztrace
 
-  !================================================!
-  ! matrix product trace                           !
-  ! alpha := tr(A^H*B) = tr(B*A^H)                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix product trace (real version).
+  !============================================================================!
   subroutine mm_dtrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -1892,14 +1940,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1999,6 +2047,9 @@ contains
 
   end subroutine mm_dtrace
 
+  !============================================================================!
+  !> @brief Matrix product trace (complex version).
+  !============================================================================!
   subroutine mm_ztrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -2007,14 +2058,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -2110,22 +2161,21 @@ contains
 
   end subroutine mm_ztrace
 
-  !================================================!
-  ! scale matrix                                   !
-  ! C := beta*C                                    !
-  !================================================!
+  !============================================================================!
+  !> @brief Scale matrix (real version).
+  !============================================================================!
   subroutine m_dscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: beta
 
     !**** INTOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2232,18 +2282,21 @@ contains
 
   end subroutine m_dscale
 
+  !============================================================================!
+  !> @brief Scale matrix (complex version).
+  !============================================================================!
   subroutine m_zscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: beta
 
     !**** INTOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
