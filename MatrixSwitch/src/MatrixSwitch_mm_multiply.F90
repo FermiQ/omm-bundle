@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Implementations of \a mm_multiply.
+!==============================================================================!
 module MatrixSwitch_mm_multiply
   use MatrixSwitch_ops
 

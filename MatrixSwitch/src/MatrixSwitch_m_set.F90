@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Implementations of \a m_set.
+!==============================================================================!
 module MatrixSwitch_m_set
   use MatrixSwitch_ops
 

@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Main MatrixSwitch module.
+!==============================================================================!
 module MatrixSwitch
   use MatrixSwitch_ops
   use MatrixSwitch_mm_multiply
@@ -29,29 +32,31 @@ module MatrixSwitch
   !!                     (real/complex) needs to be the same as for the other
   !!                     matrices.
   !! @param[in]    opA   Form of op(A):
-  !!                     - `n`/`N`: A
-  !!                     - `t`/`T`: A^T
-  !!                     - `c`/`C`: A^H (equivalent to A^T for a real matrix)
+  !!                     \arg \c n / \c N A
+  !!                     \arg \c t / \c T A^T
+  !!                     \arg \c c / \c C A^H (equivalent to A^T for a real
+  !!                     matrix)
   !! @param[in]    B     Matrix B. Note that the definition of the matrix
   !!                     (real/complex) needs to be the same as for the other
   !!                     matrices.
   !! @param[in]    opB   Form of op(B):
-  !!                     - `n`/`N`: B
-  !!                     - `t`/`T`: B^T
-  !!                     - `c`/`C`: B^H (equivalent to B^T for a real matrix)
+  !!                     \arg \c n / \c N B
+  !!                     \arg \c t / \c T B^T
+  !!                     \arg \c c / \c C B^H (equivalent to B^T for a real
+  !!                     matrix)
   !! @param[inout] C     Matrix C. Note that the definition of the matrix
   !!                     (real/complex) needs to be the same as for the other
   !!                     matrices.
   !! @param[in]    alpha Scalar alpha. If the library is compiler without the
-  !!                     `-DCONV` flag, the type has to match the definition of
-  !!                     the matrices (real/complex); otherwise, it only has to
-  !!                     match the type of \p beta, and will be automatically
-  !!                     converted to match the matrices.
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrices.
   !! @param[in]    beta  Scalar beta. If the library is compiler without the
-  !!                     `-DCONV` flag, the type has to match the definition of
-  !!                     the matrices (real/complex); otherwise, it only has to
-  !!                     match the type of \p alpha, and will be automatically
-  !!                     converted to match the matrices.
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrices.
   !! @param[in]    label Implementation of the operation to use. See online
   !!                     documentation for the list of available
   !!                     implementations.
@@ -71,22 +76,23 @@ module MatrixSwitch
   !!                     (real/complex) needs to be the same as for the other
   !!                     matrices.
   !! @param[in]    opA   Form of op(A):
-  !!                     - `n`/`N`: A
-  !!                     - `t`/`T`: A^T
-  !!                     - `c`/`C`: A^H (equivalent to A^T for a real matrix)
+  !!                     \arg \c n / \c N A
+  !!                     \arg \c t / \c T A^T
+  !!                     \arg \c c / \c C A^H (equivalent to A^T for a real
+  !!                     matrix)
   !! @param[inout] C     Matrix C. Note that the definition of the matrix
   !!                     (real/complex) needs to be the same as for the other
   !!                     matrices.
   !! @param[in]    alpha Scalar alpha. If the library is compiler without the
-  !!                     `-DCONV` flag, the type has to match the definition of
-  !!                     the matrices (real/complex); otherwise, it only has to
-  !!                     match the type of \p beta, and will be automatically
-  !!                     converted to match the matrices.
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrices.
   !! @param[in]    beta  Scalar beta. If the library is compiler without the
-  !!                     `-DCONV` flag, the type has to match the definition of
-  !!                     the matrices (real/complex); otherwise, it only has to
-  !!                     match the type of \p alpha, and will be automatically
-  !!                     converted to match the matrices.
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrices.
   !! @param[in]    label Implementation of the operation to use. See online
   !!                     documentation for the list of available
   !!                     implementations.
@@ -104,7 +110,7 @@ module MatrixSwitch
   !!
   !! @param[in]  A     Matrix A.
   !! @param[out] alpha Scalar alpha. If the library is compiler without the
-  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   \c -DCONV flag, the type has to match the definition of
   !!                   the matrix (real/complex); otherwise, it will be
   !!                   automatically converted to match it.
   !! @param[in]  label Implementation of the operation to use. See online
@@ -128,7 +134,7 @@ module MatrixSwitch
   !!                   (real/complex) needs to be the same as for the other
   !!                   matrix.
   !! @param[out] alpha Scalar alpha. If the library is compiler without the
-  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   \c -DCONV flag, the type has to match the definition of
   !!                   the matrix (real/complex); otherwise, it will be
   !!                   automatically converted to match it.
   !! @param[in]  label Implementation of the operation to use. See online
@@ -147,7 +153,7 @@ module MatrixSwitch
   !!
   !! @param[in]  C     Matrix C.
   !! @param[out] beta  Scalar beta. If the library is compiler without the
-  !!                   `-DCONV` flag, the type has to match the definition of
+  !!                   \c -DCONV flag, the type has to match the definition of
   !!                   the matrix (real/complex); otherwise, it will be
   !!                   automatically converted to match it.
   !! @param[in]  label Implementation of the operation to use. See online
@@ -158,16 +164,80 @@ module MatrixSwitch
      module procedure m_zscale
   end interface m_scale
 
+  !============================================================================!
+  !> @brief Set matrix.
+  !!
+  !! Performs the operation:
+  !! C_ij := {alpha (i /= j), beta (i == j)}
+  !!
+  !! @param[inout] C     Matrix C.
+  !! @param[in]    seC   Form of the operation:
+  !!                     \arg \c l / \c L lower triangle
+  !!                     \arg \c u / \c U upper triangle
+  !!                     \arg other: complete matrix
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface m_set
      module procedure m_dset
      module procedure m_zset
   end interface m_set
 
+  !============================================================================!
+  !> @brief Set matrix element.
+  !!
+  !! Performs the operation:
+  !! C_ij := alpha + beta*C_ij
+  !!
+  !! @param[inout] C     Matrix C.
+  !! @param[in]    i     Row index of the element.
+  !! @param[in]    j     Column index of the element.
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface m_set_element
      module procedure m_dset_element
      module procedure m_zset_element
   end interface m_set_element
 
+  !============================================================================!
+  !> @brief Get matrix element.
+  !!
+  !! Performs the operation:
+  !! alpha := C_ij
+  !!
+  !! @param[in]  C     Matrix C.
+  !! @param[in]  i     Row index of the element.
+  !! @param[in]  j     Column index of the element.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   \c -DCONV flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_get_element
      module procedure m_dget_element
      module procedure m_zget_element
@@ -204,7 +274,7 @@ contains
   !============================================================================!
   !> @brief Allocate matrix.
   !!
-  !! Initialises a TYPE(MATRIX) variable by saving some basic information about
+  !! Initializes a TYPE(MATRIX) variable by saving some basic information about
   !! the matrix, and allocating the necessary arrays for the requested storage
   !! format. Matrix elements are set to zero.
   !!
@@ -212,7 +282,7 @@ contains
   !! @param[in]    i      Row dimension size of the matrix.
   !! @param[in]    j      Column dimension size of the matrix.
   !! @param[in]    label  Storage format to use. See online documentation for
-  !!                      the list of available formats. Default is `sdden`.
+  !!                      the list of available formats. Default is \c sdden.
   !============================================================================!
   subroutine m_allocate(m_name,i,j,label)
     implicit none
@@ -2403,25 +2473,23 @@ contains
 
   end subroutine m_zscale
 
-  !================================================!
-  ! set matrix                                     !
-  ! C_ij := alpha (off-diagonal elements) and      !
-  !         beta (diagonal elements)               !
-  !================================================!
+  !============================================================================!
+  !> @brief Set matrix (real version).
+  !============================================================================!
   subroutine m_dset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2490,20 +2558,23 @@ contains
 
   end subroutine m_dset
 
+  !============================================================================!
+  !> @brief Set matrix (complex version).
+  !============================================================================!
   subroutine m_zset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2572,26 +2643,25 @@ contains
 
   end subroutine m_zset
 
-  !================================================!
-  ! set matrix element                             !
-  ! C_ij := alpha + beta*C_ij                      !
-  !================================================!
+  !============================================================================!
+  !> @brief Set matrix element (real version).
+  !============================================================================!
   subroutine m_dset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2747,22 +2817,25 @@ contains
 
   end subroutine m_dset_element
 
+  !============================================================================!
+  !> @brief Set matrix element (complex version).
+  !============================================================================!
   subroutine m_zset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2918,25 +2991,24 @@ contains
 
   end subroutine m_zset_element
 
-  !================================================!
-  ! get matrix element                             !
-  ! alpha := C_ij                                  !
-  !================================================!
+  !============================================================================!
+  !> @brief Get matrix element (real version).
+  !============================================================================!
   subroutine m_dget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    type(matrix), intent(in) :: C ! matrix C
+    type(matrix), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -3032,21 +3104,24 @@ contains
 
   end subroutine m_dget_element
 
+  !============================================================================!
+  !> @brief Get matrix element (complex version).
+  !============================================================================!
   subroutine m_zget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    type(matrix), intent(in) :: C ! matrix C
+    type(matrix), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -3142,29 +3217,41 @@ contains
 
   end subroutine m_zget_element
 
-  !================================================!
-  ! implementation: ScaLAPACK                      !
-  !================================================!
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+  !============================================================================!
+  !> @brief ScaLAPACK MPI setup.
+  !!
+  !! Sets up everything needed to use \c p?dbc matrices with ScaLAPACK. Has to
+  !! be called once at the start of the code.
+  !!
+  !! @param[in] mpi_comm MPI communicator to use.
+  !! @param[in] nprow    Row dimension of the process grid (has to be a divisor
+  !!                     of the size of the group defined by \p mpi_comm).
+  !! @param[in] order    Ordering of the process grid:
+  !!                     \arg \c c / \c C column-major ordering
+  !!                     \arg \c r / \c R row-major ordering
+  !! @param[in] bs_def   Default block size to use when allocating \c p?dbc
+  !!                     matrices.
+  !! @param[in] bs_list  List of exceptions to \p bs_def to use for specific
+  !!                     matrix dimension sizes. Has to be formatted as
+  !!                     (\c dim_1, \c bs_1, \c dim_2, \c bs_2, etc.), where
+  !!                     \c dim_x is the matrix dimension size, and \c bs_x is
+  !!                     the corresponding block size to use for it.
+  !! @param[in] icontxt  BLACS context handle, if already initialized.
+  !============================================================================!
   subroutine ms_scalapack_setup(mpi_comm,nprow,order,bs_def,bs_list,icontxt)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: order ! ordering of processor grid: 'r/R' or other for row-major, 'c/C' for column-major
+    character(1), intent(in) :: order
 
-    integer, intent(in) :: mpi_comm ! MPI communicator
-    integer, intent(in) :: nprow ! number of rows in the processor grid
-    integer, intent(in) :: bs_def ! default block size
-    ! This is a list of exceptions to the default block size for specific matrix dimension sizes. The list has to be formatted as:
-    !   * matrix dimension size 1
-    !   * block size to use for matrix dimension size 1
-    !   * matrix dimension size 2
-    !   * block size to use for matrix dimension size 2
-    !   * etc.
+    integer, intent(in) :: mpi_comm
+    integer, intent(in) :: nprow
+    integer, intent(in) :: bs_def
     integer, intent(in), optional :: bs_list(:)
-    integer, intent(in), optional :: icontxt ! existing BLACS context handle in case ScaLAPACK is already initialized
+    integer, intent(in), optional :: icontxt
 
     !**** INTERNAL ********************************!
 
@@ -3206,6 +3293,15 @@ contains
 #endif
 
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+  !============================================================================!
+  !> @brief Allocate matrix (\c p?dbc).
+  !!
+  !! Initializes a TYPE(MATRIX) variable for the p?dbc storage format. Note
+  !! that all the common metadata for the matrix must already have been set,
+  !! and \a ms_scalapack_setup must have been called.
+  !!
+  !! @param[inout] A The matrix to be allocated.
+  !============================================================================!
   subroutine ms_scalapack_allocate(A)
     implicit none
 

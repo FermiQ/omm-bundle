@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief \a m_register functions for different storage types.
+!==============================================================================!
 module MatrixSwitch_m_register
   use MatrixSwitch_ops
 

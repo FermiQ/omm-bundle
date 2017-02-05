@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Storage and auxiliary operations for MatrixSwitch C bindings.
+!==============================================================================!
 module MatrixSwitch_wrapper_params
   use MatrixSwitch, only: matrix
   use MatrixSwitch_ops, only : die

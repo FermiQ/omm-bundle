@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief MatrixSwitch C bindings.
+!==============================================================================!
 module MatrixSwitch_wrapper
   use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &

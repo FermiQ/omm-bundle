@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Storage and auxiliary operations for MatrixSwitch.
+!==============================================================================!
 module MatrixSwitch_ops
 #ifdef HAVE_PSPBLAS
   use pspBLAS
@@ -13,64 +16,86 @@ module MatrixSwitch_ops
 
   !**** PARAMS ************************************!
 
-  integer, parameter :: dp=selected_real_kind(15,300)
+  integer, parameter :: dp=selected_real_kind(15,300) !< Double precision.
 
-  complex(dp), parameter :: cmplx_1=(1.0_dp,0.0_dp)
-  complex(dp), parameter :: cmplx_i=(0.0_dp,1.0_dp)
-  complex(dp), parameter :: cmplx_0=(0.0_dp,0.0_dp)
+  complex(dp), parameter :: cmplx_1=(1.0_dp,0.0_dp) !< Complex 1.
+  complex(dp), parameter :: cmplx_i=(0.0_dp,1.0_dp) !< Complex i.
+  complex(dp), parameter :: cmplx_0=(0.0_dp,0.0_dp) !< Complex 0.
 
   !**** VARIABLES *********************************!
 
 #ifdef HAVE_MPI
-  character(1), save :: ms_lap_order
+  character(1), save :: ms_lap_order !< Ordering of the BLACS process grid.
 
-  integer, save :: ms_mpi_comm
-  integer, save :: ms_mpi_size
-  integer, save :: ms_mpi_rank
-  integer, save :: ms_lap_nprow
-  integer, save :: ms_lap_npcol
-  integer, save :: ms_lap_bs_def
-  integer, save :: ms_lap_bs_num
-  integer, save :: ms_lap_icontxt ! BLACS context handle used by MatrixSwitch
-  integer, allocatable, save :: ms_lap_bs_list(:,:)
+  integer, save :: ms_mpi_comm !< MPI communicator.
+  integer, save :: ms_mpi_size !< Number of MPI processes.
+  integer, save :: ms_mpi_rank !< MPI process rank.
+  integer, save :: ms_lap_nprow !< Number of rows in the BLACS process grid.
+  integer, save :: ms_lap_npcol !< Number of columns in the BLACS process grid.
+  integer, save :: ms_lap_bs_def !< Default block size.
+  integer, save :: ms_lap_bs_num !< Number of block size exceptions.
+  integer, save :: ms_lap_icontxt !< BLACS context handle used by MatrixSwitch.
+  integer, allocatable, save :: ms_lap_bs_list(:,:) !< Block size exception list.
 #endif
 
   !**** TYPES *************************************!
 
-  ! This is the derived type that encapsulates all matrix storage possibilities and hides the details from the user.
+  !============================================================================!
+  !> @brief MatrixSwitch matrix type.
+  !!
+  !! This is the derived type that encapsulates all matrix storage
+  !! possibilities and hides the details from the user. Typically, the elements
+  !! below will never need to be accessed directly.
+  !============================================================================!
   type matrix
-     character(3) :: str_type ! label identifying the storage format
+     character(3) :: str_type !< Label identifying the storage format.
 
-     logical :: is_initialized=.false. ! has the matrix been initialized?
-     logical :: is_serial ! is the matrix serial or parallel distributed?
-     logical :: is_real ! is the matrix real or complex (both kind dp)?
-     logical :: is_square ! is the matrix square?
-     logical :: is_sparse ! is the matrix sparse?
-     logical :: iaux1_is_allocated=.false. ! is iaux1 directly allocated?
-     logical :: iaux2_is_allocated=.false. ! is iaux2 directly allocated?
-     logical :: iaux3_is_allocated=.false. ! is iaux3 directly allocated?
-     logical :: iaux4_is_allocated=.false. ! is iaux4 directly allocated?
-     logical :: dval_is_allocated=.false. ! is dval directly allocated?
-     logical :: zval_is_allocated=.false. ! is zval directly allocated?
+     logical :: is_initialized=.false. !< Has the matrix been initialized?
+     logical :: is_serial !< Is the matrix serial or parallel distributed?
+     logical :: is_real !< Is the matrix real or complex (both kind \p dp)?
+     logical :: is_square !< Is the matrix square?
+     logical :: is_sparse !< Is the matrix sparse?
+     logical :: iaux1_is_allocated=.false. !< Is iaux1 directly allocated or it is a pointer?
+     logical :: iaux2_is_allocated=.false. !< Is iaux2 directly allocated or it is a pointer?
+     logical :: iaux3_is_allocated=.false. !< Is iaux3 directly allocated or it is a pointer?
+     logical :: iaux4_is_allocated=.false. !< Is iaux4 directly allocated or it is a pointer?
+     logical :: dval_is_allocated=.false. !< Is dval directly allocated or it is a pointer?
+     logical :: zval_is_allocated=.false. !< Is zval directly allocated or it is a pointer?
 
-     integer :: dim1 ! (global) row dimension size of the matrix
-     integer :: dim2 ! (global) column dimension size of the matrix
-     integer, pointer :: iaux1(:) => null() ! auxiliary information for certain storage formats
-     integer, pointer :: iaux2(:) => null() ! auxiliary information for certain storage formats
-     integer, pointer :: iaux3(:) => null() ! auxiliary information for certain storage formats
-     integer, pointer :: iaux4(:) => null() ! auxiliary information for certain storage formats
+     integer :: dim1 !< Row dimension size of the matrix.
+     integer :: dim2 !< Column dimension size of the matrix.
+     integer, pointer :: iaux1(:) => null() !< Auxiliary information for certain storage formats.
+     integer, pointer :: iaux2(:) => null() !< Auxiliary information for certain storage formats.
+     integer, pointer :: iaux3(:) => null() !< Auxiliary information for certain storage formats.
+     integer, pointer :: iaux4(:) => null() !< Auxiliary information for certain storage formats.
 
-     real(dp), pointer :: dval(:,:) => null() ! matrix elements for a real matrix
+     real(dp), pointer :: dval(:,:) => null() !< Matrix elements for a real matrix.
 
-     complex(dp), pointer :: zval(:,:) => null() ! matrix elements for a complex matrix
+     complex(dp), pointer :: zval(:,:) => null() !< Matrix elements for a complex matrix.
 
 #ifdef HAVE_PSPBLAS
-     type(psp_matrix_spm) :: spm ! a sparse matrix in pspBLAS
+     type(psp_matrix_spm) :: spm !< pspBLAS matrix type.
 #endif
   end type matrix
 
   !**** INTERFACES ********************************!
 
+  !============================================================================!
+  !> @brief \p opM parameter converter.
+  !!
+  !! Converts the input parameters \p opA and opB in the subroutines
+  !! \a mm_multiply and \a m_add from a character to a logical (real version)
+  !! or integer (complex version) for internal use:
+  !! \arg \c n / \c N mapped to \c .false. (real version) or \c 0 (complex
+  !! version)
+  !! \arg \c t / \c T mapped to \c .true. (real version) or \c 2 (complex
+  !! version)
+  !! \arg \c c / \c C mapped to \c .true. (real version) or \c 1 (complex
+  !! version)
+  !!
+  !! @param[in]  seM Parameter 
+  !! @param[out] luM 
+  !============================================================================!
   interface process_opM
      module procedure process_lopM
      module procedure process_iopM
@@ -80,6 +105,9 @@ module MatrixSwitch_ops
 
 contains
 
+  !============================================================================!
+  !> @brief \p opM parameter converter (real version).
+  !============================================================================!
   subroutine process_lopM(opM,trM)
     implicit none
 
@@ -107,6 +135,9 @@ contains
 
   end subroutine process_lopM
 
+  !============================================================================!
+  !> @brief \p opM parameter converter (complex version).
+  !============================================================================!
   subroutine process_iopM(opM,tcM)
     implicit none
 
@@ -135,6 +166,18 @@ contains
 
   end subroutine process_iopM
 
+  !============================================================================!
+  !> @brief \p seC parameter converter.
+  !!
+  !! Converts the input parameter \p seC in the subroutine \a m_set from a
+  !! character to an integer for internal use:
+  !! \arg \c l / \c L mapped to \c 2
+  !! \arg \c u / \c U mapped to \c 1
+  !! \arg other: mapped to \c 0
+  !!
+  !! @param[in]  seM Parameter 
+  !! @param[out] luM 
+  !============================================================================!
   subroutine process_seM(seM,luM)
     implicit none
 
@@ -160,6 +203,14 @@ contains
 
   end subroutine process_seM
 
+  !============================================================================!
+  !> @brief Code termination from error.
+  !!
+  !! Outputs a custom error message to file and then stops execution with a
+  !! non-zero exit status.
+  !!
+  !! @param[in] message Error mesage to output before stopping.
+  !============================================================================!
   subroutine die(message)
     implicit none
 

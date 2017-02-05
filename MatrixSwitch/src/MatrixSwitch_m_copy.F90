@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Implementations of \a m_copy.
+!==============================================================================!
 module MatrixSwitch_m_copy
   use MatrixSwitch_ops
 

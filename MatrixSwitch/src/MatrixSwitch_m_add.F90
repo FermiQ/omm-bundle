@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Implementations of \a m_add.
+!==============================================================================!
 module MatrixSwitch_m_add
   use MatrixSwitch_ops
 
