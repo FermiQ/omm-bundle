@@ -877,7 +877,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pdcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+    call m_register_pcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
   end subroutine m_register_pdcoo
 #endif
@@ -898,7 +898,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pzcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+    call m_register_pcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
   end subroutine m_register_pzcoo
 #endif
@@ -923,7 +923,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pdcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+    call m_register_pcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
   end subroutine m_register_pdcsc
 #endif
@@ -944,7 +944,7 @@ contains
 
     !**********************************************!
 
-    call m_register_pzcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+    call m_register_pcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
   end subroutine m_register_pzcsc
 #endif
