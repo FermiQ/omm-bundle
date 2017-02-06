@@ -12,10 +12,10 @@ module MatrixSwitch_m_set
 
 contains
 
-  !================================================!
-  ! implementation: reference                      !
-  !================================================!
-
+  !============================================================================!
+  !> @brief Set matrix (simple dense, serial distribution, reference
+  !!        implementation, real version).
+  !============================================================================!
   subroutine m_set_sddenref(C,seC,alpha,beta)
     implicit none
 
@@ -74,6 +74,10 @@ contains
 
   end subroutine m_set_sddenref
 
+  !============================================================================!
+  !> @brief Set matrix (simple dense, serial distribution, reference
+  !!        implementation, complex version).
+  !============================================================================!
   subroutine m_set_szdenref(C,seC,alpha,beta)
     implicit none
 
