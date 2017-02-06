@@ -46,15 +46,72 @@ module MatrixSwitch_m_register
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list/compressed sparse column
+  !!        from dense block cyclic, parallel distribution).
+  !!
+  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
+  !! \c p?coo or \c p?csc format.
+  !!
+  !! @param[inout] m_name      The matrix to be allocated.
+  !! @param[in]    A           The values of the local matrix elements, stored
+  !!                           as a two-dimensional array.
+  !! @param[in]    desc        BLACS array descriptor.
+  !! @param[in]    spm_storage Storage format to use:
+  !!                           \arg \c coo Sparse coordinate list.
+  !!                           \arg \c csc Compressed sparse column.
+  !! @param[in]    thre        Tolerance for zeroing elements. Elements with an
+  !!                           absolute value below this threshold will be
+  !!                           omitted.
+  !============================================================================!
   interface m_register_psp_thre
      module procedure m_register_pdsp_thre
      module procedure m_register_pzsp_thre
   end interface m_register_psp_thre
+#endif
 
-  interface m_register_psp_st
-     module procedure m_register_pdsp_st
-     module procedure m_register_pzsp_st
-  end interface m_register_psp_st
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list, parallel distribution).
+  !!
+  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
+  !! \c p?coo format.
+  !!
+  !! @param[inout] m_name      The matrix to be allocated.
+  !! @param[in]    idx1        The local row indices, stored as a
+  !!                           one-dimensional array.
+  !! @param[in]    idx2        The local column indices, stored as a
+  !!                           one-dimensional array.
+  !! @param[in]    val         The values of the local matrix elements, stored
+  !!                           as a one-dimensional array.
+  !! @param[in]    desc        BLACS array descriptor.
+  !============================================================================!
+  interface m_register_pcoo
+     module procedure m_register_pdcoo
+     module procedure m_register_pzcoo
+  end interface m_register_pcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (compressed sparse column, parallel distribution).
+  !!
+  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
+  !! \c p?csc format.
+  !!
+  !! @param[inout] m_name      The matrix to be allocated.
+  !! @param[in]    idx1        The local row indices, stored as a
+  !!                           one-dimensional array.
+  !! @param[in]    idx2        The local column pointers, stored as a
+  !!                           one-dimensional array.
+  !! @param[in]    val         The values of the local matrix elements, stored
+  !!                           as a one-dimensional array.
+  !! @param[in]    desc        BLACS array descriptor.
+  !============================================================================!
+  interface m_register_pcsc
+     module procedure m_register_pdcsc
+     module procedure m_register_pzcsc
+  end interface m_register_pcsc
 #endif
 
   !************************************************!
@@ -69,11 +126,11 @@ contains
 
     !**** INPUT ***********************************!
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+    real(dp), intent(in), target :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -109,11 +166,11 @@ contains
 
     !**** INPUT ***********************************!
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -150,13 +207,13 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    real(dp), intent(in), target :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -199,13 +256,13 @@ contains
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: desc(9) ! BLACS array descriptor
+    integer, intent(in) :: desc(9)
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -240,11 +297,11 @@ contains
   end subroutine m_register_pzdbc
 #endif
 
-  !======================================================!
-  ! register matrix by thresholding                      !
-  ! parallel distributed 2D block cyclic sparse matrix   !
-  !======================================================!
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list/compressed sparse column
+  !!        from dense block cyclic, parallel distribution, real version).
+  !============================================================================!
   subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
@@ -296,6 +353,10 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list/compressed sparse column
+  !!        from dense block cyclic, parallel distribution, complex version).
+  !============================================================================!
   subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
     implicit none
 
@@ -347,52 +408,44 @@ contains
   end subroutine m_register_pzsp_thre
 #endif
 
-  !======================================================!
-  ! register matrix using the Sparse Triplet format      !
-  ! parallel distributed 2D block cyclic sparse matrix   !
-  !======================================================!
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list, parallel distribution,
+  !!        real version).
+  !============================================================================!
+  subroutine m_register_pdcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
-    real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
-    integer :: nprow, npcol
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
+
+    real(dp), intent(in), target :: val(:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
-    integer :: dim(2), iprow, ipcol
+    integer :: dim(2), i, j, k, l
 
-    !**********************************************!
+    !**** EXTERNAL ********************************!
 
     integer, external :: numroc
 
-    !***** COMMON BLOCK ***************************!
-    integer :: psp_bs_def_row, psp_bs_def_col, psp_icontxt
-
-    common /coeff/ psp_bs_def_row, psp_bs_def_col, psp_icontxt
-
     !**********************************************!
-    call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
-    !if (m_name%is_initialized .EQV. .true.) then
-    !   call m_deallocate(m_name)
-    !end if
+
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
     m_name%iaux2_is_allocated=.true.
-    dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
-    dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
+    call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
+    dim(1)=numroc(m_name%dim1,desc(5),k,0,ms_lap_nprow)
+    dim(2)=numroc(m_name%dim2,desc(6),l,0,ms_lap_npcol)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
     if (m_name%dim1==m_name%dim2) then
@@ -400,59 +453,56 @@ contains
     else
        m_name%is_square=.false.
     end if
-    m_name%str_type=spm_storage
+    m_name%str_type='coo'
     m_name%is_serial=.false.
     m_name%is_real=.true.
     m_name%is_sparse=.true.
+
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+
     m_name%is_initialized=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
-
-  end subroutine m_register_pdsp_st
+  end subroutine m_register_pdcoo
 #endif
 
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pzsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+  !============================================================================!
+  !> @brief Register matrix (sparse coordinate list, parallel distribution,
+  !!        complex version).
+  !============================================================================!
+  subroutine m_register_pzcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
-    complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
-    integer :: nprow, npcol
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
+
+    complex(dp), intent(in), target :: val(:)
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
-    integer :: dim(2), iprow, ipcol
+    integer :: dim(2), i, j, k, l
 
-    !**********************************************!
+    !**** EXTERNAL ********************************!
 
     integer, external :: numroc
 
-    !***** COMMON BLOCK ***************************!
-    integer :: psp_bs_def_row, psp_bs_def_col, psp_icontxt
-
-    common /coeff/ psp_bs_def_row, psp_bs_def_col, psp_icontxt
-
     !**********************************************!
-    call blacs_gridinfo(psp_icontxt,nprow,npcol,iprow,ipcol)
-    !if (m_name%is_initialized .EQV. .true.) then
-    !   call m_deallocate(m_name)
-    !end if
+
     m_name%iaux1 => desc
     m_name%dim1=desc(3)
     m_name%dim2=desc(4)
     allocate(m_name%iaux2(2))
     m_name%iaux2_is_allocated=.true.
-    dim(1)=numroc(m_name%dim1,psp_bs_def_row,iprow,0,nprow)
-    dim(2)=numroc(m_name%dim2,psp_bs_def_col,ipcol,0,npcol)
+    call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
+    dim(1)=numroc(m_name%dim1,desc(5),k,0,ms_lap_nprow)
+    dim(2)=numroc(m_name%dim2,desc(6),l,0,ms_lap_npcol)
     m_name%iaux2(1)=dim(1)
     m_name%iaux2(2)=dim(2)
     if (m_name%dim1==m_name%dim2) then
@@ -460,15 +510,130 @@ contains
     else
        m_name%is_square=.false.
     end if
-    m_name%str_type=spm_storage
+    m_name%str_type='coo'
     m_name%is_serial=.false.
     m_name%is_real=.true.
     m_name%is_sparse=.true.
+
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+
     m_name%is_initialized=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,spm_storage,dim,nprow,npcol)
+  end subroutine m_register_pzcoo
+#endif
 
-  end subroutine m_register_pzsp_st
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (compressed sparse column, parallel distribution,
+  !!        real version).
+  !============================================================================!
+  subroutine m_register_pdcsc(m_name,idx1,idx2,val,desc)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
+
+    real(dp), intent(in), target :: val(:)
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2), i, j, k, l
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: numroc
+
+    !**********************************************!
+
+    m_name%iaux1 => desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
+    dim(1)=numroc(m_name%dim1,desc(5),k,0,ms_lap_nprow)
+    dim(2)=numroc(m_name%dim2,desc(6),l,0,ms_lap_npcol)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_register_pdcsc
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Register matrix (compressed sparse column, parallel distribution,
+  !!        complex version).
+  !============================================================================!
+  subroutine m_register_pzcsc(m_name,idx1,idx2,val,desc)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
+
+    complex(dp), intent(in), target :: val(:)
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2), i, j, k, l
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: numroc
+
+    !**********************************************!
+
+    m_name%iaux1 => desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
+    dim(1)=numroc(m_name%dim1,desc(5),k,0,ms_lap_nprow)
+    dim(2)=numroc(m_name%dim2,desc(6),l,0,ms_lap_npcol)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_register_pzcsc
 #endif
 
 end module MatrixSwitch_m_register
