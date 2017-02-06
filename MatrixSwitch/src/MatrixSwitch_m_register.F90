@@ -12,12 +12,33 @@ module MatrixSwitch_m_register
 
   !**** INTERFACES ********************************!
 
+  !============================================================================!
+  !> @brief Register matrix (simple dense, serial distribution).
+  !!
+  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
+  !! \c s?den format.
+  !!
+  !! @param[inout] m_name The matrix to be allocated.
+  !! @param[in]    A      The values of the matrix elements, stored as a
+  !!                      two-dimensional array.
+  !============================================================================!
   interface m_register_sden
      module procedure m_register_sdden
      module procedure m_register_szden
   end interface m_register_sden
 
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Register matrix (dense block cyclic, parallel distribution).
+  !!
+  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
+  !! \c p?dbc format.
+  !!
+  !! @param[inout] m_name The matrix to be allocated.
+  !! @param[in]    A      The values of the local matrix elements, stored as a
+  !!                      two-dimensional array.
+  !! @param[in]    desc   BLACS array descriptor.
+  !============================================================================!
   interface m_register_pdbc
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
@@ -40,9 +61,9 @@ module MatrixSwitch_m_register
 
 contains
 
-  !================================================!
-  ! register matrix: simple dense serial           !
-  !================================================!
+  !============================================================================!
+  !> @brief Register matrix (simple dense, serial distribution, real version).
+  !============================================================================!
   subroutine m_register_sdden(m_name,A)
     implicit none
 
@@ -79,6 +100,10 @@ contains
 
   end subroutine m_register_sdden
 
+  !============================================================================!
+  !> @brief Register matrix (simple dense, serial distribution, complex
+  !!        version).
+  !============================================================================!
   subroutine m_register_szden(m_name,A)
     implicit none
 
@@ -115,10 +140,11 @@ contains
 
   end subroutine m_register_szden
 
-  !================================================!
-  ! register matrix: dense block cyclic parallel   !
-  !================================================!
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Register matrix (dense block cyclic, parallel distribution, real
+  !!        version).
+  !============================================================================!
   subroutine m_register_pddbc(m_name,A,desc)
     implicit none
 
@@ -164,6 +190,10 @@ contains
 #endif
 
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Register matrix (dense block cyclic, parallel distribution, complex
+  !!        version).
+  !============================================================================!
   subroutine m_register_pzdbc(m_name,A,desc)
     implicit none
 

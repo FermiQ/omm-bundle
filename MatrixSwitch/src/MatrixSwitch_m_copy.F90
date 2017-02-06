@@ -12,10 +12,10 @@ module MatrixSwitch_m_copy
 
 contains
 
-  !================================================!
-  ! implementation: reference                      !
-  !================================================!
-
+  !============================================================================!
+  !> @brief Copy matrix (simple dense, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_sdensdenref(m_name,A)
     implicit none
 
@@ -41,6 +41,10 @@ contains
 
   end subroutine m_copy_sdensdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (simple dense, serial distribution, reference
+  !!        implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdensdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -88,6 +92,10 @@ contains
 
   end subroutine m_copy_sdensdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (dense block cyclic, parallel distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_pdbcpdbcref(m_name,A)
     implicit none
 
@@ -119,6 +127,10 @@ contains
 
   end subroutine m_copy_pdbcpdbcref
 
+  !============================================================================!
+  !> @brief Copy matrix (dense block cyclic, parallel distribution, reference
+  !!        implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_pdbcpdbcref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -172,6 +184,10 @@ contains
 
   end subroutine m_copy_pdbcpdbcref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (sparse coordinate list, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_scooscooref(m_name,A)
     implicit none
 
@@ -206,6 +222,10 @@ contains
 
   end subroutine m_copy_scooscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscooref(m_name,A)
     implicit none
 
@@ -258,6 +278,10 @@ contains
 
   end subroutine m_copy_sdenscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscooref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -334,6 +358,10 @@ contains
 
   end subroutine m_copy_sdenscooref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (compressed sparse column, serial distribution,
+  !!        reference implementation).
+  !============================================================================!
   subroutine m_copy_scscscscref(m_name,A)
     implicit none
 
@@ -368,6 +396,10 @@ contains
 
   end subroutine m_copy_scscscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (compressed sparse row, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_scsrscsrref(m_name,A)
     implicit none
 
@@ -402,6 +434,10 @@ contains
 
   end subroutine m_copy_scsrscsrref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscscref(m_name,A)
     implicit none
 
@@ -456,6 +492,10 @@ contains
 
   end subroutine m_copy_sdenscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscscref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -534,6 +574,10 @@ contains
 
   end subroutine m_copy_sdenscscref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscsrref(m_name,A)
     implicit none
 
@@ -588,6 +632,10 @@ contains
 
   end subroutine m_copy_sdenscsrref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscsrref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -666,6 +714,10 @@ contains
 
   end subroutine m_copy_sdenscsrref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = sparse coordinate list,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scoosdenref(m_name,A)
     implicit none
 
@@ -701,6 +753,10 @@ contains
 
   end subroutine m_copy_scoosdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = sparse coordinate list,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scoosdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -746,6 +802,10 @@ contains
 
   end subroutine m_copy_scoosdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse column,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scscsdenref(m_name,A)
     implicit none
 
@@ -787,6 +847,10 @@ contains
 
   end subroutine m_copy_scscsdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse column,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scscsdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -838,6 +902,10 @@ contains
 
   end subroutine m_copy_scscsdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse row,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scsrsdenref(m_name,A)
     implicit none
 
@@ -879,6 +947,10 @@ contains
 
   end subroutine m_copy_scsrsdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse row,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scsrsdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -930,6 +1002,10 @@ contains
 
   end subroutine m_copy_scsrsdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = compressed sparse
+  !!        column, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scscscooref(m_name,A)
     implicit none
 
@@ -973,6 +1049,10 @@ contains
 
   end subroutine m_copy_scscscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = compressed sparse
+  !!        row, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scsrscooref(m_name,A)
     implicit none
 
@@ -1016,6 +1096,10 @@ contains
 
   end subroutine m_copy_scsrscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = sparse
+  !!        coordinate list, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scooscscref(m_name,A)
     implicit none
 
@@ -1097,6 +1181,10 @@ contains
 
   end subroutine m_copy_scooscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = sparse
+  !!        coordinate list, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scooscsrref(m_name,A)
     implicit none
 

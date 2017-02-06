@@ -469,25 +469,48 @@ contains
 
   end subroutine m_deallocate
 
-  !================================================!
-  !> Copy matrix.
-  !================================================!
+  !============================================================================!
+  !> @brief Copy matrix.
+  !!
+  !! Initializes a TYPE(MATRIX) variable by copying the information and element
+  !! values from an existing one. The storage format of the new matrix can be
+  !! different from that of the old matrix, thus allowing to convert between
+  !! formats. This can be useful, e.g., to convert from a dense to a sparse
+  !! format or vice-versa, or between different sparse formats. The optional
+  !! thresholding variables allow to shave an existing matrix, increasing the
+  !! level of sparsity.
+  !!
+  !! @param[inout] m_name            The matrix to be created.
+  !! @param[in]    A                 The matrix to be copied.
+  !! @param[in]    label             Storage format to use for \a m_name.
+  !! @param[in]    threshold         Tolerance for zeroing elements. Elements
+  !!                                 with an absolute value below this
+  !!                                 threshold will be omitted for sparse
+  !!                                 storage formats, and set to zero for dense
+  !!                                 storage formats.
+  !! @param[in]    threshold_is_soft Is the thresholding soft?
+  !!                                 \arg \c .true. Values above \p threshold
+  !!                                 are shifted down to remove the jump
+  !!                                 discontinuity.
+  !!                                 \arg \c .false. Values are not shifted
+  !!                                 (default).
+  !============================================================================!
   subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label !< Storage format to use for m_name.
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft !< Soft or hard thresholding.
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold !< Threshold for zeroing elements.
+    real(dp), intent(in), optional :: threshold
 
-    type(matrix), intent(inout) :: A !< Matrix to copy from.
+    type(matrix), intent(inout) :: A
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name !< Matrix to copy onto.
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -774,23 +797,42 @@ contains
 
   end subroutine m_copy
 
-  !================================================!
-  !> Wrapper for in-place matrix type conversion.
-  !================================================!
+  !============================================================================!
+  !> @brief Convert matrix format.
+  !!
+  !! This routine facilitates an in-place conversion between storage formats.
+  !! Internally it uses \a m_copy to produce a temporary matrix with the new
+  !! format, then overwrites the original matrix with this information and
+  !! finally deletes the temporary matrix.
+  !!
+  !! @param[inout] m_name            The matrix to be converted.
+  !! @param[in]    label             The new storage format to use.
+  !! @param[in]    threshold         Tolerance for zeroing elements. Elements
+  !!                                 with an absolute value below this
+  !!                                 threshold will be omitted for sparse
+  !!                                 storage formats, and set to zero for dense
+  !!                                 storage formats.
+  !! @param[in]    threshold_is_soft Is the thresholding soft?
+  !!                                 \arg \c .true. Values above \p threshold
+  !!                                 are shifted down to remove the jump
+  !!                                 discontinuity.
+  !!                                 \arg \c .false. Values are not shifted
+  !!                                 (default).
+  !============================================================================!
   subroutine m_convert(m_name,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label !< Storage format to use for m_name.
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft !< Soft or hard thresholding.
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold !< Threshold for zeroing elements.
+    real(dp), intent(in), optional :: threshold
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name !< Matrix to convert.
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
