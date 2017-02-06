@@ -265,7 +265,8 @@ module MatrixSwitch
   public :: ms_lap_icontxt
 #endif
 #ifdef HAVE_PSPBLAS
-  public :: m_register_psp_thre
+  public :: m_copy_external_pdbcpcoo
+  public :: m_copy_external_pdbcpcsc
   public :: m_register_pcoo
   public :: m_register_pcsc
 #endif
@@ -765,9 +766,9 @@ contains
           else
 #ifdef HAVE_PSPBLAS
              if (A%is_real) then
-                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'coo',threshold)
+                call m_copy_external_pdbcpcoo(m_name,A%dval,A%iaux1,threshold)
              else
-                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'coo',threshold)
+                call m_copy_external_pdbcpcoo(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
              call die('mm_dmultiply: compile with pspBLAS')
@@ -783,9 +784,9 @@ contains
           else
 #ifdef HAVE_PSPBLAS
              if (A%is_real) then
-                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'csc',threshold)
+                call m_copy_external_pdbcpcsc(m_name,A%dval,A%iaux1,threshold)
              else
-                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'csc',threshold)
+                call m_copy_external_pdbcpcsc(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
              call die('mm_dmultiply: compile with pspBLAS')

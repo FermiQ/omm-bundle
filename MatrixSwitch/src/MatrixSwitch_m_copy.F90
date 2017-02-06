@@ -10,6 +10,60 @@ module MatrixSwitch_m_copy
 
   implicit none
 
+  !**** INTERFACES ********************************!
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution).
+  !!
+  !! Initializes a TYPE(MATRIX) variable with \c p?coo format by copying the
+  !! information and element values from pre-existing matrix data with \c p?dbc
+  !! format. This is a dense to sparse conversion.
+  !!
+  !! @param[inout] m_name    The matrix to be allocated.
+  !! @param[in]    A         The values of the local matrix elements for the
+  !!                         matrix to be copied, stored as a two-dimensional
+  !!                         array.
+  !! @param[in]    desc      BLACS array descriptor for the matrix to be
+  !!                         copied.
+  !! @param[in]    threshold Tolerance for zeroing elements. Elements with an
+  !!                         absolute value below this threshold will be
+  !!                         omitted.
+  !============================================================================!
+  interface m_copy_external_pdbcpcoo
+     module procedure m_copy_external_pddbcpdcoo
+     module procedure m_copy_external_pzdbcpzcoo
+  end interface m_copy_external_pdbcpcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution).
+  !!
+  !! Initializes a TYPE(MATRIX) variable with \c p?csc format by copying the
+  !! information and element values from pre-existing matrix data with \c p?dbc
+  !! format. This is a dense to sparse conversion.
+  !!
+  !! @param[inout] m_name    The matrix to be allocated.
+  !! @param[in]    A         The values of the local matrix elements for the
+  !!                         matrix to be copied, stored as a two-dimensional
+  !!                         array.
+  !! @param[in]    desc      BLACS array descriptor for the matrix to be
+  !!                         copied.
+  !! @param[in]    threshold Tolerance for zeroing elements. Elements with an
+  !!                         absolute value below this threshold will be
+  !!                         omitted.
+  !============================================================================!
+  interface m_copy_external_pdbcpcsc
+     module procedure m_copy_external_pddbcpdcsc
+     module procedure m_copy_external_pzdbcpzcsc
+  end interface m_copy_external_pdbcpcsc
+#endif
+
+  !************************************************!
+
 contains
 
   !============================================================================!
@@ -1265,5 +1319,213 @@ contains
        deallocate(sort_temp)
 
   end subroutine m_copy_scooscsrref
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution, real version).
+  !============================================================================!
+  subroutine m_copy_external_pddbcpdcoo(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='coo'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pddbcpdcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution, complex version).
+  !============================================================================!
+  subroutine m_copy_external_pzdbcpzcoo(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    complex(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='coo'
+    m_name%is_serial=.false.
+    m_name%is_real=.false.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pzdbcpzcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution, real version).
+  !============================================================================!
+  subroutine m_copy_external_pddbcpdcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pddbcpdcsc
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution, complex version).
+  !============================================================================!
+  subroutine m_copy_external_pzdbcpzcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    complex(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.false.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pzdbcpzcsc
+#endif
 
 end module MatrixSwitch_m_copy

@@ -29,7 +29,8 @@ module MatrixSwitch_wrapper
 #endif
 #ifdef HAVE_PSPBLAS
   use MatrixSwitch, only: &
-    m_register_psp_thre_orig => m_register_psp_thre, &
+    m_copy_external_pdbcpcoo_orig => m_copy_external_pdbcpcoo, &
+    m_copy_external_pdbcpcsc_orig => m_copy_external_pdbcpcsc, &
     m_register_pcoo_orig => m_register_pcoo, &
     m_register_pcsc_orig => m_register_pcsc
 #endif
@@ -97,10 +98,15 @@ module MatrixSwitch_wrapper
 #endif
 
 #ifdef HAVE_PSPBLAS
-  interface m_register_psp_thre
-     module procedure m_register_pdsp_thre
-     module procedure m_register_pzsp_thre
-  end interface m_register_psp_thre
+  interface m_copy_external_pdbcpcoo
+     module procedure m_copy_external_pddbcpdcoo
+     module procedure m_copy_external_pzdbcpzcoo
+  end interface m_copy_external_pdbcpcoo
+
+  interface m_copy_external_pdbcpcsc
+     module procedure m_copy_external_pddbcpdcsc
+     module procedure m_copy_external_pzdbcpzcsc
+  end interface m_copy_external_pdbcpcsc
 
   interface m_register_pcoo
      module procedure m_register_pdcoo
@@ -143,7 +149,8 @@ module MatrixSwitch_wrapper
   public :: ms_lap_icontxt
 #endif
 #ifdef HAVE_PSPBLAS
-  public :: m_register_psp_thre
+  public :: m_copy_external_pdbcpcoo
+  public :: m_copy_external_pdbcpcsc
   public :: m_register_pcoo
   public :: m_register_pcsc
 #endif
@@ -810,51 +817,85 @@ contains
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
+  subroutine m_copy_external_pddbcpdcoo(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
 
-    !**** OPTIONAL INPUT ***********************************!
-    real(dp), optional :: thre ! non-negative threshold
-    ! If thre=0, generate a sparse matrix with nonzero entries.
-    ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
+    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    real(dp), intent(in), optional :: threshold ! non-negative threshold
 
     character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
+    call m_copy_external_pdbcpcoo_orig(ms_matrices(ms_lookup(m_name)),A,desc,threshold)
 
-  end subroutine m_register_pdsp_thre
+  end subroutine m_copy_external_pddbcpdcoo
 #endif
 
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
+  subroutine m_copy_external_pzdbcpzcoo(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
 
-    !**** OPTIONAL INPUT ***********************************!
-    real(dp), optional :: thre ! non-negative threshold
-    ! If thre=0, generate a sparse matrix with nonzero entries.
-    ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
+    real(dp), intent(in), optional :: threshold ! non-negative threshold
+
+    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
 
     character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_thre_orig(ms_matrices(ms_lookup(m_name)),A,desc,spm_storage,thre)
+    call m_copy_external_pdbcpcoo_orig(ms_matrices(ms_lookup(m_name)),A,desc,threshold)
 
-  end subroutine m_register_pzsp_thre
+  end subroutine m_copy_external_pzdbcpzcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  subroutine m_copy_external_pddbcpdcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+
+    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    real(dp), intent(in), optional :: threshold ! non-negative threshold
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
+    !**********************************************!
+
+    call m_copy_external_pdbcpcsc_orig(ms_matrices(ms_lookup(m_name)),A,desc,threshold)
+
+  end subroutine m_copy_external_pddbcpdcsc
+#endif
+
+#ifdef HAVE_PSPBLAS
+  subroutine m_copy_external_pzdbcpzcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+
+    real(dp), intent(in), optional :: threshold ! non-negative threshold
+
+    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
+    !**********************************************!
+
+    call m_copy_external_pdbcpcsc_orig(ms_matrices(ms_lookup(m_name)),A,desc,threshold)
+
+  end subroutine m_copy_external_pzdbcpzcsc
 #endif
 
   !======================================================!

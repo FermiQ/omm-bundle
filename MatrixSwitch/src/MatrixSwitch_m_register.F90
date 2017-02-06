@@ -47,44 +47,19 @@ module MatrixSwitch_m_register
 
 #ifdef HAVE_PSPBLAS
   !============================================================================!
-  !> @brief Register matrix (sparse coordinate list/compressed sparse column
-  !!        from dense block cyclic, parallel distribution).
-  !!
-  !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
-  !! \c p?coo or \c p?csc format.
-  !!
-  !! @param[inout] m_name      The matrix to be allocated.
-  !! @param[in]    A           The values of the local matrix elements, stored
-  !!                           as a two-dimensional array.
-  !! @param[in]    desc        BLACS array descriptor.
-  !! @param[in]    spm_storage Storage format to use:
-  !!                           \arg \c coo Sparse coordinate list.
-  !!                           \arg \c csc Compressed sparse column.
-  !! @param[in]    thre        Tolerance for zeroing elements. Elements with an
-  !!                           absolute value below this threshold will be
-  !!                           omitted.
-  !============================================================================!
-  interface m_register_psp_thre
-     module procedure m_register_pdsp_thre
-     module procedure m_register_pzsp_thre
-  end interface m_register_psp_thre
-#endif
-
-#ifdef HAVE_PSPBLAS
-  !============================================================================!
   !> @brief Register matrix (sparse coordinate list, parallel distribution).
   !!
   !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
   !! \c p?coo format.
   !!
-  !! @param[inout] m_name      The matrix to be allocated.
-  !! @param[in]    idx1        The local row indices, stored as a
-  !!                           one-dimensional array.
-  !! @param[in]    idx2        The local column indices, stored as a
-  !!                           one-dimensional array.
-  !! @param[in]    val         The values of the local matrix elements, stored
-  !!                           as a one-dimensional array.
-  !! @param[in]    desc        BLACS array descriptor.
+  !! @param[inout] m_name The matrix to be allocated.
+  !! @param[in]    idx1   The local row indices, stored as a one-dimensional
+  !!                      array.
+  !! @param[in]    idx2   The local column indices, stored as a one-dimensional
+  !!                      array.
+  !! @param[in]    val    The values of the local matrix elements, stored as a
+  !!                      one-dimensional array.
+  !! @param[in]    desc   BLACS array descriptor.
   !============================================================================!
   interface m_register_pcoo
      module procedure m_register_pdcoo
@@ -99,14 +74,14 @@ module MatrixSwitch_m_register
   !! Registers pre-existing matrix data into a TYPE(MATRIX) variable with
   !! \c p?csc format.
   !!
-  !! @param[inout] m_name      The matrix to be allocated.
-  !! @param[in]    idx1        The local row indices, stored as a
-  !!                           one-dimensional array.
-  !! @param[in]    idx2        The local column pointers, stored as a
-  !!                           one-dimensional array.
-  !! @param[in]    val         The values of the local matrix elements, stored
-  !!                           as a one-dimensional array.
-  !! @param[in]    desc        BLACS array descriptor.
+  !! @param[inout] m_name The matrix to be allocated.
+  !! @param[in]    idx1   The local row indices, stored as a one-dimensional
+  !!                      array.
+  !! @param[in]    idx2   The local column pointers, stored as a one-dimensional
+  !!                      array.
+  !! @param[in]    val    The values of the local matrix elements, stored as a
+  !!                      one-dimensional array.
+  !! @param[in]    desc   BLACS array descriptor.
   !============================================================================!
   interface m_register_pcsc
      module procedure m_register_pdcsc
@@ -295,117 +270,6 @@ contains
     m_name%is_initialized=.true.
 
   end subroutine m_register_pzdbc
-#endif
-
-#ifdef HAVE_PSPBLAS
-  !============================================================================!
-  !> @brief Register matrix (sparse coordinate list/compressed sparse column
-  !!        from dense block cyclic, parallel distribution, real version).
-  !============================================================================!
-  subroutine m_register_pdsp_thre(m_name,A,desc,spm_storage,thre)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
-
-    !**** OPTIONAL INPUT ***********************************!
-    real(dp), optional :: thre ! non-negative threshold
-    ! If thre=0, generate a sparse matrix with nonzero entries.
-    ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
-
-    !**** INTERNAL ********************************!
-
-    integer :: dim(2)
-
-    !**********************************************!
-    !if (m_name%is_initialized .EQV. .true.) then
-    !   call m_deallocate(m_name)
-    !end if
-    m_name%iaux1 => desc
-    m_name%dim1=desc(3)
-    m_name%dim2=desc(4)
-    allocate(m_name%iaux2(2))
-    m_name%iaux2_is_allocated=.true.
-    dim=shape(A)
-    m_name%iaux2(1)=dim(1)
-    m_name%iaux2(2)=dim(2)
-    if (m_name%dim1==m_name%dim2) then
-       m_name%is_square=.true.
-    else
-       m_name%is_square=.false.
-    end if
-    m_name%str_type=spm_storage
-    m_name%is_serial=.false.
-    m_name%is_real=.true.
-    m_name%is_sparse=.true.
-    m_name%is_initialized=.true.
-
-    call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
-
-  end subroutine m_register_pdsp_thre
-#endif
-
-#ifdef HAVE_PSPBLAS
-  !============================================================================!
-  !> @brief Register matrix (sparse coordinate list/compressed sparse column
-  !!        from dense block cyclic, parallel distribution, complex version).
-  !============================================================================!
-  subroutine m_register_pzsp_thre(m_name,A,desc,spm_storage,thre)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
-
-    !**** OPTIONAL INPUT ***********************************!
-    real(dp), optional :: thre ! non-negative threshold
-    ! If thre=0, generate a sparse matrix with nonzero entries.
-    ! If thre>0, generate a sparse matrix with entries with an absolute value >= thre.
-
-    !**** INOUT ***********************************!
-
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
-
-    !**** INTERNAL ********************************!
-
-    integer :: dim(2)
-
-    !**********************************************!
-    !if (m_name%is_initialized .EQV. .true.) then
-    !   call m_deallocate(m_name)
-    !end if
-    m_name%iaux1 => desc
-    m_name%dim1=desc(3)
-    m_name%dim2=desc(4)
-    allocate(m_name%iaux2(2))
-    m_name%iaux2_is_allocated=.true.
-    dim=shape(A)
-    m_name%iaux2(1)=dim(1)
-    m_name%iaux2(2)=dim(2)
-    if (m_name%dim1==m_name%dim2) then
-       m_name%is_square=.true.
-    else
-       m_name%is_square=.false.
-    end if
-    m_name%str_type=spm_storage
-    m_name%is_serial=.false.
-    m_name%is_real=.false.
-    m_name%is_sparse=.true.
-
-    m_name%is_initialized=.true.
-
-    call psp_den2sp_m(A,desc,m_name%spm,spm_storage,thre)
-
-  end subroutine m_register_pzsp_thre
 #endif
 
 #ifdef HAVE_PSPBLAS
