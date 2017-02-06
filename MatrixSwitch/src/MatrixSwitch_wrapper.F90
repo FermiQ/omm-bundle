@@ -30,7 +30,7 @@ module MatrixSwitch_wrapper
 #ifdef HAVE_PSPBLAS
   use MatrixSwitch, only: &
     m_register_psp_thre_orig => m_register_psp_thre, &
-    m_register_pcoo_orig => m_register_pcoo
+    m_register_pcoo_orig => m_register_pcoo, &
     m_register_pcsc_orig => m_register_pcsc
 #endif
 

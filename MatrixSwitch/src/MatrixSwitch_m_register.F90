@@ -458,7 +458,7 @@ contains
     m_name%is_real=.true.
     m_name%is_sparse=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,ms_lap_nprow,ms_lap_npcol)
 
     m_name%is_initialized=.true.
 
@@ -515,7 +515,7 @@ contains
     m_name%is_real=.true.
     m_name%is_sparse=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,ms_lap_nprow,ms_lap_npcol)
 
     m_name%is_initialized=.true.
 
@@ -572,7 +572,7 @@ contains
     m_name%is_real=.true.
     m_name%is_sparse=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,ms_lap_nprow,ms_lap_npcol)
 
     m_name%is_initialized=.true.
 
@@ -629,7 +629,7 @@ contains
     m_name%is_real=.true.
     m_name%is_sparse=.true.
 
-    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,nprow,npcol)
+    call psp_register_spm(m_name%spm,idx1,idx2,val,desc,m_name%str_type,m_name%iaux2,ms_lap_nprow,ms_lap_npcol)
 
     m_name%is_initialized=.true.
 
