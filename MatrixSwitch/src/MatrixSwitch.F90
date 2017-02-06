@@ -266,7 +266,8 @@ module MatrixSwitch
 #endif
 #ifdef HAVE_PSPBLAS
   public :: m_register_psp_thre
-  public :: m_register_psp_st
+  public :: m_register_pcoo
+  public :: m_register_pcsc
 #endif
 
 contains

@@ -30,7 +30,8 @@ module MatrixSwitch_wrapper
 #ifdef HAVE_PSPBLAS
   use MatrixSwitch, only: &
     m_register_psp_thre_orig => m_register_psp_thre, &
-    m_register_psp_st_orig => m_register_psp_st
+    m_register_pcoo_orig => m_register_pcoo
+    m_register_pcsc_orig => m_register_pcsc
 #endif
 
   implicit none
@@ -101,10 +102,15 @@ module MatrixSwitch_wrapper
      module procedure m_register_pzsp_thre
   end interface m_register_psp_thre
 
-  interface m_register_psp_st
-     module procedure m_register_pdsp_st
-     module procedure m_register_pzsp_st
-  end interface m_register_psp_st
+  interface m_register_pcoo
+     module procedure m_register_pdcoo
+     module procedure m_register_pzcoo
+  end interface m_register_pcoo
+
+  interface m_register_pcsc
+     module procedure m_register_pdcsc
+     module procedure m_register_pzcsc
+  end interface m_register_pcsc
 #endif
 
   !************************************************!
@@ -138,7 +144,8 @@ module MatrixSwitch_wrapper
 #endif
 #ifdef HAVE_PSPBLAS
   public :: m_register_psp_thre
-  public :: m_register_psp_st
+  public :: m_register_pcoo
+  public :: m_register_pcsc
 #endif
 
 contains
@@ -855,47 +862,91 @@ contains
   ! parallel distributed 2D block cyclic sparse matrix   !
   !======================================================!
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pdsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+  subroutine m_register_pdcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
     integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
     integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+
     real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
-    integer :: nprow, npcol
 
     character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_pdcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
-  end subroutine m_register_pdsp_st
+  end subroutine m_register_pdcoo
 #endif
 
 #ifdef HAVE_PSPBLAS
-  subroutine m_register_pzsp_st(m_name,idx1,idx2,val,desc,spm_storage,nprow,npcol)
+  subroutine m_register_pzcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    character(3), intent(in), target :: spm_storage ! storage format of sparse matrices, 'coo' or 'csc'
     integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
     integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+
     complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
-    integer :: nprow, npcol
 
     character(*), intent(in) :: m_name ! matrix to be allocated
 
     !**********************************************!
 
-    call m_register_psp_st_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc,spm_storage,nprow,npcol)
+    call m_register_pzcoo_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
 
-  end subroutine m_register_pzsp_st
+  end subroutine m_register_pzcoo
+#endif
+
+  !======================================================!
+  ! register matrix using the Sparse Triplet format      !
+  ! parallel distributed 2D block cyclic sparse matrix   !
+  !======================================================!
+#ifdef HAVE_PSPBLAS
+  subroutine m_register_pdcsc(m_name,idx1,idx2,val,desc)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
+    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+
+    real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
+    !**********************************************!
+
+    call m_register_pdcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+
+  end subroutine m_register_pdcsc
+#endif
+
+#ifdef HAVE_PSPBLAS
+  subroutine m_register_pzcsc(m_name,idx1,idx2,val,desc)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
+    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+
+    complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+
+    character(*), intent(in) :: m_name ! matrix to be allocated
+
+    !**********************************************!
+
+    call m_register_pzcsc_orig(ms_matrices(ms_lookup(m_name)),idx1,idx2,val,desc)
+
+  end subroutine m_register_pzcsc
 #endif
 
 end module MatrixSwitch_wrapper
