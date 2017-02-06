@@ -12,11 +12,12 @@ module MatrixSwitch_m_add
 
 contains
 
-  !================================================!
-  ! implementation: reference                      !
-  !================================================!
-
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse column, C = dense block
+  !!        cyclic, parallel distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine m_add_pdcscpddbcref(A,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -49,6 +50,11 @@ contains
 
   end subroutine m_add_pdcscpddbcref
 
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse column, C = dense block
+  !!        cyclic, parallel distribution, reference implementation, complex
+  !!        version).
+  !============================================================================!
   subroutine m_add_pzcscpzdbcref(A,C,alpha,beta)
     implicit none
     include 'mpif.h'
@@ -82,6 +88,10 @@ contains
   end subroutine m_add_pzcscpzdbcref
 #endif
 
+  !============================================================================!
+  !> @brief Matrix addition (simple dense, serial distribution, reference
+  !!        implementation, real version).
+  !============================================================================!
   subroutine m_add_sddenref(A,trA,C,alpha,beta)
     implicit none
 
@@ -118,6 +128,10 @@ contains
 
   end subroutine m_add_sddenref
 
+  !============================================================================!
+  !> @brief Matrix addition (simple dense, serial distribution, reference
+  !!        implementation, complex version).
+  !============================================================================!
   subroutine m_add_szdenref(A,tcA,C,alpha,beta)
     implicit none
 
@@ -160,6 +174,11 @@ contains
 
   end subroutine m_add_szdenref
 
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse column, C = dense block
+  !!        cyclic, serial distribution, reference implementation, real
+  !!        version).
+  !============================================================================!
   subroutine m_add_sdcscsddenref(A,trA,C,alpha,beta)
     implicit none
 
@@ -202,6 +221,10 @@ contains
 
   end subroutine m_add_sdcscsddenref
 
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse row, C = dense block cyclic,
+  !!        serial distribution, reference implementation, real version).
+  !============================================================================!
   subroutine m_add_sdcsrsddenref(A,trA,C,alpha,beta)
     implicit none
 
@@ -244,6 +267,10 @@ contains
 
   end subroutine m_add_sdcsrsddenref
 
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse column, C = simple dense,
+  !!        serial distribution, reference implementation, complex version).
+  !============================================================================!
   subroutine m_add_szcscszdenref(A,tcA,C,alpha,beta)
     implicit none
 
@@ -293,6 +320,10 @@ contains
 
   end subroutine m_add_szcscszdenref
 
+  !============================================================================!
+  !> @brief Matrix addition (A = compressed sparse row, C = simple dense,
+  !!        serial distribution, reference implementation, complex version).
+  !============================================================================!
   subroutine m_add_szcsrszdenref(A,tcA,C,alpha,beta)
     implicit none
 

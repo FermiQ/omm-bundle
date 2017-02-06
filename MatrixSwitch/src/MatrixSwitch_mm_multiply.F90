@@ -1744,8 +1744,8 @@ contains
   !!        compressed sparse row, parallel distribution, t1D reference
   !!        implementation, complex version).
   !!
-  !! Note: requires a 1D parallel distribution and op(A) /= op(B) (counting M^T
-  !! and M^H as equivalent).
+  !! Note: requires a 1D parallel distribution and op(A) /= op(B) (considering
+  !! M^T and M^H as equivalent).
   !============================================================================!
   subroutine mm_multiply_pzdbcpzdbcpzcsct1D(A,tcA,B,tcB,C,alpha,beta)
     implicit none
