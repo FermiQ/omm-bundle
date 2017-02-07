@@ -2,6 +2,9 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Main MatrixSwitch module.
+!==============================================================================!
 module MatrixSwitch
   use MatrixSwitch_ops
   use MatrixSwitch_mm_multiply
@@ -19,41 +22,222 @@ module MatrixSwitch
 
   !**** INTERFACES ********************************!
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication.
+  !!
+  !! Performs the operation:
+  !! C := alpha*op(A)*op(B) + beta*C, where op(M) = {M, M^T, M^H}
+  !!
+  !! @param[in]    A     Matrix A. Note that the definition of the matrix
+  !!                     (real/complex) needs to be the same as for the other
+  !!                     matrices.
+  !! @param[in]    opA   Form of op(A):
+  !!                     \arg \c n / \c N A
+  !!                     \arg \c t / \c T A^T
+  !!                     \arg \c c / \c C A^H (equivalent to A^T for a real
+  !!                     matrix)
+  !! @param[in]    B     Matrix B. Note that the definition of the matrix
+  !!                     (real/complex) needs to be the same as for the other
+  !!                     matrices.
+  !! @param[in]    opB   Form of op(B):
+  !!                     \arg \c n / \c N B
+  !!                     \arg \c t / \c T B^T
+  !!                     \arg \c c / \c C B^H (equivalent to B^T for a real
+  !!                     matrix)
+  !! @param[inout] C     Matrix C. Note that the definition of the matrix
+  !!                     (real/complex) needs to be the same as for the other
+  !!                     matrices.
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrices.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrices.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface mm_multiply
      module procedure mm_dmultiply
      module procedure mm_zmultiply
   end interface mm_multiply
 
+  !============================================================================!
+  !> @brief Matrix addition.
+  !!
+  !! Performs the operation:
+  !! C := alpha*op(A) + beta*C, where op(M) = {M, M^T, M^H}
+  !!
+  !! @param[in]    A     Matrix A. Note that the definition of the matrix
+  !!                     (real/complex) needs to be the same as for the other
+  !!                     matrices.
+  !! @param[in]    opA   Form of op(A):
+  !!                     \arg \c n / \c N A
+  !!                     \arg \c t / \c T A^T
+  !!                     \arg \c c / \c C A^H (equivalent to A^T for a real
+  !!                     matrix)
+  !! @param[inout] C     Matrix C. Note that the definition of the matrix
+  !!                     (real/complex) needs to be the same as for the other
+  !!                     matrices.
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrices.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrices (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrices.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface m_add
      module procedure m_dadd
      module procedure m_zadd
   end interface m_add
 
+  !============================================================================!
+  !> @brief Matrix trace.
+  !!
+  !! Performs the operation:
+  !! alpha := tr(A)
+  !!
+  !! @param[in]  A     Matrix A.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   \c -DCONV flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_trace
      module procedure m_dtrace
      module procedure m_ztrace
   end interface m_trace
 
+  !============================================================================!
+  !> @brief Matrix product trace.
+  !!
+  !! Performs the operation:
+  !! alpha := tr(A^H*B) = tr(B*A^H)
+  !!
+  !! @param[in]  A     Matrix A. Note that the definition of the matrix
+  !!                   (real/complex) needs to be the same as for the other
+  !!                   matrix.
+  !! @param[in]  B     Matrix B. Note that the definition of the matrix
+  !!                   (real/complex) needs to be the same as for the other
+  !!                   matrix.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   \c -DCONV flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface mm_trace
      module procedure mm_dtrace
      module procedure mm_ztrace
   end interface mm_trace
 
+  !============================================================================!
+  !> @brief Scale matrix.
+  !!
+  !! Performs the operation:
+  !! C := beta*C
+  !!
+  !! @param[in]  C     Matrix C.
+  !! @param[out] beta  Scalar beta. If the library is compiler without the
+  !!                   \c -DCONV flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_scale
      module procedure m_dscale
      module procedure m_zscale
   end interface m_scale
 
+  !============================================================================!
+  !> @brief Set matrix.
+  !!
+  !! Performs the operation:
+  !! C_ij := {alpha (i /= j), beta (i == j)}
+  !!
+  !! @param[inout] C     Matrix C.
+  !! @param[in]    seC   Form of the operation:
+  !!                     \arg \c l / \c L lower triangle
+  !!                     \arg \c u / \c U upper triangle
+  !!                     \arg other: complete matrix
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface m_set
      module procedure m_dset
      module procedure m_zset
   end interface m_set
 
+  !============================================================================!
+  !> @brief Set matrix element.
+  !!
+  !! Performs the operation:
+  !! C_ij := alpha + beta*C_ij
+  !!
+  !! @param[inout] C     Matrix C.
+  !! @param[in]    i     Row index of the element.
+  !! @param[in]    j     Column index of the element.
+  !! @param[in]    alpha Scalar alpha. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p beta, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    beta  Scalar beta. If the library is compiler without the
+  !!                     \c -DCONV flag, the type has to match the definition
+  !!                     of the matrix (real/complex); otherwise, it only has
+  !!                     to match the type of \p alpha, and will be
+  !!                     automatically converted to match the matrix.
+  !! @param[in]    label Implementation of the operation to use. See online
+  !!                     documentation for the list of available
+  !!                     implementations.
+  !============================================================================!
   interface m_set_element
      module procedure m_dset_element
      module procedure m_zset_element
   end interface m_set_element
 
+  !============================================================================!
+  !> @brief Get matrix element.
+  !!
+  !! Performs the operation:
+  !! alpha := C_ij
+  !!
+  !! @param[in]  C     Matrix C.
+  !! @param[in]  i     Row index of the element.
+  !! @param[in]  j     Column index of the element.
+  !! @param[out] alpha Scalar alpha. If the library is compiler without the
+  !!                   \c -DCONV flag, the type has to match the definition of
+  !!                   the matrix (real/complex); otherwise, it will be
+  !!                   automatically converted to match it.
+  !! @param[in]  label Implementation of the operation to use. See online
+  !!                   documentation for the list of available implementations.
+  !============================================================================!
   interface m_get_element
      module procedure m_dget_element
      module procedure m_zget_element
@@ -81,28 +265,40 @@ module MatrixSwitch
   public :: ms_lap_icontxt
 #endif
 #ifdef HAVE_PSPBLAS
-  public :: m_register_psp_thre
-  public :: m_register_psp_st
+  public :: m_copy_external_pdbcpcoo
+  public :: m_copy_external_pdbcpcsc
+  public :: m_register_pcoo
+  public :: m_register_pcsc
 #endif
 
 contains
 
-  !================================================!
-  ! allocate matrix                                !
-  !================================================!
+  !============================================================================!
+  !> @brief Allocate matrix.
+  !!
+  !! Initializes a TYPE(MATRIX) variable by saving some basic information about
+  !! the matrix, and allocating the necessary arrays for the requested storage
+  !! format. Matrix elements are set to zero.
+  !!
+  !! @param[inout] m_name The matrix to be allocated.
+  !! @param[in]    i      Row dimension size of the matrix.
+  !! @param[in]    j      Column dimension size of the matrix.
+  !! @param[in]    label  Storage format to use. See online documentation for
+  !!                      the list of available formats. Default is \c sdden.
+  !============================================================================!
   subroutine m_allocate(m_name,i,j,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use (see documentation)
+    character(5), intent(in), optional :: label
 
-    integer, intent(in) :: i ! (global) row dimension size of the matrix
-    integer, intent(in) :: j ! (global) column dimension size of the matrix
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be allocated
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -199,15 +395,20 @@ contains
 
   end subroutine m_allocate
 
-  !================================================!
-  ! deallocate matrix                              !
-  !================================================!
+  !============================================================================!
+  !> @brief Deallocate matrix.
+  !!
+  !! Deallocates any allocated arrays in a TYPE(MATRIX) variable. For a
+  !! registered matrix, the pointers are nullified.
+  !!
+  !! @param[inout] m_name The matrix to be deallocated.
+  !============================================================================!
   subroutine m_deallocate(m_name)
     implicit none
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to be deallocated
+    type(matrix), intent(inout) :: m_name
 
     !**********************************************!
 
@@ -270,25 +471,48 @@ contains
 
   end subroutine m_deallocate
 
-  !================================================!
-  ! copy matrix                                    !
-  !================================================!
+  !============================================================================!
+  !> @brief Copy matrix.
+  !!
+  !! Initializes a TYPE(MATRIX) variable by copying the information and element
+  !! values from an existing one. The storage format of the new matrix can be
+  !! different from that of the old matrix, thus allowing to convert between
+  !! formats. This can be useful, e.g., to convert from a dense to a sparse
+  !! format or vice-versa, or between different sparse formats. The optional
+  !! thresholding variables allow to shave an existing matrix, increasing the
+  !! level of sparsity.
+  !!
+  !! @param[inout] m_name            The matrix to be created.
+  !! @param[in]    A                 The matrix to be copied.
+  !! @param[in]    label             Storage format to use for \p m_name.
+  !! @param[in]    threshold         Tolerance for zeroing elements. Elements
+  !!                                 with an absolute value below this
+  !!                                 threshold will be omitted for sparse
+  !!                                 storage formats, and set to zero for dense
+  !!                                 storage formats.
+  !! @param[in]    threshold_is_soft Is the thresholding soft?
+  !!                                 \arg \c .true. Values above \p threshold
+  !!                                 are shifted down to remove the jump
+  !!                                 discontinuity.
+  !!                                 \arg \c .false. Values are not shifted
+  !!                                 (default).
+  !============================================================================!
   subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+    real(dp), intent(in), optional :: threshold
 
-    type(matrix), intent(inout) :: A ! matrix to copy from
+    type(matrix), intent(inout) :: A
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to copy onto
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -542,9 +766,9 @@ contains
           else
 #ifdef HAVE_PSPBLAS
              if (A%is_real) then
-                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'coo',threshold)
+                call m_copy_external_pdbcpcoo(m_name,A%dval,A%iaux1,threshold)
              else
-                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'coo',threshold)
+                call m_copy_external_pdbcpcoo(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
              call die('mm_dmultiply: compile with pspBLAS')
@@ -560,9 +784,9 @@ contains
           else
 #ifdef HAVE_PSPBLAS
              if (A%is_real) then
-                call m_register_pdsp_thre(m_name,A%dval,A%iaux1,'csc',threshold)
+                call m_copy_external_pdbcpcsc(m_name,A%dval,A%iaux1,threshold)
              else
-                call m_register_pzsp_thre(m_name,A%zval,A%iaux1,'csc',threshold)
+                call m_copy_external_pdbcpcsc(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
              call die('mm_dmultiply: compile with pspBLAS')
@@ -575,23 +799,42 @@ contains
 
   end subroutine m_copy
 
-  !================================================!
-  ! wrapper for in-place matrix type conversion    !
-  !================================================!
+  !============================================================================!
+  !> @brief Convert matrix format.
+  !!
+  !! This routine facilitates an in-place conversion between storage formats.
+  !! Internally it uses \a m_copy to produce a temporary matrix with the new
+  !! format, then overwrites the original matrix with this information and
+  !! finally deletes the temporary matrix.
+  !!
+  !! @param[inout] m_name            The matrix to be converted.
+  !! @param[in]    label             The new storage format to use.
+  !! @param[in]    threshold         Tolerance for zeroing elements. Elements
+  !!                                 with an absolute value below this
+  !!                                 threshold will be omitted for sparse
+  !!                                 storage formats, and set to zero for dense
+  !!                                 storage formats.
+  !! @param[in]    threshold_is_soft Is the thresholding soft?
+  !!                                 \arg \c .true. Values above \p threshold
+  !!                                 are shifted down to remove the jump
+  !!                                 discontinuity.
+  !!                                 \arg \c .false. Values are not shifted
+  !!                                 (default).
+  !============================================================================!
   subroutine m_convert(m_name,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+    real(dp), intent(in), optional :: threshold
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: m_name ! matrix to convert
+    type(matrix), intent(inout) :: m_name
 
     !**** INTERNAL ********************************!
 
@@ -634,30 +877,27 @@ contains
 
   end subroutine m_convert
 
-  !================================================!
-  ! matrix-matrix multiplication                   !
-  ! C := alpha*op(A)*op(B) + beta*C, where         !
-  ! op(M) can be M^T (transpose) or                !
-  !              M^H (Hermitian transpose)         !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (real version).
+  !============================================================================!
   subroutine mm_dmultiply(A,opA,B,opB,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
-    character(1), intent(in) :: opB ! form of op(B)
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(1), intent(in) :: opB
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -975,24 +1215,27 @@ contains
 
   end subroutine mm_dmultiply
 
+  !============================================================================!
+  !> @brief Matrix-matrix multiplication (complex version).
+  !============================================================================!
   subroutine mm_zmultiply(A,opA,B,opB,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T' for A^T, 'c/C' for A^H
-    character(1), intent(in) :: opB ! form of op(B)
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(1), intent(in) :: opB
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -1308,27 +1551,25 @@ contains
 
   end subroutine mm_zmultiply
 
-  !================================================!
-  ! matrix addition                                !
-  ! C := alpha*op(A) + beta*C, where               !
-  ! op(M) can be M^T or M^H                        !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix addition (real version).
+  !============================================================================!
   subroutine m_dadd(A,opA,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -1465,22 +1706,25 @@ contains
 
   end subroutine m_dadd
 
+  !============================================================================!
+  !> @brief Matrix addition (complex version).
+  !============================================================================!
   subroutine m_zadd(A,opA,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T' for A^T, 'c/C' for A^H
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -1615,22 +1859,21 @@ contains
 
   end subroutine m_zadd
 
-  !================================================!
-  ! matrix trace                                   !
-  ! alpha := tr(A)                                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix trace (real version).
+  !============================================================================!
   subroutine m_dtrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1708,18 +1951,21 @@ contains
 
   end subroutine m_dtrace
 
+  !============================================================================!
+  !> @brief Matrix trace (complex version).
+  !============================================================================!
   subroutine m_ztrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
+    type(matrix), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1797,10 +2043,9 @@ contains
 
   end subroutine m_ztrace
 
-  !================================================!
-  ! matrix product trace                           !
-  ! alpha := tr(A^H*B) = tr(B*A^H)                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Matrix product trace (real version).
+  !============================================================================!
   subroutine mm_dtrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -1809,14 +2054,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -1916,6 +2161,9 @@ contains
 
   end subroutine mm_dtrace
 
+  !============================================================================!
+  !> @brief Matrix product trace (complex version).
+  !============================================================================!
   subroutine mm_ztrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -1924,14 +2172,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    type(matrix), intent(in) :: A ! matrix A
-    type(matrix), intent(in) :: B ! matrix B
+    type(matrix), intent(in) :: A
+    type(matrix), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -2027,22 +2275,21 @@ contains
 
   end subroutine mm_ztrace
 
-  !================================================!
-  ! scale matrix                                   !
-  ! C := beta*C                                    !
-  !================================================!
+  !============================================================================!
+  !> @brief Scale matrix (real version).
+  !============================================================================!
   subroutine m_dscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: beta
 
     !**** INTOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2149,18 +2396,21 @@ contains
 
   end subroutine m_dscale
 
+  !============================================================================!
+  !> @brief Scale matrix (complex version).
+  !============================================================================!
   subroutine m_zscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: beta
 
     !**** INTOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2267,25 +2517,23 @@ contains
 
   end subroutine m_zscale
 
-  !================================================!
-  ! set matrix                                     !
-  ! C_ij := alpha (off-diagonal elements) and      !
-  !         beta (diagonal elements)               !
-  !================================================!
+  !============================================================================!
+  !> @brief Set matrix (real version).
+  !============================================================================!
   subroutine m_dset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2354,20 +2602,23 @@ contains
 
   end subroutine m_dset
 
+  !============================================================================!
+  !> @brief Set matrix (complex version).
+  !============================================================================!
   subroutine m_zset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2436,26 +2687,25 @@ contains
 
   end subroutine m_zset
 
-  !================================================!
-  ! set matrix element                             !
-  ! C_ij := alpha + beta*C_ij                      !
-  !================================================!
+  !============================================================================!
+  !> @brief Set matrix element (real version).
+  !============================================================================!
   subroutine m_dset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2611,22 +2861,25 @@ contains
 
   end subroutine m_dset_element
 
+  !============================================================================!
+  !> @brief Set matrix element (complex version).
+  !============================================================================!
   subroutine m_zset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
     !**** INOUT ***********************************!
 
-    type(matrix), intent(inout) :: C ! matrix C
+    type(matrix), intent(inout) :: C
 
     !**** INTERNAL ********************************!
 
@@ -2782,25 +3035,24 @@ contains
 
   end subroutine m_zset_element
 
-  !================================================!
-  ! get matrix element                             !
-  ! alpha := C_ij                                  !
-  !================================================!
+  !============================================================================!
+  !> @brief Get matrix element (real version).
+  !============================================================================!
   subroutine m_dget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    type(matrix), intent(in) :: C ! matrix C
+    type(matrix), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -2896,21 +3148,24 @@ contains
 
   end subroutine m_dget_element
 
+  !============================================================================!
+  !> @brief Get matrix element (complex version).
+  !============================================================================!
   subroutine m_zget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    type(matrix), intent(in) :: C ! matrix C
+    type(matrix), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**** INTERNAL ********************************!
 
@@ -3006,29 +3261,41 @@ contains
 
   end subroutine m_zget_element
 
-  !================================================!
-  ! implementation: ScaLAPACK                      !
-  !================================================!
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+  !============================================================================!
+  !> @brief ScaLAPACK MPI setup.
+  !!
+  !! Sets up everything needed to use \c p?dbc matrices with ScaLAPACK. Has to
+  !! be called once at the start of the code.
+  !!
+  !! @param[in] mpi_comm MPI communicator to use.
+  !! @param[in] nprow    Row dimension of the process grid (has to be a divisor
+  !!                     of the size of the group defined by \p mpi_comm).
+  !! @param[in] order    Ordering of the process grid:
+  !!                     \arg \c c / \c C column-major ordering
+  !!                     \arg \c r / \c R row-major ordering
+  !! @param[in] bs_def   Default block size to use when allocating \c p?dbc
+  !!                     matrices.
+  !! @param[in] bs_list  List of exceptions to \p bs_def to use for specific
+  !!                     matrix dimension sizes. Has to be formatted as
+  !!                     (\c dim_1, \c bs_1, \c dim_2, \c bs_2, etc.), where
+  !!                     \c dim_x is the matrix dimension size, and \c bs_x is
+  !!                     the corresponding block size to use for it.
+  !! @param[in] icontxt  BLACS context handle, if already initialized.
+  !============================================================================!
   subroutine ms_scalapack_setup(mpi_comm,nprow,order,bs_def,bs_list,icontxt)
     implicit none
     include 'mpif.h'
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: order ! ordering of processor grid: 'r/R' or other for row-major, 'c/C' for column-major
+    character(1), intent(in) :: order
 
-    integer, intent(in) :: mpi_comm ! MPI communicator
-    integer, intent(in) :: nprow ! number of rows in the processor grid
-    integer, intent(in) :: bs_def ! default block size
-    ! This is a list of exceptions to the default block size for specific matrix dimension sizes. The list has to be formatted as:
-    !   * matrix dimension size 1
-    !   * block size to use for matrix dimension size 1
-    !   * matrix dimension size 2
-    !   * block size to use for matrix dimension size 2
-    !   * etc.
+    integer, intent(in) :: mpi_comm
+    integer, intent(in) :: nprow
+    integer, intent(in) :: bs_def
     integer, intent(in), optional :: bs_list(:)
-    integer, intent(in), optional :: icontxt ! existing BLACS context handle in case ScaLAPACK is already initialized
+    integer, intent(in), optional :: icontxt
 
     !**** INTERNAL ********************************!
 
@@ -3062,7 +3329,7 @@ contains
     end if
 
 #ifdef HAVE_PSPBLAS
-    ! initialized grid information in pspBLAS
+    ! initialize grid information in pspBLAS
     call psp_gridinit_2D(ms_mpi_comm,ms_mpi_size,ms_lap_nprow,ms_lap_order,ms_lap_bs_def,ms_lap_bs_def,ms_lap_icontxt)
 #endif
 
@@ -3070,6 +3337,15 @@ contains
 #endif
 
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+  !============================================================================!
+  !> @brief Allocate matrix (dense block cyclic, parallel distribution).
+  !!
+  !! Initializes a TYPE(MATRIX) variable for the \c p?dbc storage format. Note
+  !! that all the common metadata for the matrix must already have been set,
+  !! and \a ms_scalapack_setup must have been called.
+  !!
+  !! @param[inout] A The matrix to be allocated.
+  !============================================================================!
   subroutine ms_scalapack_allocate(A)
     implicit none
 
