@@ -2,9 +2,12 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Storage and auxiliary operations for MatrixSwitch C bindings.
+!==============================================================================!
 module MatrixSwitch_wrapper_params
   use MatrixSwitch, only: matrix
-  use MatrixSwitch_ops, only : die
+  use MatrixSwitch_ops, only : dp, die
 
   implicit none
 
@@ -12,16 +15,15 @@ module MatrixSwitch_wrapper_params
 
   !**** PARAMS ************************************!
 
-  integer, parameter :: dp=selected_real_kind(15,300)
-  integer, parameter :: max_key_length=10
+  integer, parameter :: max_key_length=10 !< Maximum character length of keys.
 
   !**** VARIABLES *********************************!
 
-  character(max_key_length), allocatable :: ms_keys(:)
+  character(max_key_length), allocatable :: ms_keys(:) !< Array of keys.
 
-  integer :: ms_num_matrices
+  integer :: ms_num_matrices !< Number of matrices stored in the wrapper.
 
-  type(matrix), allocatable :: ms_matrices(:)
+  type(matrix), allocatable :: ms_matrices(:) !< Array of MatrixSwitch matrices stored in the wrapper.
 
   !************************************************!
 
@@ -33,9 +35,15 @@ module MatrixSwitch_wrapper_params
 
 contains
 
-  !================================================!
-  ! map key to index of ms_matrices array          !
-  !================================================!
+  !============================================================================!
+  !> @brief MatrixSwitch wrapper map lookup.
+  !!
+  !! Finds the value bound to the given key, corresponding to the index of the
+  !! matrix in the \p ms_matrices array.
+  !!
+  !! @param[in] key They key of the matrix.
+  !! @return        The index of the matrix in \p ms_matrices.
+  !============================================================================!
   integer function ms_lookup(key)
     implicit none
 

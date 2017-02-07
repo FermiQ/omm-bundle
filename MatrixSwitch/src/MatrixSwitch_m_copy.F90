@@ -2,17 +2,74 @@
 #include "config.h"
 #endif
 
+!==============================================================================!
+!> @brief Implementations of \a m_copy.
+!==============================================================================!
 module MatrixSwitch_m_copy
   use MatrixSwitch_ops
 
   implicit none
 
+  !**** INTERFACES ********************************!
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution).
+  !!
+  !! Initializes a TYPE(MATRIX) variable with \c p?coo format by copying the
+  !! information and element values from pre-existing matrix data with \c p?dbc
+  !! format. This is a dense to sparse conversion.
+  !!
+  !! @param[inout] m_name    The matrix to be allocated.
+  !! @param[in]    A         The values of the local matrix elements for the
+  !!                         matrix to be copied, stored as a two-dimensional
+  !!                         array.
+  !! @param[in]    desc      BLACS array descriptor for the matrix to be
+  !!                         copied.
+  !! @param[in]    threshold Tolerance for zeroing elements. Elements with an
+  !!                         absolute value below this threshold will be
+  !!                         omitted.
+  !============================================================================!
+  interface m_copy_external_pdbcpcoo
+     module procedure m_copy_external_pddbcpdcoo
+     module procedure m_copy_external_pzdbcpzcoo
+  end interface m_copy_external_pdbcpcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution).
+  !!
+  !! Initializes a TYPE(MATRIX) variable with \c p?csc format by copying the
+  !! information and element values from pre-existing matrix data with \c p?dbc
+  !! format. This is a dense to sparse conversion.
+  !!
+  !! @param[inout] m_name    The matrix to be allocated.
+  !! @param[in]    A         The values of the local matrix elements for the
+  !!                         matrix to be copied, stored as a two-dimensional
+  !!                         array.
+  !! @param[in]    desc      BLACS array descriptor for the matrix to be
+  !!                         copied.
+  !! @param[in]    threshold Tolerance for zeroing elements. Elements with an
+  !!                         absolute value below this threshold will be
+  !!                         omitted.
+  !============================================================================!
+  interface m_copy_external_pdbcpcsc
+     module procedure m_copy_external_pddbcpdcsc
+     module procedure m_copy_external_pzdbcpzcsc
+  end interface m_copy_external_pdbcpcsc
+#endif
+
+  !************************************************!
+
 contains
 
-  !================================================!
-  ! implementation: reference                      !
-  !================================================!
-
+  !============================================================================!
+  !> @brief Copy matrix (simple dense, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_sdensdenref(m_name,A)
     implicit none
 
@@ -38,6 +95,10 @@ contains
 
   end subroutine m_copy_sdensdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (simple dense, serial distribution, reference
+  !!        implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdensdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -85,6 +146,10 @@ contains
 
   end subroutine m_copy_sdensdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (dense block cyclic, parallel distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_pdbcpdbcref(m_name,A)
     implicit none
 
@@ -116,6 +181,10 @@ contains
 
   end subroutine m_copy_pdbcpdbcref
 
+  !============================================================================!
+  !> @brief Copy matrix (dense block cyclic, parallel distribution, reference
+  !!        implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_pdbcpdbcref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -169,6 +238,10 @@ contains
 
   end subroutine m_copy_pdbcpdbcref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (sparse coordinate list, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_scooscooref(m_name,A)
     implicit none
 
@@ -203,6 +276,10 @@ contains
 
   end subroutine m_copy_scooscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscooref(m_name,A)
     implicit none
 
@@ -255,6 +332,10 @@ contains
 
   end subroutine m_copy_sdenscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscooref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -331,6 +412,10 @@ contains
 
   end subroutine m_copy_sdenscooref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (compressed sparse column, serial distribution,
+  !!        reference implementation).
+  !============================================================================!
   subroutine m_copy_scscscscref(m_name,A)
     implicit none
 
@@ -365,6 +450,10 @@ contains
 
   end subroutine m_copy_scscscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (compressed sparse row, serial distribution, reference
+  !!        implementation).
+  !============================================================================!
   subroutine m_copy_scsrscsrref(m_name,A)
     implicit none
 
@@ -399,6 +488,10 @@ contains
 
   end subroutine m_copy_scsrscsrref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscscref(m_name,A)
     implicit none
 
@@ -453,6 +546,10 @@ contains
 
   end subroutine m_copy_sdenscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscscref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -531,6 +628,10 @@ contains
 
   end subroutine m_copy_sdenscscref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = simple dense,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_sdenscsrref(m_name,A)
     implicit none
 
@@ -585,6 +686,10 @@ contains
 
   end subroutine m_copy_sdenscsrref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = simple dense,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_sdenscsrref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -663,6 +768,10 @@ contains
 
   end subroutine m_copy_sdenscsrref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = sparse coordinate list,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scoosdenref(m_name,A)
     implicit none
 
@@ -698,6 +807,10 @@ contains
 
   end subroutine m_copy_scoosdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = sparse coordinate list,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scoosdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -743,6 +856,10 @@ contains
 
   end subroutine m_copy_scoosdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse column,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scscsdenref(m_name,A)
     implicit none
 
@@ -784,6 +901,10 @@ contains
 
   end subroutine m_copy_scscsdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse column,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scscsdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -835,6 +956,10 @@ contains
 
   end subroutine m_copy_scscsdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse row,
+  !!        serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scsrsdenref(m_name,A)
     implicit none
 
@@ -876,6 +1001,10 @@ contains
 
   end subroutine m_copy_scsrsdenref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = simple dense, A = compressed sparse row,
+  !!        serial distribution, reference implementation with thresholding).
+  !============================================================================!
   subroutine m_copy_scsrsdenref_thre(m_name,A,abs_threshold,soft_threshold)
     implicit none
 
@@ -927,6 +1056,10 @@ contains
 
   end subroutine m_copy_scsrsdenref_thre
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = compressed sparse
+  !!        column, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scscscooref(m_name,A)
     implicit none
 
@@ -970,6 +1103,10 @@ contains
 
   end subroutine m_copy_scscscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = sparse coordinate list, A = compressed sparse
+  !!        row, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scsrscooref(m_name,A)
     implicit none
 
@@ -1013,6 +1150,10 @@ contains
 
   end subroutine m_copy_scsrscooref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse column, A = sparse
+  !!        coordinate list, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scooscscref(m_name,A)
     implicit none
 
@@ -1094,6 +1235,10 @@ contains
 
   end subroutine m_copy_scooscscref
 
+  !============================================================================!
+  !> @brief Copy matrix (m_name = compressed sparse row, A = sparse
+  !!        coordinate list, serial distribution, reference implementation).
+  !============================================================================!
   subroutine m_copy_scooscsrref(m_name,A)
     implicit none
 
@@ -1174,5 +1319,213 @@ contains
        deallocate(sort_temp)
 
   end subroutine m_copy_scooscsrref
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution, real version).
+  !============================================================================!
+  subroutine m_copy_external_pddbcpdcoo(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='coo'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pddbcpdcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (sparse coordinate list from dense block
+  !!        cyclic, parallel distribution, complex version).
+  !============================================================================!
+  subroutine m_copy_external_pzdbcpzcoo(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    complex(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='coo'
+    m_name%is_serial=.false.
+    m_name%is_real=.false.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pzdbcpzcoo
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution, real version).
+  !============================================================================!
+  subroutine m_copy_external_pddbcpdcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.true.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pddbcpdcsc
+#endif
+
+#ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Copy external matrix (compressed sparse column from dense block
+  !!        cyclic, parallel distribution, complex version).
+  !============================================================================!
+  subroutine m_copy_external_pzdbcpzcsc(m_name,A,desc,threshold)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in) :: desc(9)
+
+    complex(dp), intent(in) :: A(:,:)
+    real(dp), intent(in), optional :: threshold
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: dim(2)
+
+    !**********************************************!
+
+    allocate(m_name%iaux1(size(desc)))
+    m_name%iaux1_is_allocated=.true.
+    m_name%iaux1=desc
+    m_name%dim1=desc(3)
+    m_name%dim2=desc(4)
+    allocate(m_name%iaux2(2))
+    m_name%iaux2_is_allocated=.true.
+    dim=shape(A)
+    m_name%iaux2(1)=dim(1)
+    m_name%iaux2(2)=dim(2)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+    m_name%str_type='csc'
+    m_name%is_serial=.false.
+    m_name%is_real=.false.
+    m_name%is_sparse=.true.
+
+    call psp_den2sp_m(A,desc,m_name%spm,m_name%str_type,threshold)
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_copy_external_pzdbcpzcsc
+#endif
 
 end module MatrixSwitch_m_copy
