@@ -83,7 +83,7 @@ module MatrixSwitch_ops
   !============================================================================!
   !> @brief \p opM parameter converter.
   !!
-  !! Converts the input parameters \p opA and opB in the subroutines
+  !! Converts the input parameters \p opA and \p opB in the subroutines
   !! \a mm_multiply and \a m_add from a character to a logical (real version)
   !! or integer (complex version) for internal use:
   !! \arg \c n / \c N mapped to \c .false. (real version) or \c 0 (complex

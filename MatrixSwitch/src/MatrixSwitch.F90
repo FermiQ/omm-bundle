@@ -484,7 +484,7 @@ contains
   !!
   !! @param[inout] m_name            The matrix to be created.
   !! @param[in]    A                 The matrix to be copied.
-  !! @param[in]    label             Storage format to use for \a m_name.
+  !! @param[in]    label             Storage format to use for \p m_name.
   !! @param[in]    threshold         Tolerance for zeroing elements. Elements
   !!                                 with an absolute value below this
   !!                                 threshold will be omitted for sparse
