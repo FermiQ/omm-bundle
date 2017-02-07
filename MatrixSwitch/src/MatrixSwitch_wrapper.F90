@@ -6,6 +6,7 @@
 !> @brief MatrixSwitch C bindings.
 !==============================================================================!
 module MatrixSwitch_wrapper
+  use MatrixSwitch_ops, only: dp
   use MatrixSwitch_wrapper_params
   use MatrixSwitch, only: &
     mm_multiply_orig => mm_multiply, &
@@ -39,58 +40,85 @@ module MatrixSwitch_wrapper
 
   private
 
-  !**** PARAMS ************************************!
-
-  integer, parameter :: dp=selected_real_kind(15,300)
-
   !**** INTERFACES ********************************!
 
+  !============================================================================!
+  !> @brief Wrapper to matrix-matrix multiplication.
+  !============================================================================!
   interface mm_multiply
      module procedure mm_dmultiply
      module procedure mm_zmultiply
   end interface mm_multiply
 
+  !============================================================================!
+  !> @brief Wrapper to matrix addition.
+  !============================================================================!
   interface m_add
      module procedure m_dadd
      module procedure m_zadd
   end interface m_add
 
+  !============================================================================!
+  !> @brief Wrapper to matrix trace.
+  !============================================================================!
   interface m_trace
      module procedure m_dtrace
      module procedure m_ztrace
   end interface m_trace
 
+  !============================================================================!
+  !> @brief Wrapper to matrix product trace.
+  !============================================================================!
   interface mm_trace
      module procedure mm_dtrace
      module procedure mm_ztrace
   end interface mm_trace
 
+  !============================================================================!
+  !> @brief Wrapper to scale matrix.
+  !============================================================================!
   interface m_scale
      module procedure m_dscale
      module procedure m_zscale
   end interface m_scale
 
+  !============================================================================!
+  !> @brief Wrapper to set matrix.
+  !============================================================================!
   interface m_set
      module procedure m_dset
      module procedure m_zset
   end interface m_set
 
+  !============================================================================!
+  !> @brief Wrapper to set matrix element.
+  !============================================================================!
   interface m_set_element
      module procedure m_dset_element
      module procedure m_zset_element
   end interface m_set_element
 
+  !============================================================================!
+  !> @brief Wrapper to get matrix element.
+  !============================================================================!
   interface m_get_element
      module procedure m_dget_element
      module procedure m_zget_element
   end interface m_get_element
 
+  !============================================================================!
+  !> @brief Wrapper to register matrix (simple dense, serial distribution).
+  !============================================================================!
   interface m_register_sden
      module procedure m_register_sdden
      module procedure m_register_szden
   end interface m_register_sden
 
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Wrapper to register matrix (dense block cyclic, parallel
+  !!        distribution).
+  !============================================================================!
   interface m_register_pdbc
      module procedure m_register_pddbc
      module procedure m_register_pzdbc
@@ -98,21 +126,37 @@ module MatrixSwitch_wrapper
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (sparse coordinate list from dense
+  !!        block cyclic, parallel distribution).
+  !============================================================================!
   interface m_copy_external_pdbcpcoo
      module procedure m_copy_external_pddbcpdcoo
      module procedure m_copy_external_pzdbcpzcoo
   end interface m_copy_external_pdbcpcoo
 
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (compressed sparse column from
+  !!        dense block cyclic, parallel distribution).
+  !============================================================================!
   interface m_copy_external_pdbcpcsc
      module procedure m_copy_external_pddbcpdcsc
      module procedure m_copy_external_pzdbcpzcsc
   end interface m_copy_external_pdbcpcsc
 
+  !============================================================================!
+  !> @brief Wrapper to register matrix (sparse coordinate list, parallel
+  !!        distribution).
+  !============================================================================!
   interface m_register_pcoo
      module procedure m_register_pdcoo
      module procedure m_register_pzcoo
   end interface m_register_pcoo
 
+  !============================================================================!
+  !> @brief Wrapper to register matrix (compressed sparse column, parallel
+  !!        distribution).
+  !============================================================================!
   interface m_register_pcsc
      module procedure m_register_pdcsc
      module procedure m_register_pzcsc
@@ -157,9 +201,17 @@ module MatrixSwitch_wrapper
 
 contains
 
-  !================================================!
-  ! setup the MatrixSwitch wrapper                 !
-  !================================================!
+  !============================================================================!
+  !> @brief MatrixSwitch wrapper setup.
+  !!
+  !! Sets up the MatrixSwitch wrapper with a fixed number of matrices, each of
+  !! which is identified by a unique key.
+  !!
+  !! @param[in] num_matrices The number of matrices to store in the wrapper.
+  !! @param[in] keys         The array of keys for accessing the stored
+  !!                         matrices. Each key cannot exceed \p max_key_length
+  !!                         characters.
+  !============================================================================!
   subroutine ms_wrapper_open(num_matrices,keys)
     implicit none
 
@@ -179,9 +231,12 @@ contains
 
   end subroutine ms_wrapper_open
 
-  !================================================!
-  ! close the MatrixSwitch wrapper                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Close the MatrixSwitch wrapper.
+  !!
+  !! All MatrixSwitch matrices stored in the wrapper are deallocated, and the
+  !! map is deallocated.
+  !============================================================================!
   subroutine ms_wrapper_close()
     implicit none
 
@@ -201,15 +256,18 @@ contains
 
   end subroutine ms_wrapper_close
 
-  !================================================!
-  ! functions to unpack the matrix data type       !
-  !================================================!
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_is_initialized).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_is_initialized
+  !============================================================================!
   logical function ms_is_initialized(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -217,12 +275,18 @@ contains
 
   end function ms_is_initialized
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_is_serial).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_is_serial
+  !============================================================================!
   logical function ms_is_serial(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -230,12 +294,18 @@ contains
 
   end function ms_is_serial
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_is_real).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_is_real
+  !============================================================================!
   logical function ms_is_real(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -243,12 +313,18 @@ contains
 
   end function ms_is_real
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_is_square).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_is_square
+  !============================================================================!
   logical function ms_is_square(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -256,12 +332,18 @@ contains
 
   end function ms_is_square
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_is_sparse).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_is_sparse
+  !============================================================================!
   logical function ms_is_sparse(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -269,12 +351,18 @@ contains
 
   end function ms_is_sparse
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_dim1).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_dim1
+  !============================================================================!
   integer function ms_dim1(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -282,12 +370,18 @@ contains
 
   end function ms_dim1
 
+  !============================================================================!
+  !> @brief Unpack matrix data type (\p ms_dim2).
+  !!
+  !! @param[in]  m_name The matrix to unpack.
+  !! @return            \p ms_dim2
+  !============================================================================!
   integer function ms_dim2(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to unpack
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -295,19 +389,19 @@ contains
 
   end function ms_dim2
 
-  !================================================!
-  ! allocate matrix                                !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to allocate matrix.
+  !============================================================================!
   subroutine m_allocate(m_name,i,j,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use (see documentation)
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(5), intent(in), optional :: label
+    character(*), intent(in) :: m_name
 
-    integer, intent(in) :: i ! (global) row dimension size of the matrix
-    integer, intent(in) :: j ! (global) column dimension size of the matrix
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
     !**********************************************!
 
@@ -315,15 +409,15 @@ contains
 
   end subroutine m_allocate
 
-  !================================================!
-  ! deallocate matrix                              !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to deallocate matrix.
+  !============================================================================!
   subroutine m_deallocate(m_name)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(*), intent(in) :: m_name ! matrix to be deallocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -331,22 +425,22 @@ contains
 
   end subroutine m_deallocate
 
-  !================================================!
-  ! copy matrix                                    !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to copy matrix.
+  !============================================================================!
   subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+    real(dp), intent(in), optional :: threshold
 
-    character(*), intent(in) :: A ! matrix to copy from
-    character(*), intent(in) :: m_name ! matrix to copy onto
+    character(*), intent(in) :: A
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -354,21 +448,21 @@ contains
 
   end subroutine m_copy
 
-  !================================================!
-  ! wrapper for in-place matrix type conversion    !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to convert matrix format.
+  !============================================================================!
   subroutine m_convert(m_name,label,threshold,threshold_is_soft)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(5), intent(in), optional :: label ! storage format to use for m_name (see documentation)
+    character(5), intent(in), optional :: label
 
-    logical, intent(in), optional :: threshold_is_soft ! soft or hard thresholding
+    logical, intent(in), optional :: threshold_is_soft
 
-    real(dp), intent(in), optional :: threshold ! threshold for zeroing elements
+    real(dp), intent(in), optional :: threshold
 
-    character(*), intent(in) :: m_name ! matrix to convert
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -376,27 +470,24 @@ contains
 
   end subroutine m_convert
 
-  !================================================!
-  ! matrix-matrix multiplication                   !
-  ! C := alpha*op(A)*op(B) + beta*C, where         !
-  ! op(M) can be M^T (transpose) or                !
-  !              M^H (Hermitian transpose)         !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to matrix-matrix multiplication (real version).
+  !============================================================================!
   subroutine mm_dmultiply(A,opA,B,opB,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
-    character(1), intent(in) :: opB ! form of op(B)
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(1), intent(in) :: opB
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: B ! matrix B
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: A
+    character(*), intent(in) :: B
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -404,21 +495,24 @@ contains
 
   end subroutine mm_dmultiply
 
+  !============================================================================!
+  !> @brief Wrapper to matrix-matrix multiplication (complex version).
+  !============================================================================!
   subroutine mm_zmultiply(A,opA,B,opB,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T' for A^T, 'c/C' for A^H
-    character(1), intent(in) :: opB ! form of op(B)
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(1), intent(in) :: opB
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: B ! matrix B
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: A
+    character(*), intent(in) :: B
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -426,24 +520,22 @@ contains
 
   end subroutine mm_zmultiply
 
-  !================================================!
-  ! matrix addition                                !
-  ! C := alpha*op(A) + beta*C, where               !
-  ! op(M) can be M^T or M^H                        !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to matrix addition (real version).
+  !============================================================================!
   subroutine m_dadd(A,opA,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: A
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -451,19 +543,22 @@ contains
 
   end subroutine m_dadd
 
+  !============================================================================!
+  !> @brief Wrapper to matrix addition (complex version).
+  !============================================================================!
   subroutine m_zadd(A,opA,C,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T' for A^T, 'c/C' for A^H
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: opA
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: A
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -471,22 +566,21 @@ contains
 
   end subroutine m_zadd
 
-  !================================================!
-  ! matrix trace                                   !
-  ! alpha := tr(A)                                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to matrix trace (real version).
+  !============================================================================!
   subroutine m_dtrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -494,18 +588,21 @@ contains
 
   end subroutine m_dtrace
 
+  !============================================================================!
+  !> @brief Wrapper to matrix trace (complex version).
+  !============================================================================!
   subroutine m_ztrace(A,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    character(*), intent(in) :: A ! matrix A
+    character(*), intent(in) :: A
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -513,10 +610,9 @@ contains
 
   end subroutine m_ztrace
 
-  !================================================!
-  ! matrix product trace                           !
-  ! alpha := tr(A^H*B) = tr(B*A^H)                 !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to matrix product trace (real version).
+  !============================================================================!
   subroutine mm_dtrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -525,14 +621,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: B ! matrix B
+    character(*), intent(in) :: A
+    character(*), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -540,6 +636,9 @@ contains
 
   end subroutine mm_dtrace
 
+  !============================================================================!
+  !> @brief Wrapper to matrix product trace (complex version).
+  !============================================================================!
   subroutine mm_ztrace(A,B,alpha,label)
     implicit none
 #ifdef HAVE_MPI
@@ -548,14 +647,14 @@ contains
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    character(*), intent(in) :: A ! matrix A
-    character(*), intent(in) :: B ! matrix B
+    character(*), intent(in) :: A
+    character(*), intent(in) :: B
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -563,20 +662,19 @@ contains
 
   end subroutine mm_ztrace
 
-  !================================================!
-  ! scale matrix                                   !
-  ! C := beta*C                                    !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to scale matrix (real version).
+  !============================================================================!
   subroutine m_dscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -584,16 +682,19 @@ contains
 
   end subroutine m_dscale
 
+  !============================================================================!
+  !> @brief Wrapper to scale matrix (complex version).
+  !============================================================================!
   subroutine m_zscale(C,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -601,23 +702,21 @@ contains
 
   end subroutine m_zscale
 
-  !================================================!
-  ! set matrix                                     !
-  ! C_ij := alpha (off-diagonal elements) and      !
-  !         beta (diagonal elements)               !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to set matrix (real version).
+  !============================================================================!
   subroutine m_dset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -625,18 +724,21 @@ contains
 
   end subroutine m_dset
 
+  !============================================================================!
+  !> @brief Wrapper to set matrix (complex version).
+  !============================================================================!
   subroutine m_zset(C,seC,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(1), intent(in) :: seC ! part of matrix to set: 'l/L' for lower, 'u/U' for upper, other for all
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(1), intent(in) :: seC
+    character(3), intent(in), optional :: label
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -644,24 +746,23 @@ contains
 
   end subroutine m_zset
 
-  !================================================!
-  ! set matrix element                             !
-  ! C_ij := alpha                                  !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to set matrix element (real version).
+  !============================================================================!
   subroutine m_dset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    real(dp), intent(in) :: alpha ! scalar alpha
-    real(dp), intent(in) :: beta ! scalar beta
+    real(dp), intent(in) :: alpha
+    real(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -669,20 +770,23 @@ contains
 
   end subroutine m_dset_element
 
+  !============================================================================!
+  !> @brief Wrapper to set matrix element (complex version).
+  !============================================================================!
   subroutine m_zset_element(C,i,j,alpha,beta,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    complex(dp), intent(in) :: alpha ! scalar alpha
-    complex(dp), intent(in) :: beta ! scalar beta
+    complex(dp), intent(in) :: alpha
+    complex(dp), intent(in) :: beta
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**********************************************!
 
@@ -690,25 +794,24 @@ contains
 
   end subroutine m_zset_element
 
-  !================================================!
-  ! get matrix element                             !
-  ! alpha := C_ij                                  !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to get matrix element (real version).
+  !============================================================================!
   subroutine m_dget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    real(dp), intent(out) :: alpha ! scalar alpha
+    real(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -716,21 +819,24 @@ contains
 
   end subroutine m_dget_element
 
+  !============================================================================!
+  !> @brief Wrapper to get matrix element (complex version).
+  !============================================================================!
   subroutine m_zget_element(C,i,j,alpha,label)
     implicit none
 
     !**** INPUT ***********************************!
 
-    character(3), intent(in), optional :: label ! implementation of the operation to use (see documentation)
+    character(3), intent(in), optional :: label
 
-    integer, intent(in) :: i ! row index of element
-    integer, intent(in) :: j ! column index of element
+    integer, intent(in) :: i
+    integer, intent(in) :: j
 
-    character(*), intent(in) :: C ! matrix C
+    character(*), intent(in) :: C
 
     !**** OUTPUT **********************************!
 
-    complex(dp), intent(out) :: alpha ! scalar alpha
+    complex(dp), intent(out) :: alpha
 
     !**********************************************!
 
@@ -738,17 +844,18 @@ contains
 
   end subroutine m_zget_element
 
-  !================================================!
-  ! register matrix: simple dense serial           !
-  !================================================!
+  !============================================================================!
+  !> @brief Wrapper to register matrix (simple dense, serial distribution, real
+  !!        version).
+  !============================================================================!
   subroutine m_register_sdden(m_name,A)
     implicit none
 
     !**** INPUT ***********************************!
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+    real(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -756,14 +863,18 @@ contains
 
   end subroutine m_register_sdden
 
+  !============================================================================!
+  !> @brief Wrapper to register matrix (simple dense, serial distribution,
+  !!        complex version).
+  !============================================================================!
   subroutine m_register_szden(m_name,A)
     implicit none
 
     !**** INPUT ***********************************!
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -771,20 +882,21 @@ contains
 
   end subroutine m_register_szden
 
-  !================================================!
-  ! register matrix: dense block cyclic parallel   !
-  !================================================!
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Wrapper to register matrix (dense block cyclic, parallel
+  !!        distribution, real version).
+  !============================================================================!
   subroutine m_register_pddbc(m_name,A,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    real(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -794,16 +906,20 @@ contains
 #endif
 
 #ifdef HAVE_MPI
+  !============================================================================!
+  !> @brief Wrapper to register matrix (dense block cyclic, parallel
+  !!        distribution, complex version).
+  !============================================================================!
   subroutine m_register_pzdbc(m_name,A,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in) :: desc(9) ! BLACS array descriptor
+    integer, intent(in) :: desc(9)
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -812,22 +928,22 @@ contains
   end subroutine m_register_pzdbc
 #endif
 
-  !======================================================!
-  ! register matrix by thresholding                      !
-  ! parallel distributed 2D block cyclic sparse matrix   !
-  !======================================================!
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (sparse coordinate list from dense
+  !!        block cyclic, parallel distribution, real version).
+  !============================================================================!
   subroutine m_copy_external_pddbcpdcoo(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
-    real(dp), intent(in), optional :: threshold ! non-negative threshold
+    real(dp), intent(in), target :: A(:,:)
+    real(dp), intent(in), optional :: threshold
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -837,18 +953,22 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (sparse coordinate list from dense
+  !!        block cyclic, parallel distribution, complex version).
+  !============================================================================!
   subroutine m_copy_external_pzdbcpzcoo(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), optional :: threshold ! non-negative threshold
+    real(dp), intent(in), optional :: threshold
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -858,17 +978,21 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (compressed sparse column from
+  !!        dense block cyclic, parallel distribution, real version).
+  !============================================================================!
   subroutine m_copy_external_pddbcpdcsc(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
-    real(dp), intent(in), optional :: threshold ! non-negative threshold
+    real(dp), intent(in), target :: A(:,:)
+    real(dp), intent(in), optional :: threshold
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -878,18 +1002,22 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to copy external matrix (compressed sparse column from
+  !!        dense block cyclic, parallel distribution, complex version).
+  !============================================================================!
   subroutine m_copy_external_pzdbcpzcsc(m_name,A,desc,threshold)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
+    integer, intent(in), target :: desc(9)
 
-    real(dp), intent(in), optional :: threshold ! non-negative threshold
+    real(dp), intent(in), optional :: threshold
 
-    complex(dp), intent(in), target :: A(:,:) ! two-dimensional array containing the local matrix elements
+    complex(dp), intent(in), target :: A(:,:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -898,23 +1026,24 @@ contains
   end subroutine m_copy_external_pzdbcpzcsc
 #endif
 
-  !======================================================!
-  ! register matrix using the Sparse Triplet format      !
-  ! parallel distributed 2D block cyclic sparse matrix   !
-  !======================================================!
 #ifdef HAVE_PSPBLAS
+
+  !============================================================================!
+  !> @brief Wrapper to register matrix (sparse coordinate list, parallel
+  !!        distribution, real version).
+  !============================================================================!
   subroutine m_register_pdcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
 
-    real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+    real(dp), intent(in), target :: val(:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -924,18 +1053,23 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+
+  !============================================================================!
+  !> @brief Wrapper to register matrix (sparse coordinate list, parallel
+  !!        distribution, complex version).
+  !============================================================================!
   subroutine m_register_pzcoo(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
 
-    complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+    complex(dp), intent(in), target :: val(:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -944,23 +1078,23 @@ contains
   end subroutine m_register_pzcoo
 #endif
 
-  !======================================================!
-  ! register matrix using the Sparse Triplet format      !
-  ! parallel distributed 2D block cyclic sparse matrix   !
-  !======================================================!
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to register matrix (compressed sparse column, parallel
+  !!        distribution, real version).
+  !============================================================================!
   subroutine m_register_pdcsc(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
 
-    real(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+    real(dp), intent(in), target :: val(:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
@@ -970,18 +1104,22 @@ contains
 #endif
 
 #ifdef HAVE_PSPBLAS
+  !============================================================================!
+  !> @brief Wrapper to register matrix (compressed sparse column, parallel
+  !!        distribution, complex version).
+  !============================================================================!
   subroutine m_register_pzcsc(m_name,idx1,idx2,val,desc)
     implicit none
 
     !**** INPUT ***********************************!
 
-    integer, intent(in), target :: desc(9) ! BLACS array descriptor
-    integer, intent(in), target :: idx1(:) ! one-dimensional array for row indices, local
-    integer, intent(in), target :: idx2(:) ! one-dimensional array for column indices in 'coo' format or column pointers in 'csc' format, local
+    integer, intent(in), target :: desc(9)
+    integer, intent(in), target :: idx1(:)
+    integer, intent(in), target :: idx2(:)
 
-    complex(dp), intent(in), target :: val(:) ! one-dimensional array containing the nonzero local matrix elements
+    complex(dp), intent(in), target :: val(:)
 
-    character(*), intent(in) :: m_name ! matrix to be allocated
+    character(*), intent(in) :: m_name
 
     !**********************************************!
 
