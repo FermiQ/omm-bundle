@@ -43,14 +43,18 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 # Check default build
 mkdir tmp-minimal
 cd tmp-minimal
-../configure
+if test -s "../../build-omm"; then
+  instdir="${PWD}/../../tmp-pspblas"
+else
+  instdir="${PWD}/install-minimal"
+fi
+../configure --prefix="${instdir}"
 make dist
 make
 make clean && make -j${make_nprocs}
 make check -j${make_nprocs}
-mkdir install-minimal
-make install DESTDIR="${PWD}/install-minimal"
-ls -lR install-minimal >install-minimal.log
+make install
+ls -lR "${instdir}" >install-minimal.log
 cd ..
 
 # Make distcheck
