@@ -27,6 +27,9 @@ set -ev
 # Check that we are in the correct directory
 test -s "configure.ac" -a -s "src/MatrixSwitch.F90" || exit 0
 
+# Set number of processors for parallel builds (make -j)
+make_nprocs="8"
+
 # Init build parameters
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
@@ -41,7 +44,7 @@ cd tmp-minimal
 ../configure
 make dist
 make
-make clean && make -j4
+make clean && make -j${make_nprocs}
 make check
 mkdir install-minimal
 make install DESTDIR="${PWD}/install-minimal"
@@ -52,8 +55,8 @@ cd ..
 mkdir tmp-examples
 cd tmp-examples
 ../configure --enable-examples
-make -j4
-make check -j4
+make -j${make_nprocs}
+make check -j${make_nprocs}
 cd ..
 
 # Check Linalg build
@@ -61,46 +64,46 @@ mkdir tmp-linalg
 cd tmp-linalg
 ../configure \
   LINALG_LIBS="-llapack -lblas"
-make -j4
-make check -j4
+make -j${make_nprocs}
+make check -j${make_nprocs}
 cd ..
 
 # Check bare MPI build
 mkdir tmp-mpi
 cd tmp-mpi
 ../configure --enable-examples CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
+make -j${make_nprocs}
+make check -j${make_nprocs}
 cd ..
 
 # Check MPI + Linalg build
 mkdir tmp-mpi-linalg
 cd tmp-mpi-linalg
 ../configure \
-  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
   --enable-examples \
+  LINALG_LIBS="-lscalapack -lopenblas" \
   CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
+make -j${make_nprocs}
+make check -j${make_nprocs}
 cd ..
 
 # Check MPI + pspBLAS build
 mkdir tmp-mpi-psp
 cd tmp-mpi-psp
 ../configure \
-  --with-psp="${PWD}/../../tmp-psp" \
-  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
+  --with-psp="${PWD}/../../tmp-pspblas" \
   --enable-examples \
+  LINALG_LIBS="-lscalapack -lopenblas" \
   CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
+make -j${make_nprocs}
+make check -j${make_nprocs}
 cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
-make distcheck -j4
+make distcheck -j${make_nprocs}
 make distcleancheck
 
 # Clean-up the mess

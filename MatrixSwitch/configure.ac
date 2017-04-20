@@ -379,6 +379,19 @@ AC_SUBST(msw_psp_libs)
 # Architecture setup
 #
 
+# Improve defaults using information from EasyBuild
+if test "${msw_mpi_enable}" != "no" -a \
+        -n "${EBROOTOPENMPI}" -a \
+        "${msw_mpi_type}" = "def"; then
+  if test "${CC}" = "" -a "${FC}" = ""; then
+    CC="mpicc"
+    FC="mpifort"
+  else
+    MPICC="mpicc"
+    MPIFC="mpifort"
+  fi
+fi
+
 # Init MPI parameters, possibly setting and/or wrapping compilers
 MSW_MPI_INIT
 
@@ -475,20 +488,34 @@ AC_SUBST(TESTS_CMD)
 #
 
 # Set linear algebra includes
-if test "${msw_linalg_type}" != "dir"; then
-  if test -n "${LINALG_INCLUDES}"; then
-    msw_linalg_incs="${LINALG_INCLUDES}"
-  else
-    msw_linalg_incs="${msw_linalg_incs_def}"
+if test "${msw_linalg_enable}" != "no"; then
+  if test "${msw_linalg_type}" != "dir"; then
+    if test -n "${LINALG_INCLUDES}"; then
+      msw_linalg_incs="${LINALG_INCLUDES}"
+    else
+      msw_linalg_incs="${msw_linalg_incs_def}"
+    fi
   fi
 fi
 
 # Set linear algebra libraries
-if test "${msw_linalg_type}" != "dir"; then
-  if test -n "${LINALG_LIBS}"; then
-    msw_linalg_libs="${LINALG_LIBS}"
-  else
-    msw_linalg_libs="${msw_linalg_libs_def}"
+if test "${msw_linalg_enable}" != "no"; then
+  if test "${msw_linalg_type}" != "dir"; then
+    if test -n "${LINALG_LIBS}"; then
+      msw_linalg_libs="${LINALG_LIBS}"
+    else
+      msw_linalg_libs="${msw_linalg_libs_def}"
+      if test "${msw_linalg_type}" = "def"; then
+        if test -n "${EBROOTOPENBLAS}"; then
+          AC_MSG_NOTICE([using EasyBuild configuration to set linear algebra libraries])
+          msw_linalg_type="ebf"
+          msw_linalg_libs="-lopenblas"
+        fi
+        if test -n "${EBROOTSCALAPACK}" -a "${msw_mpi_enable}" = "yes"; then
+          msw_linalg_libs="-lscalapack ${msw_linalg_libs}"
+        fi
+      fi
+    fi
   fi
 fi
 
@@ -520,25 +547,39 @@ fi
 
 # Check that MPI is still enabled
 if test "${msw_mpi_enable}" = "no" -a "${msw_psp_enable}" = "yes"; then
-  AC_MSG_FAILURE([pspBLAS requires MPI
+  AC_MSG_ERROR([pspBLAS requires MPI
                   Please adjust your parameters and re-run configure.])
 fi
 
 # Set pspBLAS includes
-if test "${msw_psp_type}" != "dir"; then
-  if test -n "${PSP_INCLUDES}"; then
-    msw_psp_incs="${PSP_INCLUDES}"
-  else
-    msw_psp_incs="${msw_psp_incs_def}"
+if test "${msw_psp_enable}" != "no"; then
+  if test "${msw_psp_type}" != "dir"; then
+    if test -n "${PSP_INCLUDES}"; then
+      msw_psp_incs="${PSP_INCLUDES}"
+    else
+      msw_psp_incs="${msw_psp_incs_def}"
+      if test -d "../../tmp-pspblas"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set PspBLAS includes])
+        msw_psp_type="omm"
+        msw_psp_incs="-I../../tmp-pspblas/include"
+      fi
+    fi
   fi
 fi
 
 # Set pspBLAS libraries
-if test "${msw_psp_type}" != "dir"; then
-  if test -n "${PSP_LIBS}"; then
-    msw_psp_libs="${PSP_LIBS}"
-  else
-    msw_psp_libs="${msw_psp_libs_def}"
+if test "${msw_psp_enable}" != "no"; then
+  if test "${msw_psp_type}" != "dir"; then
+    if test -n "${PSP_LIBS}"; then
+      msw_psp_libs="${PSP_LIBS}"
+    else
+      msw_psp_libs="${msw_psp_libs_def}"
+      if test -d "../../tmp-pspblas"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set PspBLAS libraries])
+        msw_psp_type="omm"
+        msw_psp_incs="-L../../tmp-pspblas/lib -lpspBLAS"
+      fi
+    fi
   fi
 fi
 
