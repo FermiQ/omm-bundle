@@ -27,6 +27,9 @@ set -ev
 # Check that we are in the correct directory
 test -s "configure.ac" -a -s "src/pspBLAS.F90" || exit 0
 
+# Set number of processors for parallel builds (make -j)
+make_nprocs="8"
+
 # Init build parameters
 export CC="mpicc"
 export FC="mpif90"
@@ -43,8 +46,8 @@ cd tmp-minimal
 ../configure
 make dist
 make
-make clean && make -j4
-make check
+make clean && make -j${make_nprocs}
+make check -j${make_nprocs}
 mkdir install-minimal
 make install DESTDIR="${PWD}/install-minimal"
 ls -lR install-minimal >install-minimal.log
