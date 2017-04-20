@@ -300,11 +300,14 @@ AC_SUBST(psp_linalg_has_scalapack)
 #
 
 # Improve defaults using information from EasyBuild
-# FIXME: might want to be more flexible with CC and FC in the future
-#        (currently works because MPI is mandatory)
 if test -n "${EBROOTOPENMPI}" -a "${psp_mpi_type}" = "def"; then
-  CC="mpicc"
-  FC="mpifort"
+  if test "${CC}" = "" -a "${FC}" = ""; then
+    CC="mpicc"
+    FC="mpifort"
+  else
+    MPICC="mpicc"
+    MPIFC="mpifort"
+  fi
 fi
 
 # Init MPI parameters, possibly setting and/or wrapping compilers
@@ -421,6 +424,7 @@ if test "${psp_linalg_type}" != "dir"; then
             -n "${EBROOTSCALAPACK}" -a \
             "${psp_linalg_type}" = "def"; then
       AC_MSG_NOTICE([using EasyBuild configuration to set linear algebra libraries])
+      psp_linalg_type="ebf"
       psp_linalg_libs="-lscalapack -lopenblas"
     fi
   fi
