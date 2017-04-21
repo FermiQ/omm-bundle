@@ -249,7 +249,7 @@ if test -n "${PSP_LIBS}"; then
   omm_psp_type="env"
 fi
 
-# MatrixSwitch (optional)
+# MatrixSwitch (mandatory)
 AC_ARG_WITH([msw],
   [AS_HELP_STRING([--with-msw],
     [Install prefix of the MatrixSwitch library (e.g. /usr/local). MatrixSwitch support will be enabled only if you use this option. You may use --with-msw without argument if MatrixSwitch is installed as a system library, and --without-msw to disable MatrixSwitch support completely.])],
@@ -300,6 +300,12 @@ done
 #  AC_MSG_ERROR([linear algebra support has been disabled
 #                  while it is mandatory])
 #fi
+
+# MatrixSwitch must be enabled
+if test "${omm_msw_enable}" != "yes"; then
+  AC_MSG_ERROR([MatrixSwitch support has been disabled
+                  while it is mandatory])
+fi
 
 # All MPI wrappers must be provided at once
 tmp_mpi_vars="${MPICC}${MPIFC}"
