@@ -577,7 +577,7 @@ if test "${msw_psp_enable}" != "no"; then
       if test -d "../../tmp-pspblas"; then
         AC_MSG_NOTICE([using OMM Bundle configuration to set PspBLAS libraries])
         msw_psp_type="omm"
-        msw_psp_incs="-L../../tmp-pspblas/lib -lpspBLAS"
+        msw_psp_libs="-L../../tmp-pspblas/lib -lpspBLAS"
       fi
     fi
   fi
