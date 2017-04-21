@@ -41,50 +41,80 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 # Check default build
 mkdir tmp-minimal
 cd tmp-minimal
-../configure
+if test -s "../../build-omm"; then
+  instdir="${PWD}/../../tmp-matrixswitch"
+else
+  instdir="${PWD}/install-minimal"
+fi
+../configure \
+  --prefix="${instdir}" \
+  --disable-debug \
+  --without-mpi
+sleep 3
 make dist
 make
 make clean && make -j${make_nprocs}
-make check
-mkdir install-minimal
-make install DESTDIR="${PWD}/install-minimal"
-ls -lR install-minimal >install-minimal.log
+make check -j${make_nprocs}
+make install
+ls -lR "${instdir}" >../install-minimal.tmp
+sleep 3
 cd ..
 
-# Check examples build
-mkdir tmp-examples
-cd tmp-examples
-../configure --enable-examples
+# Check default build
+mkdir tmp-default
+cd tmp-default
+../configure
+sleep 3
 make -j${make_nprocs}
 make check -j${make_nprocs}
+sleep 3
 cd ..
 
-# Check Linalg build
-mkdir tmp-linalg
-cd tmp-linalg
+# Check Linalg build (EasyBuild)
+mkdir tmp-linalg1
+cd tmp-linalg1
+../configure \
+  --with-linalg
+sleep 3
+make -j${make_nprocs}
+make check -j${make_nprocs}
+sleep 3
+cd ..
+
+# Check Linalg build (system libs)
+mkdir tmp-linalg2
+cd tmp-linalg2
 ../configure \
   LINALG_LIBS="-llapack -lblas"
+sleep 3
 make -j${make_nprocs}
 make check -j${make_nprocs}
+sleep 3
 cd ..
 
 # Check bare MPI build
 mkdir tmp-mpi
 cd tmp-mpi
-../configure --enable-examples CC="mpicc" FC="mpif90"
+../configure \
+  CC="mpicc" \
+  FC="mpif90"
+sleep 3
 make -j${make_nprocs}
 make check -j${make_nprocs}
+sleep 3
 cd ..
 
 # Check MPI + Linalg build
 mkdir tmp-mpi-linalg
 cd tmp-mpi-linalg
 ../configure \
-  --enable-examples \
   LINALG_LIBS="-lscalapack -lopenblas" \
-  CC="mpicc" FC="mpif90"
+  CC="mpicc" \
+  FC="mpifort"
+sleep 3
 make -j${make_nprocs}
 make check -j${make_nprocs}
+sleep 3
 cd ..
 
 # Check MPI + pspBLAS build
@@ -92,20 +122,23 @@ mkdir tmp-mpi-psp
 cd tmp-mpi-psp
 ../configure \
   --with-psp="${PWD}/../../tmp-pspblas" \
-  --enable-examples \
   LINALG_LIBS="-lscalapack -lopenblas" \
-  CC="mpicc" FC="mpif90"
+  CC="mpicc" \
+  FC="mpifort"
+sleep 3
 make -j${make_nprocs}
 make check -j${make_nprocs}
+sleep 3
 cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
+sleep 3
 make distcheck -j${make_nprocs}
 make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-examples tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
+rm -rf tmp-minimal tmp-default tmp-linalg1 tmp-linalg2 tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
