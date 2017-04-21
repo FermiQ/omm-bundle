@@ -49,19 +49,23 @@ else
   instdir="${PWD}/install-minimal"
 fi
 ../configure --prefix="${instdir}"
+sleep 3
 make dist
 make
 make clean && make -j${make_nprocs}
 make check -j${make_nprocs}
 make install
-ls -lR "${instdir}" >install-minimal.log
+sleep 3
+ls -lR "${instdir}" >../install-minimal.tmp
 cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
+sleep 3
 make distcheck -j4
+sleep 3
 make distcleancheck
 
 # Clean-up the mess
