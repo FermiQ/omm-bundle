@@ -32,7 +32,7 @@ make_nprocs="8"
 
 # Init build parameters
 export CC="mpicc"
-export FC="mpif90"
+export FC="mpifort"
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 
@@ -53,10 +53,11 @@ sleep 3
 make dist
 make
 make clean && make -j${make_nprocs}
-make check -j${make_nprocs}
-make install
-sleep 3
+make -j${make_nprocs} check
+make -j${make_nprocs} install
 ls -lR "${instdir}" >../install-minimal.tmp
+cat ../install-minimal.tmp
+sleep 3
 cd ..
 
 # Make distcheck
@@ -64,7 +65,7 @@ mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
 sleep 3
-make distcheck -j4
+make -j${make_nprocs} distcheck
 sleep 3
 make distcleancheck
 

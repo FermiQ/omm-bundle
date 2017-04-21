@@ -1,12 +1,15 @@
 #!/bin/sh
 
+# Set number of processors for parallel builds (make -j)
+make_nprocs="8"
+
 # Set external dependencies if necessary
 if test ! -n "${LINALG_INCLUDES}"; then
   LINALG_INCLUDES=""
   export LINALG_INCLUDES
 fi
 if test ! -n "${LINALG_LIBS}"; then
-  LINALG_LIBS="-lscalapack -llapack -lblas"
+  LINALG_LIBS="-lscalapack -lopenblas"
   export LINALG_LIBS
 fi
 
@@ -153,7 +156,7 @@ fi
 
 # Set build parameters
 test -n "${CC}" || CC="mpicc"
-test -n "${FC}" || FC="mpif90"
+test -n "${FC}" || FC="mpifort"
 export CC FC
 
 # Stop at first error
@@ -174,11 +177,11 @@ if test "${bld_psp}" = "yes"; then
     --prefix="${psp_prefix}" \
     ${cfg_psp}
   sleep 3
-  make -j4
+  make -j${make_nprocs}
   if test "${run_chk}" = "yes"; then
-    make -j4 check
+    make -j${make_nprocs} check
   fi
-  make -j4 install
+  make -j${make_nprocs} install
 fi
 
                     # ------------------------------------ #
@@ -201,11 +204,11 @@ if test "${bld_msw}" = "yes"; then
     --with-psp="${psp_prefix}" \
     ${cfg_msw}
   sleep 3
-  make -j4
+  make -j${make_nprocs}
   if test "${run_chk}" = "yes"; then
-    make -j4 check
+    make -j${make_nprocs} check
   fi
-  make -j4 install
+  make -j${make_nprocs} install
 fi
 
                     # ------------------------------------ #
@@ -233,9 +236,9 @@ if test "${bld_omm}" = "yes"; then
     --with-msw="${msw_prefix}" \
     ${cfg_omm}
   sleep 3
-  make -j4
+  make -j${make_nprocs}
   if test "${run_chk}" = "yes"; then
-    make -j4 check
+    make -j${make_nprocs} check
   fi
-  make -j4 install
+  make -j${make_nprocs} install
 fi

@@ -27,6 +27,9 @@ set -ev
 # Check that we are in the correct directory
 test -s "configure.ac" -a -s "src/omm.F90" || exit 0
 
+# Set number of processors for parallel builds (make -j)
+make_nprocs="8"
+
 # Required install dirs
 MSW_ROOT="${PWD}/../tmp-msw"
 PSP_ROOT="${PWD}/../tmp-psp"
@@ -48,71 +51,109 @@ export PSP_LIBS="-L${PSP_ROOT}/lib -lpspblas"
 # Check default build
 mkdir tmp-minimal
 cd tmp-minimal
-../configure
+instdir="${PWD}/install-minimal"
+../configure \
+  --prefix="${instdir}" \
+  --without-mpi
+sleep 3
 make dist
 make
-make clean && make -j4
-make check
-mkdir install-minimal
-make install DESTDIR="${PWD}/install-minimal"
-ls -lR install-minimal >install-minimal.log
+make clean && make -j${make_nprocs}
+make -j${make_nprocs} check
+make -j${make_nprocs} install
+ls -lR "${instdir}" >../install-minimal.tmp
+cat ../install-minimal.tmp
+sleep 3
 cd ..
 
-# Check examples build
-mkdir tmp-examples
-cd tmp-examples
-../configure --enable-examples
-make -j4
-make check -j4
+# Check default build
+mkdir tmp-default
+cd tmp-default
+../configure
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
 cd ..
 
-# Check Linalg build
-mkdir tmp-linalg
-cd tmp-linalg
+# Check Linalg build (EasyBuild)
+mkdir tmp-linalg1
+cd tmp-linalg1
+../configure \
+  --with-linalg
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
+cd ..
+
+# Check Linalg build (system libs)
+mkdir tmp-linalg2
+cd tmp-linalg2
 ../configure \
   LINALG_LIBS="-llapack -lblas"
-make -j4
-make check -j4
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
 cd ..
 
 # Check bare MPI build
 mkdir tmp-mpi
 cd tmp-mpi
-../configure --enable-examples CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
+../configure \
+  CC="mpicc" \
+  FC="mpif90"
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
 cd ..
 
 # Check MPI + Linalg build
 mkdir tmp-mpi-linalg
 cd tmp-mpi-linalg
 ../configure \
-  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
-  --enable-examples \
-  CC="mpicc" FC="mpif90"
-make -j4
-make check -j4
+  --with-linalg \
+  CC="mpicc" \
+  FC="mpifort"
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
 cd ..
 
-# Check MPI + pspBLAS build
-#mkdir tmp-mpi-psp
-#cd tmp-mpi-psp
-#../configure \
-#  --with-psp="${PWD}/../../tmp-psp" \
-#  LINALG_LIBS="-lscalapack -lblacs -lblacsCinit -lblacsF77init -llapack -lblas" \
-#  --enable-examples \
-#  CC="mpicc" FC="mpif90"
-#make -j4
-#make check -j4
-#cd ..
+# Check build with all options
+mkdir tmp-all
+cd tmp-all
+if test -s "../../build-omm"; then
+  instdir="${PWD}/../../tmp-libomm"
+else
+  instdir="${PWD}/tmp-install-all"
+fi
+../configure \
+  --prefix="${instdir}" \
+  -with-msw="${PWD}/../../tmp-matrixswitch" \
+  --with-linalg \
+  --with-psp="${PWD}/../../tmp-pspblas" \
+  CC="mpicc" \
+  FC="mpifort"
+sleep 3
+make -j${make_nprocs}
+make -j${make_nprocs} check
+sleep 3
+make -j${make_nprocs} install
+cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
-make distcheck -j4
+sleep 3
+make -j${make_nprocs} distcheck
+sleep 3
 make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-examples tmp-linalg tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
+rm -rf tmp-minimal tmp-default tmp-linalg1 tmp-linalg2 tmp-mpi tmp-mpi-linalg tmp-all tmp-distcheck

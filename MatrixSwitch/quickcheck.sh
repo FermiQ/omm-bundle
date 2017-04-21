@@ -41,11 +41,7 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 # Check default build
 mkdir tmp-minimal
 cd tmp-minimal
-if test -s "../../build-omm"; then
-  instdir="${PWD}/../../tmp-matrixswitch"
-else
-  instdir="${PWD}/install-minimal"
-fi
+instdir="${PWD}/install-minimal"
 ../configure \
   --prefix="${instdir}" \
   --disable-debug \
@@ -54,9 +50,10 @@ sleep 3
 make dist
 make
 make clean && make -j${make_nprocs}
-make check -j${make_nprocs}
-make install
+make -j${make_nprocs} check
+make -j${make_nprocs} install
 ls -lR "${instdir}" >../install-minimal.tmp
+cat ../install-minimal.tmp
 sleep 3
 cd ..
 
@@ -66,7 +63,7 @@ cd tmp-default
 ../configure
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
 cd ..
 
@@ -77,7 +74,7 @@ cd tmp-linalg1
   --with-linalg
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
 cd ..
 
@@ -88,7 +85,7 @@ cd tmp-linalg2
   LINALG_LIBS="-llapack -lblas"
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
 cd ..
 
@@ -100,7 +97,7 @@ cd tmp-mpi
   FC="mpif90"
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
 cd ..
 
@@ -113,22 +110,29 @@ cd tmp-mpi-linalg
   FC="mpifort"
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
 cd ..
 
 # Check MPI + pspBLAS build
 mkdir tmp-mpi-psp
 cd tmp-mpi-psp
+if test -s "../../build-omm"; then
+  instdir="${PWD}/../../tmp-matrixswitch"
+else
+  instdir="${PWD}/tmp-install-all"
+fi
 ../configure \
+  --prefix="${instdir}" \
   --with-psp="${PWD}/../../tmp-pspblas" \
   LINALG_LIBS="-lscalapack -lopenblas" \
   CC="mpicc" \
   FC="mpifort"
 sleep 3
 make -j${make_nprocs}
-make check -j${make_nprocs}
+make -j${make_nprocs} check
 sleep 3
+make -j${make_nprocs} install
 cd ..
 
 # Make distcheck
@@ -136,7 +140,7 @@ mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
 sleep 3
-make distcheck -j${make_nprocs}
+make -j${make_nprocs} distcheck
 make distcleancheck
 
 # Clean-up the mess
