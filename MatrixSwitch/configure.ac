@@ -505,7 +505,7 @@ if test "${msw_linalg_enable}" != "no"; then
       msw_linalg_libs="${LINALG_LIBS}"
     else
       msw_linalg_libs="${msw_linalg_libs_def}"
-      if test "${msw_linalg_type}" = "def"; then
+      if test "${msw_linalg_type}" = "def" -o "${msw_linalg_type}" = "yon"; then
         if test -n "${EBROOTOPENBLAS}"; then
           AC_MSG_NOTICE([using EasyBuild configuration to set linear algebra libraries])
           msw_linalg_type="ebf"
