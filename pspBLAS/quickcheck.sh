@@ -31,6 +31,7 @@ test -s "configure.ac" -a -s "src/pspBLAS.F90" || exit 0
 make_nprocs="8"
 
 # Init build parameters
+export OMM_ROOT=`dirname "${PWD}"`
 export CC="mpicc"
 export FC="mpifort"
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
@@ -41,13 +42,13 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 ./autogen.sh
 
 # Check default build
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-pspblas"
+else
+  instdir="${PWD}/tmp-install"
+fi
 mkdir tmp-minimal
 cd tmp-minimal
-if test -s "../../build-omm"; then
-  instdir="${PWD}/../../tmp-pspblas"
-else
-  instdir="${PWD}/install-minimal"
-fi
 ../configure --prefix="${instdir}"
 sleep 3
 make dist
@@ -71,4 +72,4 @@ make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-distcheck
+rm -rf tmp-minimal tmp-install tmp-distcheck
