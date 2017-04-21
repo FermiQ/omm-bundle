@@ -31,6 +31,7 @@ test -s "configure.ac" -a -s "src/MatrixSwitch.F90" || exit 0
 make_nprocs="8"
 
 # Init build parameters
+export OMM_ROOT=`dirname "${PWD}"`
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 
@@ -39,9 +40,13 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 ./autogen.sh
 
 # Check default build
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-msw-ser"
+else
+  instdir="${PWD}/tmp-install-ser"
+fi
 mkdir tmp-minimal
 cd tmp-minimal
-instdir="${PWD}/install-minimal"
 ../configure \
   --prefix="${instdir}" \
   --disable-debug \
@@ -68,14 +73,23 @@ sleep 3
 cd ..
 
 # Check Linalg build (EasyBuild)
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-msw-ser-lin"
+else
+  instdir="${PWD}/tmp-install-ser-lin"
+fi
 mkdir tmp-linalg1
 cd tmp-linalg1
 ../configure \
-  --with-linalg
+  --prefix="${instdir}" \
+  --with-linalg \
+  CC="gcc" \
+  FC="gfortran"
 sleep 3
 make -j${make_nprocs}
 make -j${make_nprocs} check
 sleep 3
+make -j${make_nprocs} install
 cd ..
 
 # Check Linalg build (system libs)
@@ -90,21 +104,34 @@ sleep 3
 cd ..
 
 # Check bare MPI build
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-msw-mpi"
+else
+  instdir="${PWD}/tmp-install-mpi"
+fi
 mkdir tmp-mpi
 cd tmp-mpi
 ../configure \
+  --prefix="${instdir}" \
   CC="mpicc" \
   FC="mpif90"
 sleep 3
 make -j${make_nprocs}
 make -j${make_nprocs} check
 sleep 3
+make -j${make_nprocs} install
 cd ..
 
 # Check MPI + Linalg build
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-msw-mpi-lin"
+else
+  instdir="${PWD}/tmp-install-mpi-lin"
+fi
 mkdir tmp-mpi-linalg
 cd tmp-mpi-linalg
 ../configure \
+  --prefix="${instdir}" \
   LINALG_LIBS="-lscalapack -lopenblas" \
   CC="mpicc" \
   FC="mpifort"
@@ -112,19 +139,20 @@ sleep 3
 make -j${make_nprocs}
 make -j${make_nprocs} check
 sleep 3
+make -j${make_nprocs} install
 cd ..
 
 # Check MPI + pspBLAS build
-mkdir tmp-mpi-psp
-cd tmp-mpi-psp
-if test -s "../../build-omm"; then
-  instdir="${PWD}/../../tmp-matrixswitch"
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-msw-all"
 else
   instdir="${PWD}/tmp-install-all"
 fi
+mkdir tmp-mpi-psp
+cd tmp-mpi-psp
 ../configure \
   --prefix="${instdir}" \
-  --with-psp="${PWD}/../../tmp-pspblas" \
+  --with-psp="${OMM_ROOT}/tmp-pspblas" \
   LINALG_LIBS="-lscalapack -lopenblas" \
   CC="mpicc" \
   FC="mpifort"
@@ -145,4 +173,4 @@ make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-default tmp-linalg1 tmp-linalg2 tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck
+rm -rf tmp-minimal tmp-default tmp-linalg1 tmp-linalg2 tmp-mpi tmp-mpi-linalg tmp-mpi-psp tmp-distcheck tmp-install-*
