@@ -79,7 +79,9 @@ program example_gamma
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
 
+#ifdef HAVE_SCALAPACK
   call ms_scalapack_setup(mpi_comm_world,1,'c',3)
+#endif
 
   m_storage='pddbc'
   m_operation='lap'
