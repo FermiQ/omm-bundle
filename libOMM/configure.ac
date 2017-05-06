@@ -249,7 +249,7 @@ if test -n "${PSP_LIBS}"; then
   omm_psp_type="env"
 fi
 
-# MatrixSwitch (optional)
+# MatrixSwitch (mandatory)
 AC_ARG_WITH([msw],
   [AS_HELP_STRING([--with-msw],
     [Install prefix of the MatrixSwitch library (e.g. /usr/local). MatrixSwitch support will be enabled only if you use this option. You may use --with-msw without argument if MatrixSwitch is installed as a system library, and --without-msw to disable MatrixSwitch support completely.])],
@@ -300,6 +300,12 @@ done
 #  AC_MSG_ERROR([linear algebra support has been disabled
 #                  while it is mandatory])
 #fi
+
+# MatrixSwitch must be enabled
+if test "${omm_msw_enable}" != "yes"; then
+  AC_MSG_ERROR([MatrixSwitch support has been disabled
+                  while it is mandatory])
+fi
 
 # All MPI wrappers must be provided at once
 tmp_mpi_vars="${MPICC}${MPIFC}"
@@ -536,11 +542,23 @@ if test "${omm_linalg_type}" != "dir"; then
 fi
 
 # Set linear algebra libraries
-if test "${omm_linalg_type}" != "dir"; then
-  if test -n "${LINALG_LIBS}"; then
-    omm_linalg_libs="${LINALG_LIBS}"
-  else
-    omm_linalg_libs="${omm_linalg_libs_def}"
+if test "${omm_linalg_enable}" != "no"; then
+  if test "${omm_linalg_type}" != "dir"; then
+    if test -n "${LINALG_LIBS}"; then
+      omm_linalg_libs="${LINALG_LIBS}"
+    else
+      omm_linalg_libs="${omm_linalg_libs_def}"
+      if test "${omm_linalg_type}" = "def" -o "${omm_linalg_type}" = "yon"; then
+        if test -n "${EBROOTOPENBLAS}"; then
+          AC_MSG_NOTICE([using EasyBuild configuration to set linear algebra libraries])
+          omm_linalg_type="ebf"
+          omm_linalg_libs="-lopenblas"
+        fi
+        if test -n "${EBROOTSCALAPACK}" -a "${omm_mpi_enable}" = "yes"; then
+          omm_linalg_libs="-lscalapack ${omm_linalg_libs}"
+        fi
+      fi
+    fi
   fi
 fi
 
@@ -577,20 +595,34 @@ if test "${omm_mpi_enable}" = "no" -a "${omm_psp_enable}" = "yes"; then
 fi
 
 # Set pspBLAS includes
-if test "${omm_psp_type}" != "dir"; then
-  if test -n "${PSP_INCLUDES}"; then
-    omm_psp_incs="${PSP_INCLUDES}"
-  else
-    omm_psp_incs="${omm_psp_incs_def}"
+if test "${omm_psp_enable}" != "no"; then
+  if test "${omm_psp_type}" != "dir"; then
+    if test -n "${PSP_INCLUDES}"; then
+      omm_psp_incs="${PSP_INCLUDES}"
+    else
+      omm_psp_incs="${omm_psp_incs_def}"
+      if test -d "../../tmp-pspblas"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set PspBLAS includes])
+        omm_psp_type="omm"
+        omm_psp_incs="-I../../tmp-pspblas/include"
+      fi
+    fi
   fi
 fi
 
 # Set pspBLAS libraries
-if test "${omm_psp_type}" != "dir"; then
-  if test -n "${PSP_LIBS}"; then
-    omm_psp_libs="${PSP_LIBS}"
-  else
-    omm_psp_libs="${omm_psp_libs_def}"
+if test "${omm_psp_enable}" != "no"; then
+  if test "${omm_psp_type}" != "dir"; then
+    if test -n "${PSP_LIBS}"; then
+      omm_psp_libs="${PSP_LIBS}"
+    else
+      omm_psp_libs="${omm_psp_libs_def}"
+      if test -d "../../tmp-pspblas"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set PspBLAS libraries])
+        omm_psp_type="omm"
+        omm_psp_libs="-L../../tmp-pspblas/lib -lpspBLAS"
+      fi
+    fi
   fi
 fi
 
@@ -614,20 +646,34 @@ if test "${omm_psp_enable}" = "yes"; then
 fi
 
 # Set MatrixSwitch includes
-if test "${omm_msw_type}" != "dir"; then
-  if test -n "${MSW_INCLUDES}"; then
-    omm_msw_incs="${MSW_INCLUDES}"
-  else
-    omm_msw_incs="${omm_msw_incs_def}"
+if test "${omm_msw_enable}" != "no"; then
+  if test "${omm_msw_type}" != "dir"; then
+    if test -n "${MSW_INCLUDES}"; then
+      omm_msw_incs="${MSW_INCLUDES}"
+    else
+      omm_msw_incs="${omm_msw_incs_def}"
+      if test -d "../../tmp-matrixswitch"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set MatrixSwitch includes])
+        omm_msw_type="omm"
+        omm_msw_incs="-I../../tmp-matrixswitch/include"
+      fi
+    fi
   fi
 fi
 
 # Set MatrixSwitch libraries
-if test "${omm_msw_type}" != "dir"; then
-  if test -n "${MSW_LIBS}"; then
-    omm_msw_libs="${MSW_LIBS}"
-  else
-    omm_msw_libs="${omm_msw_libs_def}"
+if test "${omm_msw_enable}" != "no"; then
+  if test "${omm_msw_type}" != "dir"; then
+    if test -n "${MSW_LIBS}"; then
+      omm_msw_libs="${MSW_LIBS}"
+    else
+      omm_msw_libs="${omm_msw_libs_def}"
+      if test -d "../../tmp-matrixswitch"; then
+        AC_MSG_NOTICE([using OMM Bundle configuration to set MatrixSwitch libraries])
+        omm_msw_type="omm"
+        omm_msw_libs="-L../../tmp-matrixswitch/lib -lMatrixSwitch"
+      fi
+    fi
   fi
 fi
 

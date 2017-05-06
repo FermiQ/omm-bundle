@@ -261,8 +261,10 @@ module MatrixSwitch
   public :: m_register_sden
 #ifdef HAVE_MPI
   public :: m_register_pdbc
-  public :: ms_scalapack_setup
   public :: ms_lap_icontxt
+#ifdef HAVE_SCALAPACK
+  public :: ms_scalapack_setup
+#endif
 #endif
 #ifdef HAVE_PSPBLAS
   public :: m_copy_external_pdbcpcoo

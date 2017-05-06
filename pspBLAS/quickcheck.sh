@@ -27,9 +27,13 @@ set -ev
 # Check that we are in the correct directory
 test -s "configure.ac" -a -s "src/pspBLAS.F90" || exit 0
 
+# Set number of processors for parallel builds (make -j)
+make_nprocs="8"
+
 # Init build parameters
+export OMM_ROOT=`dirname "${PWD}"`
 export CC="mpicc"
-export FC="mpif90"
+export FC="mpifort"
 export CFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 
@@ -38,25 +42,34 @@ export FCFLAGS="-O0 -g3 -ggdb -Wall -Wextra -fbounds-check -fno-inline"
 ./autogen.sh
 
 # Check default build
+if test -s "../build-omm"; then
+  instdir="${OMM_ROOT}/tmp-pspblas"
+else
+  instdir="${PWD}/tmp-install"
+fi
 mkdir tmp-minimal
 cd tmp-minimal
-../configure
+../configure --prefix="${instdir}"
+sleep 3
 make dist
 make
-make clean && make -j4
-make check
-mkdir install-minimal
-make install DESTDIR="${PWD}/install-minimal"
-ls -lR install-minimal >install-minimal.log
+make clean && make -j${make_nprocs}
+make -j${make_nprocs} check
+make -j${make_nprocs} install
+ls -lR "${instdir}" >../install-minimal.tmp
+cat ../install-minimal.tmp
+sleep 3
 cd ..
 
 # Make distcheck
 mkdir tmp-distcheck
 cd tmp-distcheck
 ../configure
-make distcheck -j4
+sleep 3
+make -j${make_nprocs} distcheck
+sleep 3
 make distcleancheck
 
 # Clean-up the mess
 cd ..
-rm -rf tmp-minimal tmp-distcheck
+rm -rf tmp-minimal tmp-install tmp-distcheck

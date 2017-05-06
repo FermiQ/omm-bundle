@@ -108,11 +108,12 @@ uninstall-local:
 	cd $(DESTDIR)$(f03moddir) && rm -f $(psp_f03_mods)
 
 # Local cleaning
-clean-local:
-	rm -f *.mod *.MOD *.obj
+CLEANFILES = *.mod *.MOD *.obj
+
+# Files to mark explicitly for distribution
+EXTRA_DIST = \
+  dependencies.mf \
+  pspVariable/pspLinkedlist.F90
 
 # Explicit dependencies
 include $(srcdir)/dependencies.mf
-
-# Files to mark explicitly for distribution
-EXTRA_DIST = dependencies.mf

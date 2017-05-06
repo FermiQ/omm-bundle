@@ -13,6 +13,7 @@
 
 # Autotools parameters
 ACLOCAL_AMFLAGS = -I config/m4
+AM_DISTCHECK_CONFIGURE_FLAGS = --with-msw="@with_msw@"
 
 # Subdirectories containing makefiles
 SUBDIRS = src examples doc

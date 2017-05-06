@@ -299,6 +299,17 @@ AC_SUBST(psp_linalg_has_scalapack)
 # Architecture setup
 #
 
+# Improve defaults using information from EasyBuild
+if test -n "${EBROOTOPENMPI}" -a "${psp_mpi_type}" = "def"; then
+  if test "${CC}" = "" -a "${FC}" = ""; then
+    CC="mpicc"
+    FC="mpifort"
+  else
+    MPICC="mpicc"
+    MPIFC="mpifort"
+  fi
+fi
+
 # Init MPI parameters, possibly setting and/or wrapping compilers
 PSP_MPI_INIT
 
@@ -331,7 +342,7 @@ if test "${FC}" != "" -a ! -x "${FC}"; then
     fi
   fi
 fi
-AC_PROG_FC([mpif90 mpiifort ifort gfortran g95 xlf95 xlf90 f95 fort ifc efc pgfortran pgf95 lf95 ftn nagfor xlf90 f90 pgf90 pghpf epcf90])
+AC_PROG_FC([mpifort mpif90 mpiifort ifort gfortran g95 xlf95 xlf90 f95 fort ifc efc pgfortran pgf95 lf95 ftn nagfor xlf90 f90 pgf90 pghpf epcf90])
 
 # Fail if no Fortran compiler is available
 if test "${FC}" = ""; then
@@ -409,6 +420,13 @@ if test "${psp_linalg_type}" != "dir"; then
     psp_linalg_libs="${LINALG_LIBS}"
   else
     psp_linalg_libs="${psp_linalg_libs_def}"
+    if test -n "${EBROOTOPENBLAS}" -a \
+            -n "${EBROOTSCALAPACK}" -a \
+            "${psp_linalg_type}" = "def"; then
+      AC_MSG_NOTICE([using EasyBuild configuration to set linear algebra libraries])
+      psp_linalg_type="ebf"
+      psp_linalg_libs="-lscalapack -lopenblas"
+    fi
   fi
 fi
 
