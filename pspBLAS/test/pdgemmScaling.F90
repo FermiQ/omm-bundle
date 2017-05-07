@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of Elemental and is under the BSD 2-Clause License,! 
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 ! This code test the pdgemm in pspBLAS
 
 #if defined HAVE_CONFIG_H
@@ -43,6 +52,7 @@ program pdgemmScaling
   !**********************************************!
 
   integer, external :: numroc ! it is a function to compute local size
+  character(len=128) :: arg1, arg2, arg3, arg4
 
   !**********************************************!
   ! initialization first
@@ -51,6 +61,24 @@ program pdgemmScaling
   call mpi_init(mpi_err)
   call mpi_comm_size(mpi_comm_world,mpi_size,mpi_err)
   call mpi_comm_rank(mpi_comm_world,mpi_rank,mpi_err)
+
+  ! Read input
+  if(COMMAND_ARGUMENT_COUNT() == 4) then
+     call GET_COMMAND_ARGUMENT(1,arg1)
+     call GET_COMMAND_ARGUMENT(2,arg2)
+     call GET_COMMAND_ARGUMENT(3,arg3)
+     call GET_COMMAND_ARGUMENT(4,arg4)
+     read(arg1,*) m
+     read(arg2,*) n
+     read(arg3,*) k
+     read(arg4,*) thre
+  else
+     if(mpi_rank == 0) then
+        write(*,"('Wrong number of arguments!')")
+        write(*,"('Expected: m, n, k, threshold')")
+     endif
+     call mpi_abort(mpi_comm_world,mpi_err)
+  endif
 
   ! set up parameters for parallel computing test
   niter=1
@@ -86,9 +114,9 @@ program pdgemmScaling
 
   if (.true.) then
      ! random matrices
-     m=1000 ! global matrix size
-     n=1020
-     k=833
+!     m=1000 ! global matrix size
+!     n=1020
+!     k=833
 
      alpha = 1.5_dp
      beta = 0.5_dp
@@ -145,7 +173,7 @@ program pdgemmScaling
      spm_storage='coo' ! specify storage format, 'coo' or 'csc'
 
      ! first method to generate a sparse matrix: thresholding a dense matrix in MatrixSwitch
-     thre = 0.99_dp
+!     thre = 0.99_dp
      call psp_den2sp_m(H,desc_H,Hsp,spm_storage,thre)
      call psp_den2sp_m(S,desc_S,Ssp,spm_storage,thre)
      call psp_den2sp_m(Ht,desc_Ht,Htsp,spm_storage,thre)
@@ -171,7 +199,7 @@ program pdgemmScaling
      spm_storage='csc' ! specify storage format, 'coo' or 'csc'
 
      ! first method to generate a sparse matrix: thresholding a dense matrix in MatrixSwitch
-     thre = 0.8_dp
+!     thre = 0.8_dp
      call psp_den2sp_m(H,desc_H,Hsp,spm_storage,thre)
      call psp_den2sp_m(S,desc_S,Ssp,spm_storage,thre)
      call psp_den2sp_m(Ht,desc_Ht,Htsp,spm_storage,thre)
@@ -196,6 +224,8 @@ program pdgemmScaling
 
   if (MPI_rank==0) print *, 'process grid', nprow, npcol
   if (MPI_rank==0) print *, 'block size', bs_def_row, bs_def_col
+  if (MPI_rank==0) print *, 'matrix size m, n, k', m, n, k
+  if (MPI_rank==0) print *, 'threshold', thre
 
   !************************************************************************!
   if (mpi_rank==0) print *,  'Begin n n'

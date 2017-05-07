@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of Elemental and is under the BSD 2-Clause License,! 
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1209,7 +1218,7 @@ contains
        ! operation table
        if (trA==0) then
           ot=1
-       else if (trA>=1) then
+       else if (trA==1) then
           ot=2
        else
           call die('invalid implementation of the operator of A matrix')
@@ -1265,7 +1274,7 @@ contains
   end subroutine psp_copy_dm
 
   subroutine psp_copy_zm(opA,M,N,A,IA,JA,B,IB,JB,alpha,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*opA(A)(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
     implicit none
 
     !**** INPUT ***********************************!
@@ -1293,8 +1302,10 @@ contains
        ! operation table
        if (trA==0) then
           ot=1
-       else if (trA>=1) then
+       else if (trA==1) then
           ot=2
+       else if (trA==2) then
+          ot=3
        else
           call die('invalid implementation of the operator of A matrix')
        end if
@@ -1314,6 +1325,20 @@ contains
              enddo
           end if
        case (2)
+          if (beta/=cmplx_0) then
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*CONJG(A(IA_1+i,JA_1+j))+beta*B(JB_1+j,IB_1+i)
+                enddo
+             enddo
+          else
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*CONJG(A(IA_1+i,JA_1+j))
+                enddo
+             enddo
+          end if
+       case (3)
           if (beta/=cmplx_0) then
              do j=1,N
                 do i=1,M

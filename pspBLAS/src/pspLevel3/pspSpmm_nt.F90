@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of Elemental and is under the BSD 2-Clause License,! 
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -316,7 +325,7 @@ contains
        if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
        allocate(A_loc_idx3(A_loc_dim(2)))
        A_loc_idx3(1:A_loc_dim(2))=A%col_ptr(2:A_loc_dim(2)+1)
-       call mkl_zcscmm(opA, A_loc_dim(1), width,A_loc_dim(2),1.0_dp,matdescr,A%zval,A%row_ind,&
+       call mkl_zcscmm(opA, A_loc_dim(1), width,A_loc_dim(2),cmplx_1,matdescr,A%zval,A%row_ind,&
             A%col_ptr,A_loc_idx3,B_loc,B_loc_dim(1),cmplx_0,C_loc,C_loc_dim(1))
 #else
        ! C_loc = A*(B_loc^t), where A is a sparse matrix

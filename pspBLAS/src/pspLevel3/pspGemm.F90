@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of Elemental and is under the BSD 2-Clause License,! 
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -391,7 +400,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           endif
-          call psp_copy_m(opB,width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in column
@@ -399,7 +408,7 @@ contains
 
        ! compute local update of C
        ! C_loc = A*(B_loc^t)
-       call dgemm(opA,'n',C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),1.0_dp,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
+       call dgemm(opA,opB,C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),1.0_dp,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
             0.0_dp,C_loc,C_loc_dim(1))
 
        idx_pcol = mod(idx_k_col-1,npcol ) ! identify the processor owing C(:,kth block,), the cart coordinate
@@ -860,7 +869,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           endif
-          call psp_copy_m(opB,width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in column
@@ -868,7 +877,7 @@ contains
 
        ! compute local update of C
        ! C_loc = A*(B_loc^t)
-       call zgemm(opA,'n',C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),cmplx_1,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
+       call zgemm(opA,opB,C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),cmplx_1,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
             cmplx_0,C_loc,C_loc_dim(1))
 
        idx_pcol = mod(idx_k_col-1,npcol ) ! identify the processor owing C(:,kth block,), the cart coordinate
