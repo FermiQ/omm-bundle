@@ -2,7 +2,7 @@
 !   Copyright (c) 2015-2017, Haizhao Yang                                !
 !   All rights reserved.                                                 !
 !                                                                        !
-!   This file is part of Elemental and is under the BSD 2-Clause License,! 
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
 !   which can be found in the LICENSE file in the root directory, or at  !
 !   http://opensource.org/licenses/BSD-2-Clause                          !
 !************************************************************************!
@@ -183,8 +183,9 @@ contains
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !C=beta*C+C_loc
-          call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !C=beta*C+alpha*CC_loc
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          C(1:C_loc_dim(1),loc_st:loc_st+width-1)=beta*C(1:C_loc_dim(1),loc_st:loc_st+width-1)+alpha*CC_loc(1:C_loc_dim(1),1:width)
        end if
     enddo
     if (allocated(A_loc)) deallocate(A_loc)
@@ -330,8 +331,9 @@ contains
 
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
-          !C=beta*C+C_loc
-          call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !C=beta*C+alpha*CC_loc
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          C(1:C_loc_dim(1),loc_st:loc_st+width-1)=beta*C(1:C_loc_dim(1),loc_st:loc_st+width-1)+alpha*CC_loc(1:C_loc_dim(1),1:width)
        end if
     enddo
     if (allocated(A_loc)) deallocate(A_loc)
