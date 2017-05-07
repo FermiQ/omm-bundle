@@ -18,9 +18,8 @@ program pzgemmScaling
 
 
   implicit none
-#ifdef HAVE_MPI
+#if defined(HAVE_MPI) && defined(HAVE_MKL)
   include 'mpif.h'
-#endif
 
   !**** PARAMS **********************************!
 
@@ -242,5 +241,8 @@ program pzgemmScaling
   call psp_deallocate_spm(Hsp)
   call psp_deallocate_spm(Ssp)
   call psp_deallocate_spm(Dsp)
+#else
+  print*, 'To run this test, compile with MKL.'
+#endif
 
 end program pzgemmScaling
