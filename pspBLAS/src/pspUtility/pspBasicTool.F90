@@ -1180,14 +1180,15 @@ contains
 
   end subroutine psp_copy_zspm2st
 
-  subroutine psp_copy_dm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
+  subroutine psp_copy_dm(opA,M,N,A,IA,JA,B,IB,JB,alpha,beta)
+    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*opA(A)(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
     implicit none
 
     !**** INPUT ***********************************!
 
     integer, intent(in) :: M, N, IA, JA, IB, JB
     real(dp), intent(in) :: A(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
 
     !**** INOUT ***********************************!
 
@@ -1196,6 +1197,7 @@ contains
     !**** LOCAL ***********************************!
 
     integer :: i, j, IB_1, JB_1, IA_1, JA_1
+    integer :: trA, ot
 
     IB_1=IB-1
     JB_1=JB-1
@@ -1203,19 +1205,45 @@ contains
     JA_1=JA-1
 
     if (alpha/=0.0_dp) then
-       if (beta/=0.0_dp) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
+       call psp_process_opM(opA,trA)
+       ! operation table
+       if (trA==0) then
+          ot=1
+       else if (trA>=1) then
+          ot=2
        else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
-             enddo
-          enddo
+          call die('invalid implementation of the operator of A matrix')
        end if
+       select case (ot)
+       case (1)
+          if (beta/=0.0_dp) then
+             do j=1,N
+                do i=1,M
+                   B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+                enddo
+             enddo
+          else
+             do j=1,N
+                do i=1,M
+                   B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
+                enddo
+             enddo
+          end if
+       case (2)
+          if (beta/=0.0_dp) then
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*A(IA_1+i,JA_1+j)+beta*B(JB_1+j,IB_1+i)
+                enddo
+             enddo
+          else
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*A(IA_1+i,JA_1+j)
+                enddo
+             enddo
+          end if
+       end select
     else
        if (beta/=0.0_dp) then
           do j=1,N
@@ -1236,7 +1264,7 @@ contains
 
   end subroutine psp_copy_dm
 
-  subroutine psp_copy_zm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
+  subroutine psp_copy_zm(opA,M,N,A,IA,JA,B,IB,JB,alpha,beta)
     ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
     implicit none
 
@@ -1244,6 +1272,7 @@ contains
 
     integer, intent(in) :: M, N, IA, JA, IB, JB
     complex(dp), intent(in) :: A(:,:), alpha, beta
+    character(1), intent(in) :: opA ! form of op(A): 'n/N' for A, 't/T/c/C' for A^T
 
     !**** INOUT ***********************************!
 
@@ -1252,6 +1281,7 @@ contains
     !**** LOCAL ***********************************!
 
     integer :: i, j, IB_1, JB_1, IA_1, JA_1
+    integer :: trA, ot
 
     IB_1=IB-1
     JB_1=JB-1
@@ -1259,19 +1289,45 @@ contains
     JA_1=JA-1
 
     if (alpha/=cmplx_0) then
-       if (beta/=cmplx_0) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
+       call psp_process_opM(opA,trA)
+       ! operation table
+       if (trA==0) then
+          ot=1
+       else if (trA>=1) then
+          ot=2
        else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
-             enddo
-          enddo
+          call die('invalid implementation of the operator of A matrix')
        end if
+       select case (ot)
+       case (1)
+          if (beta/=cmplx_0) then
+             do j=1,N
+                do i=1,M
+                   B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
+                enddo
+             enddo
+          else
+             do j=1,N
+                do i=1,M
+                   B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
+                enddo
+             enddo
+          end if
+       case (2)
+          if (beta/=cmplx_0) then
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*A(IA_1+i,JA_1+j)+beta*B(JB_1+j,IB_1+i)
+                enddo
+             enddo
+          else
+             do j=1,N
+                do i=1,M
+                   B(JB_1+j,IB_1+i)=alpha*A(IA_1+i,JA_1+j)
+                enddo
+             enddo
+          end if
+       end select
     else
        if (beta/=cmplx_0) then
           do j=1,N

@@ -197,7 +197,7 @@ contains
                      C_loc%nnz,'csc',list,lastElem,disp)
              end if
           end if
-          !call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 
@@ -372,7 +372,7 @@ contains
                      C_loc%nnz,'csc',list,lastElem,disp)
              end if
           end if
-          !call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 

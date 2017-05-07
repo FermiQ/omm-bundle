@@ -4,7 +4,8 @@ check_PROGRAMS = \
   testList.x \
   spBLAS.x \
   pdgemm.x \
-  matSum.x
+  matSum.x \
+  compareSpBLAS.x
 
 pdgemmScaling_x_SOURCES = pdgemmScaling.F90
 pdgemmScaling_x_FCFLAGS = -I../src
@@ -13,6 +14,10 @@ pdgemmScaling_x_LDADD = ../src/libpspBLAS.la
 pzgemmScaling_x_SOURCES = pzgemmScaling.F90
 pzgemmScaling_x_FCFLAGS = -I../src
 pzgemmScaling_x_LDADD = ../src/libpspBLAS.la
+
+compareSpBLAS_x_SOURCES = compareSpBLAS.F90
+compareSpBLAS_x_FCFLAGS = -I../src
+compareSpBLAS_x_LDADD = ../src/libpspBLAS.la
 
 testList_x_SOURCES = testList.F90
 testList_x_FCFLAGS = -I../src
@@ -38,7 +43,8 @@ TESTS = \
   testList.x \
   spBLAS.x \
   pdgemm.x \
-  matSum.x
+  matSum.x \
+  compareSpBLAS.x
 
 CLEANFILES = \
   zgemm.txt \

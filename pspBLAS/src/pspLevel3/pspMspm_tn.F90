@@ -135,7 +135,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in row
@@ -153,7 +153,7 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 
@@ -259,7 +259,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in row
@@ -277,7 +277,7 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 

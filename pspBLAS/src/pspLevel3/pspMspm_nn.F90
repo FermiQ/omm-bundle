@@ -134,7 +134,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in row
@@ -189,7 +189,7 @@ contains
     enddo
 
     !C=beta*C+alpha*C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(C_loc)) deallocate(C_loc)
@@ -292,7 +292,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in row
@@ -347,7 +347,7 @@ contains
     enddo
 
     !C=beta*C+alpha*C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(C_loc)) deallocate(C_loc)

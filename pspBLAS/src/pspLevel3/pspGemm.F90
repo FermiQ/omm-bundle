@@ -267,7 +267,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in row
@@ -279,7 +279,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           end if
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE, idx_prow, psp_mpi_comm_col,mpi_err)
@@ -290,7 +290,7 @@ contains
             1.0_dp,C_loc,C_loc_dim(1))
     enddo
     !C=beta*C+alpha*C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(B_loc)) deallocate(B_loc)
@@ -391,7 +391,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           endif
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m(opB,width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in column
@@ -399,7 +399,7 @@ contains
 
        ! compute local update of C
        ! C_loc = A*(B_loc^t)
-       call dgemm(opA,opB,C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),1.0_dp,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
+       call dgemm(opA,'n',C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),1.0_dp,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
             0.0_dp,C_loc,C_loc_dim(1))
 
        idx_pcol = mod(idx_k_col-1,npcol ) ! identify the processor owing C(:,kth block,), the cart coordinate
@@ -409,7 +409,7 @@ contains
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 
@@ -512,7 +512,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=0.0_dp
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,1.0_dp,0.0_dp)
        end if
 
        ! boardcast in row
@@ -530,7 +530,7 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 
@@ -735,7 +735,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in row
@@ -747,7 +747,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           end if
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE_COMPLEX,  idx_prow, psp_mpi_comm_col,mpi_err)
@@ -759,7 +759,7 @@ contains
     enddo
 
     !C=beta*C+C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
 
     if (allocated(A_loc)) deallocate(A_loc)
     if (allocated(B_loc)) deallocate(B_loc)
@@ -860,7 +860,7 @@ contains
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           endif
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m(opB,width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in column
@@ -868,7 +868,7 @@ contains
 
        ! compute local update of C
        ! C_loc = A*(B_loc^t)
-       call zgemm(opA,opB,C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),cmplx_1,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
+       call zgemm(opA,'n',C_loc_dim(1),C_loc_dim(2),A_loc_dim(2),cmplx_1,A,A_loc_dim(1),B_loc,B_loc_dim(1), &
             cmplx_0,C_loc,C_loc_dim(1))
 
        idx_pcol = mod(idx_k_col-1,npcol ) ! identify the processor owing C(:,kth block,), the cart coordinate
@@ -879,7 +879,7 @@ contains
        if (ipcol==idx_pcol) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_col,npcol,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 
@@ -983,7 +983,7 @@ contains
           if (width<psp_update_rank) then
              A_loc=cmplx_0
           endif
-          call psp_copy_m(A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
+          call psp_copy_m('n',A_loc_dim(1),width,A,1,loc_st,A_loc,1,1,cmplx_1,cmplx_0)
        end if
 
        ! boardcast in row
@@ -1001,7 +1001,7 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
        end if
     enddo
 
