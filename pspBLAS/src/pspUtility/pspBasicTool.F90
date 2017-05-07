@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -71,16 +80,6 @@ MODULE pspBasicTool
      module procedure psp_copy_zspm2st
   end interface psp_copy_spm2st
 
-  interface psp_copy_m
-     module procedure psp_copy_dm
-     module procedure psp_copy_zm
-  end interface psp_copy_m
-
-  interface psp_copy_v
-     module procedure psp_copy_dv
-     module procedure psp_copy_zv
-  end interface psp_copy_v
-
   interface psp_idx_glb2loc
      module procedure psp_idx_glb2loc
   end interface psp_idx_glb2loc
@@ -108,8 +107,6 @@ MODULE pspBasicTool
   public :: psp_coo2csc
   public :: psp_csc2coo
   public :: psp_copy_spm2st
-  public :: psp_copy_m
-  public :: psp_copy_v
   public :: psp_idx_glb2loc
   public :: psp_process_opM
   public :: init_random_seed
@@ -1179,180 +1176,6 @@ contains
     if (allocated(tmp_val)) deallocate(tmp_val)
 
   end subroutine psp_copy_zspm2st
-
-  subroutine psp_copy_dm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: M, N, IA, JA, IB, JB
-    real(dp), intent(in) :: A(:,:), alpha, beta
-
-    !**** INOUT ***********************************!
-
-    real(dp), intent(inout) :: B(:,:)
-
-    !**** LOCAL ***********************************!
-
-    integer :: i, j, IB_1, JB_1, IA_1, JA_1
-
-    IB_1=IB-1
-    JB_1=JB-1
-    IA_1=IA-1
-    JA_1=JA-1
-
-    if (alpha/=0.0_dp) then
-       if (beta/=0.0_dp) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
-       else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
-             enddo
-          enddo
-       end if
-    else
-       if (beta/=0.0_dp) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
-       else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=0.0_dp
-             enddo
-          enddo
-       end if
-    end if
-
-
-
-  end subroutine psp_copy_dm
-
-  subroutine psp_copy_zm(M,N,A,IA,JA,B,IB,JB,alpha,beta)
-    ! B(IB:IB+M-1,JB:JB+N-1) = alpha*A(IA:IA+M-1,JA:JA+N-1)+beta*B(IB:IB+M-1,JB:JB+N-1)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: M, N, IA, JA, IB, JB
-    complex(dp), intent(in) :: A(:,:), alpha, beta
-
-    !**** INOUT ***********************************!
-
-    complex(dp), intent(inout) :: B(:,:)
-
-    !**** LOCAL ***********************************!
-
-    integer :: i, j, IB_1, JB_1, IA_1, JA_1
-
-    IB_1=IB-1
-    JB_1=JB-1
-    IA_1=IA-1
-    JA_1=JA-1
-
-    if (alpha/=cmplx_0) then
-       if (beta/=cmplx_0) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)+beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
-       else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=alpha*A(IA_1+i,JA_1+j)
-             enddo
-          enddo
-       end if
-    else
-       if (beta/=cmplx_0) then
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=beta*B(IB_1+i,JB_1+j)
-             enddo
-          enddo
-       else
-          do j=1,N
-             do i=1,M
-                B(IB_1+i,JB_1+j)=cmplx_0
-             enddo
-          enddo
-       end if
-    end if
-
-  end subroutine psp_copy_zm
-
-  subroutine psp_copy_dv(M,A,IA,B,IB,beta)
-    ! B(IB:IB+M-1) = A(IA:IA+M-1)+beta*B(IB:IB+M-1)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: M, IA, IB
-    real(dp), intent(in) :: A(:), beta
-
-    !**** INOUT ***********************************!
-
-    real(dp), intent(inout) :: B(:)
-
-    !**** LOCAL ***********************************!
-
-    integer :: i, IB_1, IA_1
-
-    IB_1=IB-1
-    IA_1=IA-1
-
-    if (beta/=0.0_dp) then
-       do i=1,M
-          B(IB_1+i)=A(IA_1+i)+beta*B(IB_1+i)
-       enddo
-    else
-       do i=1,M
-          B(IB_1+i)=A(IA_1+i)
-       enddo
-    end if
-
-  end subroutine psp_copy_dv
-
-  subroutine psp_copy_zv(M,A,IA,B,IB,beta)
-    ! B(IB:IB+M-1) = A(IA:IA+M-1)+beta*B(IB:IB+M-1)
-    implicit none
-
-    !**** INPUT ***********************************!
-
-    integer, intent(in) :: M, IA, IB
-    complex(dp), intent(in) :: A(:), beta
-
-    !**** INOUT ***********************************!
-
-    complex(dp), intent(inout) :: B(:)
-
-    !**** LOCAL ***********************************!
-
-    integer :: i, IB_1, IA_1
-
-    IB_1=IB-1
-    IA_1=IA-1
-
-    if (beta/=cmplx_0) then
-       do i=1,M
-          B(IB_1+i)=A(IA_1+i)+beta*B(IB_1+i)
-       enddo
-    else
-       do i=1,M
-          B(IB_1+i)=A(IA_1+i)
-       enddo
-    end if
-
-  end subroutine psp_copy_zv
 
   subroutine psp_idx_glb2loc(glb,bs,npproc,loc)
     implicit none

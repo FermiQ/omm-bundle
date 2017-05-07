@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -197,7 +206,7 @@ contains
                      C_loc%nnz,'csc',list,lastElem,disp)
              end if
           end if
-          !call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 
@@ -372,7 +381,7 @@ contains
                      C_loc%nnz,'csc',list,lastElem,disp)
              end if
           end if
-          !call psp_copy_m(C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
+          !call psp_copy_m('n',C_loc_dim(1),width,CC_loc,1,1,C,1,loc_st,alpha,beta)
        end if
     enddo
 

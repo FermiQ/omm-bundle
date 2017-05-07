@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -71,6 +80,10 @@ contains
     integer, allocatable :: A_loc_idx1(:), A_loc_idx2(:)
     integer :: A_loc_dim(2), B_loc_dim(2), C_loc_dim(2), coords(2)
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
+#ifdef HAVE_MKL
+    character(1) :: matdescr(6)
+    integer, allocatable :: A_loc_idx3(:)
+#endif
 
     !**** GLOBAL **********************************!
 #ifdef HAVE_MPI
@@ -117,6 +130,12 @@ contains
     C_loc=0.0_dp
     allocate(CC_loc(C_loc_dim(1),C_loc_dim(2)))
     CC_loc=0.0_dp
+#ifdef HAVE_MKL
+    matdescr(1)='G'
+    matdescr(4)='F'
+#endif
+
+    !**** Start the operation ********************!
 
     ! begin SUMMA
     do kloop = 1, M, psp_update_rank
@@ -166,8 +185,16 @@ contains
 
        ! compute local update of C
        ! C_loc = (A_loc)^t*B, where A_loc is a sparse matrix
+#ifdef HAVE_MKL
+       if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+       allocate(A_loc_idx3(width))
+       A_loc_idx3(1:width)=A_loc_idx2(2:width+1)
+       call mkl_dcscmm(opA,A_loc_dim(1),C_loc_dim(2),width,1.0_dp,matdescr,A_loc_val,A_loc_idx1,&
+            A_loc_idx2,A_loc_idx3,B,B_loc_dim(1),0.0_dp,C_loc,C_loc_dim(1))
+#else
        call psp_sst_gespmm(width,C_loc_dim(2),A_loc_dim(1), opA,opB, &
             1.0_dp,A_loc_idx1,A_loc_idx2,A_loc_val,B,1,1,C_loc,1,1,0.0_dp)
+#endif
 
        idx_prow = mod(idx_k_row-1,nprow ) ! identify the processor owing C(kth block,:), the cart coordinate
        ! boardcast in column
@@ -176,7 +203,8 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          !call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          C(loc_st:loc_st+width-1,1:C_loc_dim(2))=beta*C(loc_st:loc_st+width-1,1:C_loc_dim(2))+alpha*CC_loc(1:width,1:C_loc_dim(2))
        end if
     enddo
 
@@ -186,6 +214,9 @@ contains
     if (allocated(A_loc_val)) deallocate(A_loc_val)
     if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
     if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+#ifdef HAVE_MKL
+    if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+#endif
 
   end subroutine psp_dgespmm_tn
 
@@ -218,6 +249,10 @@ contains
     integer, allocatable :: A_loc_idx1(:), A_loc_idx2(:)
     integer :: A_loc_dim(2), B_loc_dim(2), C_loc_dim(2), coords(2)
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
+#ifdef HAVE_MKL
+    character(1) :: matdescr(6)
+    integer, allocatable :: A_loc_idx3(:)
+#endif
 
     !**** GLOBAL **********************************!
 #ifdef HAVE_MPI
@@ -264,6 +299,12 @@ contains
     C_loc=cmplx_0
     allocate(CC_loc(C_loc_dim(1),C_loc_dim(2)))
     CC_loc=cmplx_0
+#ifdef HAVE_MKL
+    matdescr(1)='G'
+    matdescr(4)='F'
+#endif
+
+    !**** Start the operation ********************!
 
     ! begin SUMMA
     do kloop = 1, M, psp_update_rank
@@ -312,8 +353,16 @@ contains
 
        ! compute local update of C
        ! C_loc = (A_loc)^t*B, where A_loc is a sparse matrix
+#ifdef HAVE_MKL
+       if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+       allocate(A_loc_idx3(width))
+       A_loc_idx3(1:width)=A_loc_idx2(2:width+1)
+       call mkl_zcscmm(opA,A_loc_dim(1),C_loc_dim(2),width,cmplx_1,matdescr,A_loc_val,A_loc_idx1,&
+            A_loc_idx2,A_loc_idx3,B,B_loc_dim(1),cmplx_0,C_loc,C_loc_dim(1))
+#else
        call psp_sst_gespmm(width,C_loc_dim(2),A_loc_dim(1), opA,opB, &
             cmplx_1,A_loc_idx1,A_loc_idx2,A_loc_val,B,1,1,C_loc,1,1,cmplx_0)
+#endif
 
        idx_prow = mod(idx_k_row-1,nprow ) ! identify the processor owing C(kth block,:), the cart coordinate
        ! boardcast in column
@@ -322,7 +371,8 @@ contains
        if (iprow==idx_prow) then
           call psp_idx_glb2loc(glb_st,psp_bs_def_row,nprow,loc_st)
           !C=beta*C+C_loc
-          call psp_copy_m(width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          !call psp_copy_m('n',width,C_loc_dim(2),CC_loc,1,1,C,loc_st,1,alpha,beta)
+          C(loc_st:loc_st+width-1,1:C_loc_dim(2))=beta*C(loc_st:loc_st+width-1,1:C_loc_dim(2))+alpha*CC_loc(1:width,1:C_loc_dim(2))
        end if
     enddo
 
@@ -332,6 +382,9 @@ contains
     if (allocated(A_loc_val)) deallocate(A_loc_val)
     if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
     if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+#ifdef HAVE_MKL
+    if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+#endif
 
   end subroutine psp_zgespmm_tn
 

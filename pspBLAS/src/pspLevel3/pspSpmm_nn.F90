@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -71,6 +80,10 @@ contains
     integer, allocatable :: A_loc_idx1(:), A_loc_idx2(:)
     integer :: A_loc_dim(2), B_loc_dim(2), C_loc_dim(2), coords(2)
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
+#ifdef HAVE_MKL
+    character(1) :: matdescr(6)
+    integer, allocatable :: A_loc_idx3(:)
+#endif
 
     !**** GLOBAL **********************************!
 #ifdef HAVE_MPI
@@ -119,6 +132,10 @@ contains
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
     allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
     C_loc=0.0_dp
+#ifdef HAVE_MKL
+    matdescr(1)='G'
+    matdescr(4)='F'
+#endif
 
     !**** Start the operation ********************!
 
@@ -172,22 +189,32 @@ contains
           if (width<psp_update_rank) then
              B_loc=0.0_dp
           end if
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
+          !call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,1.0_dp,0.0_dp)
+          B_loc(1:width,:)=B(loc_st:loc_st+width-1,1:B_loc_dim(2))
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE, idx_prow, psp_mpi_comm_col,mpi_err)
 
        ! compute local update of C
        ! C=MATMUL(A_loc,B_loc)+C
+#ifdef HAVE_MKL
+       if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+       allocate(A_loc_idx3(width))
+       A_loc_idx3(1:width)=A_loc_idx2(2:width+1)
+       call mkl_dcscmm(opA, C_loc_dim(1), C_loc_dim(2),width,1.0_dp,matdescr,A_loc_val,A_loc_idx1,&
+            A_loc_idx2,A_loc_idx3,B_loc,B_loc_dim(1),1.0_dp,C_loc,C_loc_dim(1))
+#else
        do cnt1=1,width
           do i=A_loc_idx2(cnt1),A_loc_idx2(cnt1+1)-1
              C_loc(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(cnt1,1:C_loc_dim(2))+C_loc(A_loc_idx1(i),1:C_loc_dim(2))
           end do
        end do
+#endif
     enddo
 
     !C=beta*C+C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    !call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    C(1:C_loc_dim(1),1:C_loc_dim(2))=beta*C(1:C_loc_dim(1),1:C_loc_dim(2))+alpha*C_loc
 
     if (allocated(B_loc)) deallocate(B_loc)
     if (allocated(C_loc)) deallocate(C_loc)
@@ -195,6 +222,9 @@ contains
     if (allocated(A_loc_val)) deallocate(A_loc_val)
     if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
     if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+#ifdef HAVE_MKL
+    if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+#endif
 
   end subroutine psp_dgespmm_nn
 
@@ -227,6 +257,10 @@ contains
     integer, allocatable :: A_loc_idx1(:), A_loc_idx2(:)
     integer :: A_loc_dim(2), B_loc_dim(2), C_loc_dim(2), coords(2)
     integer :: width, glb_st, glb_ed, loc_st, loc_ed, nnz_loc, L
+#ifdef HAVE_MKL
+    character(1) :: matdescr(6)
+    integer, allocatable :: A_loc_idx3(:)
+#endif
 
     !**** GLOBAL **********************************!
 #ifdef HAVE_MPI
@@ -275,6 +309,10 @@ contains
     C_loc_dim(2)=numroc(N,psp_bs_def_col,ipcol,0,npcol)
     allocate(C_loc(C_loc_dim(1),C_loc_dim(2)))
     C_loc=cmplx_0
+#ifdef HAVE_MKL
+    matdescr(1)='G'
+    matdescr(4)='F'
+#endif
 
     !**** Start the operation ********************!
 
@@ -330,23 +368,33 @@ contains
           if (width<psp_update_rank) then
              B_loc=cmplx_0
           end if
-          call psp_copy_m(width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
+          !call psp_copy_m('n',width,B_loc_dim(2),B,loc_st,1,B_loc,1,1,cmplx_1,cmplx_0)
+          B_loc(1:width,:)=B(loc_st:loc_st+width-1,1:B_loc_dim(2))
        end if
        ! boardcast in column
        call MPI_Bcast(B_loc, B_loc_dim(1)*B_loc_dim(2), MPI_DOUBLE_COMPLEX, idx_prow, psp_mpi_comm_col,mpi_err)
 
        ! compute local update of C
        ! C=MATMUL(A_loc,B_loc)+C
+#ifdef HAVE_MKL
+       if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+       allocate(A_loc_idx3(width))
+       A_loc_idx3(1:width)=A_loc_idx2(2:width+1)
+       call mkl_zcscmm(opA, C_loc_dim(1), C_loc_dim(2),width,cmplx_1,matdescr,A_loc_val,A_loc_idx1,&
+A_loc_idx2,A_loc_idx3,B_loc,B_loc_dim(1),cmplx_1,C_loc,C_loc_dim(1))
+#else
        do cnt1=1,width
           do i=A_loc_idx2(cnt1),A_loc_idx2(cnt1+1)-1
              C_loc(A_loc_idx1(i),1:C_loc_dim(2))= A_loc_val(i)*B_loc(cnt1,1:C_loc_dim(2))+C_loc(A_loc_idx1(i),1:C_loc_dim(2))
           end do
        end do
+#endif
 
     enddo
 
     !C=beta*C+C_loc
-    call psp_copy_m(C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    !call psp_copy_m('n',C_loc_dim(1),C_loc_dim(2),C_loc,1,1,C,1,1,alpha,beta)
+    C(1:C_loc_dim(1),1:C_loc_dim(2))=beta*C(1:C_loc_dim(1),1:C_loc_dim(2))+alpha*C_loc
 
     if (allocated(B_loc)) deallocate(B_loc)
     if (allocated(C_loc)) deallocate(C_loc)
@@ -354,6 +402,10 @@ contains
     if (allocated(A_loc_val)) deallocate(A_loc_val)
     if (allocated(A_loc_idx1)) deallocate(A_loc_idx1)
     if (allocated(A_loc_idx2)) deallocate(A_loc_idx2)
+#ifdef HAVE_MKL
+    if (allocated(A_loc_idx3)) deallocate(A_loc_idx3)
+#endif
+
 
   end subroutine psp_zgespmm_nn
 

@@ -5,7 +5,7 @@ include make.inc
 .SUFFIXES:
 .SUFFIXES: .x .f90 .F90
 
-all : pdgemmScaling.x pzgemmScaling.x testList.x matSum.x testMPI.x testMPI2.x testMPI3.x pdgemm.x spBLAS.x 
+all : pdgemmScaling.x pzgemmScaling.x testList.x matSum.x testMPI.x testMPI2.x testMPI3.x pdgemm.x spBLAS.x compareSpBLAS.x
 
 pdgemmScaling.x : pdgemmScaling.F90
 
@@ -24,6 +24,8 @@ matSum.x : matSum.F90
 pdgemm.x : pdgemm.F90
 
 spBLAS.x : spBLAS.F90
+
+compareSpBLAS.x : compareSpBLAS.F90
 
 clean :
 	rm -f *.x

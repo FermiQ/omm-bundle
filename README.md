@@ -42,6 +42,8 @@ To install the libraries manually:
     * `-DHAVE_SCALAPACK`: enable ScaLAPACK routines (requires MPI)
     * `-DHAVE_PSPBLAS`: enable pspBLAS routines (requires MPI, LAPACK and
       ScaLAPACK)
+    * `-DHAVE_MKL`: link the sequential sparse BLAS routines in Intel MKL to
+      pspBLAS
     * `-DCONV`: enable automatic conversion of scalar types (real/complex) to
       agree with matrix definitions (real/complex). Needed for libOMM.
     * `-DNORAND`: fixed seed for the random number generator. Enable for testing

@@ -1,3 +1,12 @@
+!************************************************************************!
+!   Copyright (c) 2015-2017, Haizhao Yang                                !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!
+
 !
 ! Template for a Monte Carlo code.
 !
@@ -14,7 +23,7 @@
 !   into an MPI_PACKED buffer.
 !   This illustrates the use of MPI_PACK and MPI_UNPACK commands.
 !
-program monte3
+program testMPI3
 use pspBLAS
   !
   include 'mpif.h'
@@ -149,5 +158,6 @@ allocate(BUF(sizebuf))
 
   call MPI_Finalize(ierr)
   print*,' elapsed time =',entim, '      my_rank=',my_rank
-end program monte3
+
+end program testMPI3
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

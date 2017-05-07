@@ -1,3 +1,13 @@
+!************************************************************************!
+!   Modified by Haizhao Yang                                             !
+!   Copyright (c) 2015-2017                                              !
+!   All rights reserved.                                                 !
+!                                                                        !
+!   This file is part of pspBLAS and is under the BSD 2-Clause License,  !
+!   which can be found in the LICENSE file in the root directory, or at  !
+!   http://opensource.org/licenses/BSD-2-Clause                          !
+!************************************************************************!  
+
   ! linkedlist.f90 --
   !     Include file for defining linked lists where each element holds
   !     the same kind of data
