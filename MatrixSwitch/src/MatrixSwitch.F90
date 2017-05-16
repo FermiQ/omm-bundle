@@ -2796,7 +2796,7 @@ contains
        if (beta==0.0_dp) then
           call pdelset(C%dval,i,j,C%iaux1,alpha)
        else
-          call pdelget('a',' ',el,C%dval,i,j,C%iaux1)
+          call pdelget('p',' ',el,C%dval,i,j,C%iaux1)
           call pdelset(C%dval,i,j,C%iaux1,alpha+beta*el)
        end if
 #else
@@ -2970,7 +2970,7 @@ contains
        if (beta==cmplx_0) then
           call pzelset(C%zval,i,j,C%iaux1,alpha)
        else
-          call pzelget('a',' ',el,C%zval,i,j,C%iaux1)
+          call pzelget('p',' ',el,C%zval,i,j,C%iaux1)
           call pzelset(C%zval,i,j,C%iaux1,alpha+beta*el)
        end if
 #else
