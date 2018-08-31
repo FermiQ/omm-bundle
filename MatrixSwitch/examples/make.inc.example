@@ -4,6 +4,4 @@ LINALG_LIBS = -lscalapack -llapack -lblas
 PSPLIB = ../../pspBLAS/lib/libpspBLAS.a
 
 # Uncomment to link and use DBCSR (https://github.com/cp2k/dbcsr)
-#OPTS            += -fopenmp
-#DBCSR            = <path to DBCSR installation directory>
-#DBCSR_LIBS     += -L$(DBCSR)/lib -ldbcsr
+#DBCSRLIB = -L$(DBCSR)/lib -ldbcsr

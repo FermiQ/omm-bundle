@@ -21,7 +21,9 @@ example_kpoints_wrapper.x : example_kpoints_wrapper.F90
 clean : 
 	rm -f *.x
 
-LINK_MACRO = $< -I$(BUILDPATH)/include -I$(MSWINCLUDEPATH) -I$(PSPINCLUDEPATH) $(LINALG_INCLUDES) $(BUILDPATH)/lib/$(LIBNAME) $(MSWLIB) $(PSPLIB) $(LINALG_LIBS) -o $@
+LINK_MACRO = $< -I$(BUILDPATH)/include -I$(MSWINCLUDEPATH) -I$(PSPINCLUDEPATH) \
+	     $(LINALG_INCLUDES) $(BUILDPATH)/lib/$(LIBNAME) $(MSWLIB) \
+	     $(PSPLIB) $(DBCSRLIB) $(LINALG_LIBS) -o $@
 
 .F90.x : 
 	$(FORTRAN) $(OPTS) $(FPPFLAGS) -DSRCDIR=\'./\' $(LINK_MACRO)

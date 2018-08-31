@@ -10,6 +10,12 @@ module MatrixSwitch_ops
   use pspBLAS
 #endif
 
+#if defined (HAVE_MPI) && defined(HAVE_DBCSR)
+  use mpi
+  use dbcsr_api, only : dbcsr_distribution_type, &
+                        dbcsr_type
+#endif
+
   implicit none
 
   public
@@ -36,6 +42,12 @@ module MatrixSwitch_ops
   integer, save :: ms_lap_bs_num !< Number of block size exceptions.
   integer, save :: ms_lap_icontxt !< BLACS context handle used by MatrixSwitch.
   integer, allocatable, save :: ms_lap_bs_list(:,:) !< Block size exception list.
+
+#ifdef HAVE_DBCSR
+  logical, save :: ms_dbcsr_init = .false. !< check if dbcsr is set.
+  integer, save :: ms_dbcsr_group = mpi_comm_null !< Group communication
+#endif
+
 #endif
 
   !**** TYPES *************************************!
@@ -76,6 +88,12 @@ module MatrixSwitch_ops
 #ifdef HAVE_PSPBLAS
      type(psp_matrix_spm) :: spm !< pspBLAS matrix type.
 #endif
+
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+     type(dbcsr_distribution_type)     :: dbcsr_dist
+     type(dbcsr_type)                  :: dbcsr_mat
+#endif
+
   end type matrix
 
   !**** INTERFACES ********************************!

@@ -22,8 +22,8 @@ LINALG_INCLUDES =
 LINALG_LIBS = -lscalapack -llapack -lblas
 
 # Uncomment to link and use DBCSR (https://github.com/cp2k/dbcsr)
-#OPTS            += -fopenmp
-#FPPFLAGS        += -DHAVE_DBCSR
-#DBCSR            = <path to DBCSR installation directory>
-#DBCSR_INCLUDES += -I$(DBCSR)/include
-#DBCSR_LIBS     += -L$(DBCSR)/lib -ldbcsr
+#OPTS     += -fopenmp
+#FPPFLAGS += -DHAVE_DBCSR
+#DBCSR     = <path to DBCSR installation directory>
+#DBCSRINC  = -I$(DBCSR)/include
+#DBCSRLIB  = -L$(DBCSR)/lib -ldbcsr
