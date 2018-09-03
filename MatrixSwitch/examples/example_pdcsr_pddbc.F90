@@ -12,34 +12,18 @@
 ! This example evaluates:                                                                          !
 !   res1: tr(A^T+B)                                                                                !
 !   res2: tr(A*B)                                                                                  !
-
-
-!!$! This example demonstrates how to calculate:                                                      !
-!!$!   alpha = tr(A^T*B)                                                                              !
-!!$! for two NxM matrices A and B, in five different ways. Each way should return the same result.    !
-!!$! They are:                                                                                        !
-!!$!   1. performing the matrix product trace res1 := tr(A^T*B) directly as a single operation        !
-!!$!   2. performing the multiplication D := A^T*B, and then the trace res2 := tr(D)                  !
-!!$!   3. performing E := B*A^T, and then res3 := tr(E)                                               !
-!!$!   4. performing the transpose C := A^T, then D := C*B, and then res4 := tr(D)                    !
-!!$!   5. performing C := A^T, then E := B*C, and then res5 := tr(E)                                  !
-!!$! Finally, as an extra check, the first element of E is printed out.                               !
-!!$!                                                                                                  !
-!!$! Note the difference in the code in how matrix B is handled compared with the other matrices.     !
-!!$! While the others are allocated directly by MatrixSwitch (i.e., all the data is contained within  !
-!!$! the type(matrix) variable), B is a wrapper for MyMatrix (i.e., MyMatrix has been registered as B !
-!!$! for use with MatrixSwitch, and B contains a pointer to MyMatrix).                                !
-!!$!                                                                                                  !
-!!$! Sample output:                                                                                   !
-!!$!--------------------------------------------------------------------------------------------------!
-!!$! res1 :    31.194861937321843                                                                     !
-!!$! res2 :    31.194861937321846                                                                     !
-!!$! res3 :    31.194861937321846                                                                     !
-!!$! res4 :    31.194861937321846                                                                     !
-!!$! res5 :    31.194861937321846                                                                     !
-!!$! E_11 :     2.779421970931733                                                                     !
-!!$!--------------------------------------------------------------------------------------------------!
-!!$!==================================================================================================!
+!   res3: tr(A*B^T)                                                                                !
+!   res4: tr(C*alpha)                                                                              !
+! Finally, as an extra check, the values on the result matrix are printed out.                     !
+!                                                                                                  !
+! Sample results on 4 MPI ranks:                                                                   !
+!--------------------------------------------------------------------------------------------------!
+! res1 :    15.030509283314089                                                                     !
+! res2 :    17.674348547066977                                                                     !
+! res3 :    12.760482513544938                                                                     !
+! res4 :    40.833544043343800                                                                     !
+!--------------------------------------------------------------------------------------------------!
+!==================================================================================================!
 program example_pdcsr_pddbc
   use MatrixSwitch
 
@@ -112,53 +96,23 @@ program example_pdcsr_pddbc
         call fill_blocks(C, F, ii, jj)
      end do
   end do
-!!$
-!!$  ! DBCSR
-!!$  call m_add(A,'t',C,2.0_dp,3.0_dp)
-!!$  call m_trace(C,res1)
-!!$
-!!$  call mm_trace(A,C,res2)
-!!$
-!!$  call mm_multiply(A,'n',B,'t',C,1.0_dp,1.0_dp)
-!!$  call m_trace(C,res3)
-!!$
-!!$  call m_scale(C,3.0_dp)
-!!$  call m_trace(C,res4)
-!!$
-
-  !   
+  
+  ! DBCSR
+  call run_operations(A, B, C, res_sparse)
   ! dbc
-!  call m_add(D,'t',F,2.0_dp,3.0_dp)
-!  call m_trace(F,res_dense(1))
-  
-!  call mm_trace(D,F,res_dense(2))
-  
-!!$  call mm_multiply(D,'n',E,'t',F,1.0_dp,1.0_dp)
-!!$  call m_trace(F,res7)
-!!$  
-!!$  call m_scale(F,3.0_dp)
-!!$  call m_trace(F,res8)
-!!$
+  call run_operations(D, E, F, res_dense)
+
+  ! Print results
   if (mpi_rank==0) then
-!!$     print('(a,f21.15)'), 'res1 : ', res1
-!!$     print('(a,f21.15)'), 'res2 : ', res2
-!!$     print('(a,f21.15)'), 'res3 : ', res3
-!!$     print('(a,f21.15)'), 'res4 : ', res4
+     print('(a,f21.15)'), 'res1 : ', res_sparse(1)
+     print('(a,f21.15)'), 'res2 : ', res_sparse(2)
+     print('(a,f21.15)'), 'res3 : ', res_sparse(3)
+     print('(a,f21.15)'), 'res4 : ', res_sparse(4)
   endif
 
-  if (mpi_rank==0) then
-     print('(a)'), 'SCALAPACK'
-     print('(a,f21.15)'), 'res1 : ', res_dense(1)
-     print('(a,f21.15)'), 'res2 : ', res_dense(2)
-!!$     print('(a,f21.15)'), 'res7 : ', res7
-!!$     print('(a,f21.15)'), 'res8 : ', res8
-  endif
-
-!!$  call assert_equal_dp(res1, res5)
-!!$  call assert_equal_dp(res2, res6)
-!!$  call assert_equal_dp(res3, res7)
-!!$  call assert_equal_dp(res4, res8)
-!!$
+  do ii=1, SIZE(res_sparse)
+     call assert_equal_dp(res_sparse(ii), res_dense(ii))
+  enddo
 
   ! Print values on a given MPI rank
   if (mpi_rank==0) then
@@ -217,22 +171,43 @@ program example_pdcsr_pddbc
       enddo
     end subroutine fill_blocks
 
-  subroutine assert_equal_dp(value1, value2)
-    implicit none
+    subroutine assert_equal_dp(value1, value2)
+      implicit none
 
-    !**** PARAMS **********************************!
+      !**** PARAMS **********************************!
 
-    real(dp), parameter :: tolerance=1.0d-10
+      real(dp), parameter :: tolerance=1.0d-10
 
-    !**** INPUT ***********************************!
+      !**** INPUT ***********************************!
 
-    real(dp), intent(in) :: value1
-    real(dp), intent(in) :: value2
+      real(dp), intent(in) :: value1
+      real(dp), intent(in) :: value2
 
-    !**********************************************!
+      !**********************************************!
 
-    if (abs(value1-value2)>tolerance) stop 1
-  end subroutine assert_equal_dp
+      if (abs(value1-value2)>tolerance) stop 1
+    end subroutine assert_equal_dp
+
+    subroutine run_operations(A, B, C, res)
+      implicit none
+
+      type(matrix), intent(in) :: A, B
+      type(matrix), intent(inout) :: C
+      real(dp), dimension(:), intent(out) :: res
+
+      !**********************************************!
+
+      call m_add(A,'t',C,2.0_dp,3.0_dp)
+      call m_trace(C,res(1))
+    
+      call mm_trace(A,C,res(2))
+      
+      call mm_multiply(A,'n',B,'t',C, 2.0_dp, 0.5_dp)
+      call m_trace(C,res(3))
+
+      call m_scale(C,3.2_dp)
+      call m_trace(C,res(4))
+    end subroutine run_operations
 
 #else
   print('(a,f21.15)'), 'To run this example, compile with MPI, SCALAPACK and DBCSR.'

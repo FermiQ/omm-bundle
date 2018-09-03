@@ -1247,6 +1247,11 @@ contains
              call die('mm_dmultiply: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csr') .and. &
+         (.not. B%is_serial)) then
+       ot=15
     else
        call die('mm_dmultiply: invalid implementation')
     end if
@@ -1339,6 +1344,12 @@ contains
        end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (15)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR) 
+       call dbcsr_multiply(opA,opB,alpha,A%dbcsr_mat,B%dbcsr_mat,beta,C%dbcsr_mat)
+#else
+       call die('mm_dmultiply: compile with MPI and DBCSR')
 #endif
     end select
 
@@ -1710,6 +1721,10 @@ contains
     complex(dp) :: cmplx_alpha, cmplx_beta
 #endif
 
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+    type(dbcsr_type) :: dbcsr_trA
+#endif
+
     !**********************************************!
 
 #ifdef CONV
@@ -1805,6 +1820,11 @@ contains
              call die('m_dadd: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (C%str_type .eq. 'csr') .and. &
+         (.not. C%is_serial)) then
+       ot=6
     else
        call die('m_dadd: invalid implementation')
     end if
@@ -1831,6 +1851,18 @@ contains
        call m_add_sdcscsddenref(A,trA,C,alpha,beta)
     case (5)
        call m_add_sdcsrsddenref(A,trA,C,alpha,beta)
+    case (6)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       if (trA) then
+          call dbcsr_transposed(dbcsr_trA, A%dbcsr_mat)
+          call dbcsr_add(C%dbcsr_mat, dbcsr_trA, beta, alpha)
+          call dbcsr_release(dbcsr_trA)
+       else
+          call dbcsr_add(C%dbcsr_mat, A%dbcsr_mat, beta, alpha)
+       endif
+#else
+       call die('m_dadd: compile with MPI and DBCSR')
+#endif
     end select
 
   end subroutine m_dadd
@@ -1929,7 +1961,7 @@ contains
           else if (label .eq. 't1D') then
              ot=3
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csc') .and. &
@@ -1942,7 +1974,7 @@ contains
           if (label .eq. 'ref') then
              ot=4
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csr') .and. &
@@ -1955,7 +1987,7 @@ contains
           if (label .eq. 'ref') then
              ot=5
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else
@@ -2060,6 +2092,9 @@ contains
              call die('m_dtrace: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial)) then
+       ot=3
     else
        call die('m_dtrace: invalid implementation')
     end if
@@ -2075,6 +2110,12 @@ contains
        alpha=pdlatra(A%dim1,A%dval,1,1,A%iaux1)
 #else
        call die('m_dtrace: compile with ScaLAPACK')
+#endif
+    case (3)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       CALL dbcsr_trace(A%dbcsr_mat, alpha)
+#else
+       call die('m_dtrace: compile with MPI and DBCSR')
 #endif
     end select
 
@@ -2258,6 +2299,11 @@ contains
              call die('mm_dtrace: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csr') .and. &
+         (.not. B%is_serial)) then
+       ot=4
     else
        call die('mm_dtrace: invalid implementation')
     end if
@@ -2285,6 +2331,12 @@ contains
        if (info/=0) call die('mm_dtrace: error in mpi_allreduce')
 #else
        call die('mm_dtrace: compile with MPI + LAPACK')
+#endif
+    case (4)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_trace(A%dbcsr_mat, B%dbcsr_mat, alpha)
+#else
+       call die("mm_dtrace: compile with MPI and DBCSR")
 #endif
     end select
 
@@ -2514,6 +2566,9 @@ contains
              call die('m_dscale: invalid implementation')
           end if
        end if
+    else if ((C%str_type .eq. 'csr') .and. &
+         (.not. C%is_serial)) then
+       ot=2
     else
        call die('m_dscale: invalid implementation')
     end if
@@ -2521,6 +2576,12 @@ contains
     select case (ot)
     case (1)
        C%dval=beta*C%dval
+    case (2)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_scale(C%dbcsr_mat, beta)
+#else
+       call die('m_dget_element: compile with DBCSR')
+#endif
     end select
 
   end subroutine m_dscale
@@ -3704,9 +3765,7 @@ contains
             dbcsr_type_no_symmetry, row_sizes, col_sizes, &
             reuse_arrays=.false., data_type=dbcsr_type_real_8)
     else
-       call dbcsr_create(A%dbcsr_mat, "Matrix", A%dbcsr_dist, &
-            dbcsr_type_no_symmetry, row_sizes, col_sizes, &
-            reuse_arrays=.false., data_type=dbcsr_type_complex_8)
+       call die("ms_dbcsr_allocate: DBCSR Complex type not implemented!")
     endif
     call dbcsr_distribution_release(A%dbcsr_dist)
 
