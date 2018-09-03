@@ -618,7 +618,8 @@ contains
   !!                                 with an absolute value below this
   !!                                 threshold will be omitted for sparse
   !!                                 storage formats, and set to zero for dense
-  !!                                 storage formats.
+  !!                                 storage formats. For blocks, the threshold
+  !!                                 applies to the Frobenius norm of the blocks.
   !! @param[in]    threshold_is_soft Is the thresholding soft?
   !!                                 \arg \c .true. Values above \p threshold
   !!                                 are shifted down to remove the jump
@@ -650,6 +651,8 @@ contains
     integer :: st, i, j, k
 
     real(dp) :: abs_threshold, soft_threshold
+
+    logical :: my_threshold_is_soft
 
     !**********************************************!
 
@@ -704,11 +707,12 @@ contains
           call die('m_copy: invalid label')
        end if
     else if ((m_name%str_type .eq. 'dbc') .and. &
-             (.not. m_name%is_serial) .and. &
-             (A%str_type .eq. 'dbc') .and. &
-             (.not. A%is_serial)) then
+             (.not. m_name%is_serial)) then
        m_name%is_sparse=.false.
-       st=2
+       if ((A%str_type .eq. 'dbc') .and. &
+             (.not. A%is_serial)) then
+          st=2
+       endif
     else if ((m_name%str_type .eq. 'coo') .and. &
              (m_name%is_serial)) then
        m_name%is_sparse=.true.
@@ -775,14 +779,26 @@ contains
        else
           call die('m_copy: invalid label')
        end if
+    else if ((m_name%str_type .eq. 'csr') .and. &
+             (.not. m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csr') .and. &
+            (.not. A%is_serial)) then
+          st=18
+       else
+          call die('m_copy: invalid label')
+       endif
     else
        call die('m_copy: invalid label')
     end if
+
+    my_threshold_is_soft = .false.
 
     if (present(threshold)) then
        abs_threshold=abs(threshold)
        if (present(threshold_is_soft)) then
           if (threshold_is_soft) then
+             my_threshold_is_soft = .true.
              soft_threshold=abs_threshold
           else
              soft_threshold=0.0_dp
@@ -890,7 +906,7 @@ contains
        if (.not. present(threshold)) then
           call die('m_copy: threshold must be specified')
        else
-          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+          if (my_threshold_is_soft) then
              call die('m_copy: soft thresholding not yet implemented')
           else
 #ifdef HAVE_PSPBLAS
@@ -908,7 +924,7 @@ contains
        if (.not. present(threshold)) then
           call die('m_copy: threshold must be specified')
        else
-          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+          if (my_threshold_is_soft) then
              call die('m_copy: soft thresholding not yet implemented')
           else
 #ifdef HAVE_PSPBLAS
@@ -922,6 +938,24 @@ contains
 #endif
           end if
        end if
+       case (18)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+          if (my_threshold_is_soft) then
+             call die('m_copy: soft thresholding not yet implemented')
+          else
+             ! First check if A is valid
+             if (.not. dbcsr_valid_index(A%dbcsr_mat)) then
+                call die('m_copy: Invalid DBCSR matrix to copy from')
+             endif
+             ! Copy DBCSR in DBCSR (deep-copy)
+             call dbcsr_copy(m_name%dbcsr_mat, A%dbcsr_mat)
+             if (present(threshold)) then
+                call dbcsr_filter(m_name%dbcsr_mat, abs_threshold)
+             endif
+          endif
+#else
+          call die('mm_dmultiply: compile with MPI and DBCSR')
+#endif
     end select
 
     m_name%is_initialized=.true.

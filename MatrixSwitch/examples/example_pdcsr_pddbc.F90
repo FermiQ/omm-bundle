@@ -46,9 +46,9 @@ program example_pdcsr_pddbc
   integer :: full_row_size, full_col_size, ii, jj, ll, kk
   integer, dimension(2) :: dims
   integer, pointer, dimension(:) :: row_blk_sizes, col_blk_sizes
-  type(matrix) :: A, B, C, D, E, F
+  type(matrix) :: A, B, C, CC, D, E, F, FF
   real(dp) :: val
-  real(dp), dimension(4) :: res_sparse, res_dense
+  real(dp), dimension(5) :: res_sparse, res_dense
   real(dp), dimension(:, :), pointer :: myblock
   logical :: found_block
 
@@ -102,6 +102,14 @@ program example_pdcsr_pddbc
   ! dbc
   call run_operations(D, E, F, res_dense)
 
+  ! Test Copies
+  ! CSR -> CSR
+  call m_copy(CC, C)
+  call m_trace(CC, res_sparse(5))
+  ! dbc -> dbc
+  call m_copy(FF, F)
+  call m_trace(FF, res_dense(5))
+
   ! Print results
   if (mpi_rank==0) then
      print('(a,f21.15)'), 'res1 : ', res_sparse(1)
@@ -132,9 +140,11 @@ program example_pdcsr_pddbc
      enddo
   endif
 
+  call m_deallocate(FF)
   call m_deallocate(F)
   call m_deallocate(E)
   call m_deallocate(D)
+  call m_deallocate(CC)
   call m_deallocate(C)
   call m_deallocate(B)
   call m_deallocate(A)
