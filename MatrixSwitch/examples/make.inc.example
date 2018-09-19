@@ -2,3 +2,6 @@ LINALG_INCLUDES =
 LINALG_LIBS = -lscalapack -llapack -lblas
 
 PSPLIB = ../../pspBLAS/lib/libpspBLAS.a
+
+# Uncomment to link and use DBCSR (https://github.com/cp2k/dbcsr)
+#DBCSRLIB = -L$(DBCSR)/lib -ldbcsr

@@ -29,6 +29,8 @@ To install the library manually:
     * `-DHAVE_SCALAPACK`: enable ScaLAPACK routines (requires MPI)
     * `-DHAVE_PSPBLAS`: enable pspBLAS routines (requires MPI, LAPACK and
       ScaLAPACK)
+    * `-DHAVE_DBCSR`: enable DBCSR routines (requires DBCSR, MPI, LAPACK and
+      BLAS). You can download DBCSR from https://github.com/cp2k/dbcsr.
     * `-DCONV`: enable automatic conversion of scalar types (real/complex) to
       agree with matrix definitions (real/complex). Note that conversions from
       complex to real will simply discard the imaginary part.

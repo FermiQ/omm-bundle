@@ -16,6 +16,10 @@ module MatrixSwitch
   use pspBLAS
 #endif
 
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+  use dbcsr_api
+#endif
+
   implicit none
 
   private
@@ -220,6 +224,7 @@ module MatrixSwitch
   interface m_set_element
      module procedure m_dset_element
      module procedure m_zset_element
+     module procedure m_dset_block
   end interface m_set_element
 
   !============================================================================!
@@ -241,7 +246,19 @@ module MatrixSwitch
   interface m_get_element
      module procedure m_dget_element
      module procedure m_zget_element
+     module procedure m_dget_block
   end interface m_get_element
+
+  !============================================================================!
+  !> @brief Allocate matrix.
+  !!
+  !! Two procedures are provided for elements and blocked matrices.
+  !!
+  !============================================================================!
+  interface m_allocate
+     module procedure m_allocate_elements
+     module procedure m_allocate_blocks
+  end interface m_allocate
 
   !************************************************!
 
@@ -264,6 +281,10 @@ module MatrixSwitch
   public :: ms_lap_icontxt
 #ifdef HAVE_SCALAPACK
   public :: ms_scalapack_setup
+#endif
+#ifdef HAVE_DBCSR
+  public :: ms_dbcsr_setup
+  public :: ms_dbcsr_finalize
 #endif
 #endif
 #ifdef HAVE_PSPBLAS
@@ -288,7 +309,7 @@ contains
   !! @param[in]    label  Storage format to use. See online documentation for
   !!                      the list of available formats. Default is \c sdden.
   !============================================================================!
-  subroutine m_allocate(m_name,i,j,label)
+  subroutine m_allocate_elements(m_name,i,j,label)
     implicit none
 
     !**** INPUT ***********************************!
@@ -331,17 +352,17 @@ contains
     else if (c1 .eq. 'p') then
        m_name%is_serial=.false.
 #ifndef HAVE_MPI
-       call die('m_allocate: compile with MPI')
+       call die('m_allocate_elements: compile with MPI')
 #endif
     else
-       call die('m_allocate: invalid label')
+       call die('m_allocate_elements: invalid label')
     end if
     if (c2 .eq. 'd') then
        m_name%is_real=.true.
     else if (c2 .eq. 'z') then
        m_name%is_real=.false.
     else
-       call die('m_allocate: invalid label')
+       call die('m_allocate_elements: invalid label')
     end if
 
     ! storage type
@@ -359,14 +380,14 @@ contains
           m_name%is_sparse=.true.
           st=3
        else
-          call die('m_allocate: invalid label')
+          call die('m_allocate_elements: invalid label')
        end if
     else
        if (m_name%str_type .eq. 'dbc') then
           m_name%is_sparse=.false.
           st=2
        else
-          call die('m_allocate: invalid label')
+          call die('m_allocate_elements: invalid label')
        end if
     end if
 
@@ -385,7 +406,7 @@ contains
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
        call ms_scalapack_allocate(m_name)
 #else
-       call die('m_allocate: compile with ScaLAPACK')
+       call die('m_allocate_elements: compile with ScaLAPACK')
 #endif
     case (3)
        allocate(m_name%iaux2(1))
@@ -395,7 +416,105 @@ contains
 
     m_name%is_initialized=.true.
 
-  end subroutine m_allocate
+  end subroutine m_allocate_elements
+
+  !============================================================================!
+  !> @brief Allocate blocked matrix.
+  !!
+  !! Initializes a TYPE(MATRIX) variable by saving some basic information about
+  !! the matrix, and allocating the necessary arrays for the requested storage
+  !! format. It uses a block-cycling distribution for the blocks.
+  !! The matrix is created empty.
+  !!
+  !! @param[inout] m_name    The matrix to be allocated.
+  !! @param[in]    row_sizes Row block dimensions of the matrix.
+  !! @param[in]    col_sizes Column block dimensions of the matrix.
+  !! @param[in]    label  Storage format to use. See online documentation for
+  !!                      the list of available formats. Default is \c pdcsr.
+  !============================================================================!
+
+  subroutine m_allocate_blocks(m_name,row_sizes,col_sizes,label)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label
+
+    integer, intent(in), dimension(:), pointer :: row_sizes
+    integer, intent(in), dimension(:), pointer :: col_sizes
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    character(1) :: c1, c2
+
+    integer :: st
+
+    !**********************************************!
+
+    m_name%dim1=SUM(row_sizes)
+    m_name%dim2=SUM(col_sizes)
+    if (m_name%dim1==m_name%dim2) then
+       m_name%is_square=.true.
+    else
+       m_name%is_square=.false.
+    end if
+
+    if (present(label)) then
+       read(label,'(a1,a1,a3)') c1, c2, m_name%str_type
+    else
+       c1='p'
+       c2='d'
+       m_name%str_type='csr'
+    end if
+
+    if (c1 .eq. 's') then
+       call die('m_allocate_blocks: serial algorithm with blocks is not implemented yet')
+    else if (c1 .eq. 'p') then
+       m_name%is_serial=.false.
+#ifndef HAVE_MPI
+       call die('m_allocate_blocks: compile with MPI')
+#endif
+#ifndef HAVE_DBCSR
+       call die('m_allocate_blocks: DBCSR is not linked')
+#endif
+    else
+       call die('m_allocate_blocks: invalid label')
+    end if
+    !
+    if (c2 .eq. 'd') then
+       m_name%is_real=.true.
+    else if (c2 .eq. 'z') then
+       m_name%is_real=.false.
+    else
+       call die('m_allocate: invalid label')
+    end if
+    !
+    ! storage type
+    if (.not. m_name%is_serial) then
+       if (m_name%str_type .eq. 'csr') then
+          m_name%is_sparse=.true.
+          st=1
+       else
+          call die('m_allocate_blocks: invalid label (only csr available)')
+       end if
+    end if
+
+    select case (st)
+    case (1)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call ms_dbcsr_allocate(m_name, row_sizes, col_sizes)
+#else
+       call die('m_allocate_blocks: compile with MPI and DBCSR')
+#endif
+    end select
+
+    m_name%is_initialized=.true.
+
+  end subroutine m_allocate_blocks
 
   !============================================================================!
   !> @brief Deallocate matrix.
@@ -469,6 +588,14 @@ contains
         (.not. m_name%is_serial)) call psp_deallocate_spm(m_name%spm)
 #endif
 
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+    if ((m_name%str_type .eq. 'csr') .and. &
+         (.not. m_name%is_serial)) then
+       call dbcsr_release(m_name%dbcsr_mat)
+       call dbcsr_distribution_release(m_name%dbcsr_dist)
+    endif
+#endif
+
     m_name%is_initialized=.false.
 
   end subroutine m_deallocate
@@ -491,7 +618,8 @@ contains
   !!                                 with an absolute value below this
   !!                                 threshold will be omitted for sparse
   !!                                 storage formats, and set to zero for dense
-  !!                                 storage formats.
+  !!                                 storage formats. For blocks, the threshold
+  !!                                 applies to the Frobenius norm of the blocks.
   !! @param[in]    threshold_is_soft Is the thresholding soft?
   !!                                 \arg \c .true. Values above \p threshold
   !!                                 are shifted down to remove the jump
@@ -523,6 +651,8 @@ contains
     integer :: st, i, j, k
 
     real(dp) :: abs_threshold, soft_threshold
+
+    logical :: my_threshold_is_soft
 
     !**********************************************!
 
@@ -577,11 +707,12 @@ contains
           call die('m_copy: invalid label')
        end if
     else if ((m_name%str_type .eq. 'dbc') .and. &
-             (.not. m_name%is_serial) .and. &
-             (A%str_type .eq. 'dbc') .and. &
-             (.not. A%is_serial)) then
+             (.not. m_name%is_serial)) then
        m_name%is_sparse=.false.
-       st=2
+       if ((A%str_type .eq. 'dbc') .and. &
+             (.not. A%is_serial)) then
+          st=2
+       endif
     else if ((m_name%str_type .eq. 'coo') .and. &
              (m_name%is_serial)) then
        m_name%is_sparse=.true.
@@ -648,14 +779,26 @@ contains
        else
           call die('m_copy: invalid label')
        end if
+    else if ((m_name%str_type .eq. 'csr') .and. &
+             (.not. m_name%is_serial)) then
+       m_name%is_sparse=.true.
+       if ((A%str_type .eq. 'csr') .and. &
+            (.not. A%is_serial)) then
+          st=18
+       else
+          call die('m_copy: invalid label')
+       endif
     else
        call die('m_copy: invalid label')
     end if
+
+    my_threshold_is_soft = .false.
 
     if (present(threshold)) then
        abs_threshold=abs(threshold)
        if (present(threshold_is_soft)) then
           if (threshold_is_soft) then
+             my_threshold_is_soft = .true.
              soft_threshold=abs_threshold
           else
              soft_threshold=0.0_dp
@@ -763,7 +906,7 @@ contains
        if (.not. present(threshold)) then
           call die('m_copy: threshold must be specified')
        else
-          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+          if (my_threshold_is_soft) then
              call die('m_copy: soft thresholding not yet implemented')
           else
 #ifdef HAVE_PSPBLAS
@@ -781,7 +924,7 @@ contains
        if (.not. present(threshold)) then
           call die('m_copy: threshold must be specified')
        else
-          if (present(threshold_is_soft) .and. (threshold_is_soft)) then
+          if (my_threshold_is_soft) then
              call die('m_copy: soft thresholding not yet implemented')
           else
 #ifdef HAVE_PSPBLAS
@@ -795,6 +938,24 @@ contains
 #endif
           end if
        end if
+       case (18)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+          if (my_threshold_is_soft) then
+             call die('m_copy: soft thresholding not yet implemented')
+          else
+             ! First check if A is valid
+             if (.not. dbcsr_valid_index(A%dbcsr_mat)) then
+                call die('m_copy: Invalid DBCSR matrix to copy from')
+             endif
+             ! Copy DBCSR in DBCSR (deep-copy)
+             call dbcsr_copy(m_name%dbcsr_mat, A%dbcsr_mat)
+             if (present(threshold)) then
+                call dbcsr_filter(m_name%dbcsr_mat, abs_threshold)
+             endif
+          endif
+#else
+          call die('mm_dmultiply: compile with MPI and DBCSR')
+#endif
     end select
 
     m_name%is_initialized=.true.
@@ -1120,6 +1281,11 @@ contains
              call die('mm_dmultiply: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csr') .and. &
+         (.not. B%is_serial)) then
+       ot=15
     else
        call die('mm_dmultiply: invalid implementation')
     end if
@@ -1212,6 +1378,12 @@ contains
        end if
 #else
        call die('mm_dmultiply: compile with pspBLAS')
+#endif
+    case (15)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR) 
+       call dbcsr_multiply(opA,opB,alpha,A%dbcsr_mat,B%dbcsr_mat,beta,C%dbcsr_mat)
+#else
+       call die('mm_dmultiply: compile with MPI and DBCSR')
 #endif
     end select
 
@@ -1583,6 +1755,10 @@ contains
     complex(dp) :: cmplx_alpha, cmplx_beta
 #endif
 
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+    type(dbcsr_type) :: dbcsr_trA
+#endif
+
     !**********************************************!
 
 #ifdef CONV
@@ -1678,6 +1854,11 @@ contains
              call die('m_dadd: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (C%str_type .eq. 'csr') .and. &
+         (.not. C%is_serial)) then
+       ot=6
     else
        call die('m_dadd: invalid implementation')
     end if
@@ -1704,6 +1885,18 @@ contains
        call m_add_sdcscsddenref(A,trA,C,alpha,beta)
     case (5)
        call m_add_sdcsrsddenref(A,trA,C,alpha,beta)
+    case (6)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       if (trA) then
+          call dbcsr_transposed(dbcsr_trA, A%dbcsr_mat)
+          call dbcsr_add(C%dbcsr_mat, dbcsr_trA, beta, alpha)
+          call dbcsr_release(dbcsr_trA)
+       else
+          call dbcsr_add(C%dbcsr_mat, A%dbcsr_mat, beta, alpha)
+       endif
+#else
+       call die('m_dadd: compile with MPI and DBCSR')
+#endif
     end select
 
   end subroutine m_dadd
@@ -1802,7 +1995,7 @@ contains
           else if (label .eq. 't1D') then
              ot=3
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csc') .and. &
@@ -1815,7 +2008,7 @@ contains
           if (label .eq. 'ref') then
              ot=4
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else if ((A%str_type .eq. 'csr') .and. &
@@ -1828,7 +2021,7 @@ contains
           if (label .eq. 'ref') then
              ot=5
           else
-             call die('m_dadd: invalid implementation')
+             call die('m_zadd: invalid implementation')
           end if
        end if
     else
@@ -1933,6 +2126,9 @@ contains
              call die('m_dtrace: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial)) then
+       ot=3
     else
        call die('m_dtrace: invalid implementation')
     end if
@@ -1948,6 +2144,12 @@ contains
        alpha=pdlatra(A%dim1,A%dval,1,1,A%iaux1)
 #else
        call die('m_dtrace: compile with ScaLAPACK')
+#endif
+    case (3)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       CALL dbcsr_trace(A%dbcsr_mat, alpha)
+#else
+       call die('m_dtrace: compile with MPI and DBCSR')
 #endif
     end select
 
@@ -2131,6 +2333,11 @@ contains
              call die('mm_dtrace: invalid implementation')
           end if
        end if
+    else if ((A%str_type .eq. 'csr') .and. &
+         (.not. A%is_serial) .and. &
+         (B%str_type .eq. 'csr') .and. &
+         (.not. B%is_serial)) then
+       ot=4
     else
        call die('mm_dtrace: invalid implementation')
     end if
@@ -2158,6 +2365,12 @@ contains
        if (info/=0) call die('mm_dtrace: error in mpi_allreduce')
 #else
        call die('mm_dtrace: compile with MPI + LAPACK')
+#endif
+    case (4)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_trace(A%dbcsr_mat, B%dbcsr_mat, alpha)
+#else
+       call die("mm_dtrace: compile with MPI and DBCSR")
 #endif
     end select
 
@@ -2387,6 +2600,9 @@ contains
              call die('m_dscale: invalid implementation')
           end if
        end if
+    else if ((C%str_type .eq. 'csr') .and. &
+         (.not. C%is_serial)) then
+       ot=2
     else
        call die('m_dscale: invalid implementation')
     end if
@@ -2394,6 +2610,12 @@ contains
     select case (ot)
     case (1)
        C%dval=beta*C%dval
+    case (2)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_scale(C%dbcsr_mat, beta)
+#else
+       call die('m_dget_element: compile with DBCSR')
+#endif
     end select
 
   end subroutine m_dscale
@@ -3038,6 +3260,50 @@ contains
   end subroutine m_zset_element
 
   !============================================================================!
+  !> @brief Set matrix block (real version).
+  !============================================================================!
+  subroutine m_dset_block(C,i,j,block_data,beta)
+    implicit none
+
+    type(matrix), intent(inout) :: C
+    integer, intent(in) :: i, j
+    real(dp), dimension(:, :), intent(in) :: block_data
+    real(dp), intent(in) :: beta
+
+    integer :: st, myproc, proc_holds_blk
+    real(dp), dimension(:, :), pointer :: myblock
+    logical :: found
+
+    if ((C%str_type .eq. 'csr') .and. &
+        (.not. C%is_serial) .and. &
+        (C%is_sparse)) then
+       st = 1
+    else
+       call die('m_dset_block: invalid operation')
+    endif
+
+    select case (st)
+    case (1)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_distribution_get(C%dbcsr_dist, mynode=myproc)
+       call dbcsr_get_stored_coordinates(C%dbcsr_mat, i, j, proc_holds_blk)
+       if (myproc .eq. proc_holds_blk) then
+          if (beta==0.0_dp) then
+             call dbcsr_put_block(C%dbcsr_mat, i, j, block_data)
+          else
+             call dbcsr_get_block_p(C%dbcsr_mat, i, j, myblock, found)
+             call dbcsr_put_block(C%dbcsr_mat, i, j, block_data)
+             if (found) then
+                call dbcsr_put_block(C%dbcsr_mat, i, j, myblock, .true., beta)
+             endif
+          endif
+          call dbcsr_finalize(C%dbcsr_mat)
+       endif
+#endif
+    end select
+  end subroutine m_dset_block
+
+  !============================================================================!
   !> @brief Get matrix element (real version).
   !============================================================================!
   subroutine m_dget_element(C,i,j,alpha,label)
@@ -3263,6 +3529,35 @@ contains
 
   end subroutine m_zget_element
 
+  !============================================================================!
+  !> @brief Get matrix block (real version).
+  !============================================================================!
+  subroutine m_dget_block(C,i,j,block_data,found)
+    implicit none
+
+    type(matrix), intent(inout) :: C
+    integer, intent(in) :: i, j
+    real(dp), dimension(:, :), pointer, intent(out) :: block_data
+    logical, intent(out) :: found
+
+    integer :: st
+
+    if ((C%str_type .eq. 'csr') .and. &
+        (.not. C%is_serial) .and. &
+        (C%is_sparse)) then
+       st = 1
+    else
+       call die('m_dget_block: invalid operation')
+    endif
+
+    select case (st)
+    case (1)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+       call dbcsr_get_block_p(C%dbcsr_mat, i, j, block_data, found)
+#endif
+    end select
+  end subroutine m_dget_block
+
 #if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
   !============================================================================!
   !> @brief ScaLAPACK MPI setup.
@@ -3399,6 +3694,131 @@ contains
     end if
 
   end subroutine ms_scalapack_allocate
+#endif
+
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+  !============================================================================!
+  !> @brief DBCSR setup.
+  !!
+  !! Initialize the DBCSR library. It declares a MPI 2D grid.
+  !!
+  !! @param[in] MPI communicator.
+  !============================================================================!
+  subroutine ms_dbcsr_setup(mpi_comm)
+    integer, intent(in) :: mpi_comm
+
+    integer                 :: mpi_error, mpi_size
+    integer, dimension(2)   :: dims
+    logical, dimension(2)   :: period  = .true.
+    logical                 :: reorder = .false.
+
+    if (ms_dbcsr_init) then
+       call die("ms_dbcsr_setup: DBCSR already initialized")
+    endif
+    ms_dbcsr_init = .true.
+
+    call mpi_comm_size(mpi_comm, mpi_size, mpi_error)
+
+    ! Set the 2D grid
+    dims(:) = 0
+    call mpi_dims_create(mpi_size, 2, dims, mpi_error)
+    call mpi_cart_create(mpi_comm, 2, dims, period, reorder, ms_dbcsr_group, mpi_error)
+
+    ! initialize libdbcsr
+    call dbcsr_init_lib()
+  end subroutine ms_dbcsr_setup
+
+  !============================================================================!
+  !> @brief DBCSR finalization.
+  !!
+  !! Finalize DBCSR library. It removes the 2D grid communicator.
+  !!
+  !============================================================================!
+  subroutine ms_dbcsr_finalize()
+
+    integer                 :: mpi_error
+
+    if (.not. ms_dbcsr_init) then
+       call die("ms_dbcsr_finalize: DBCSR not initialized")
+    endif
+
+    ! finalize libdbcsr
+    call dbcsr_finalize_lib(ms_dbcsr_group)
+
+    call mpi_comm_free(ms_dbcsr_group, mpi_error)
+    ms_dbcsr_group = mpi_comm_null
+
+    ms_dbcsr_init = .false.
+
+  end subroutine ms_dbcsr_finalize
+
+  !============================================================================!
+  !> @brief Allocate an empty DBCSR matrix.
+  !!
+  !! Allocate an empty DBCSR matrix. It creates a 2D block-cycling
+  !! distribution over processors.
+  !!
+  !! @param[inout] Matrix.
+  !! @param[in] Sizes of the row-blocks
+  !! @param[in] Sizes of the column-blocks
+  !============================================================================!
+
+  subroutine ms_dbcsr_allocate(A, row_sizes, col_sizes)
+    implicit none
+
+    !**** INOUT ***********************************!
+    type(matrix), intent(inout) :: A
+
+    !**** IN **************************************!
+    integer, dimension(:), intent(in), pointer :: row_sizes, col_sizes
+
+    integer                           :: mpi_error
+    integer, dimension(2)             :: dims, coords
+    logical, dimension(2)             :: period
+    integer, dimension(:), pointer    :: cd_data, rd_data
+
+    if (.not. ms_dbcsr_init) then
+       call die("ms_dbcsr_allocate: DBCSR not inizialized")
+    endif
+    
+    call mpi_cart_get(ms_dbcsr_group, 2, dims, period, coords, mpi_error)
+
+    ! Create distribution arrays (rows and columns)
+    ! Block-cycling distribution
+    call dbcsr_make_dist(rd_data, SIZE(row_sizes), dims(1))
+    call dbcsr_make_dist(cd_data, SIZE(col_sizes), dims(2))
+
+    call dbcsr_distribution_new (A%dbcsr_dist,&
+                                 group=ms_dbcsr_group,&
+                                 row_dist=rd_data,&
+                                 col_dist=cd_data,&
+                                 reuse_arrays=.true.)
+
+    if (A%is_real) then
+       call dbcsr_create(A%dbcsr_mat, "Matrix", A%dbcsr_dist, &
+            dbcsr_type_no_symmetry, row_sizes, col_sizes, &
+            reuse_arrays=.false., data_type=dbcsr_type_real_8)
+    else
+       call die("ms_dbcsr_allocate: DBCSR Complex type not implemented!")
+    endif
+    call dbcsr_distribution_release(A%dbcsr_dist)
+
+    contains
+
+      subroutine dbcsr_make_dist(dist_array, dist_size, nbins)
+        integer, dimension(:), intent(out), pointer        :: dist_array
+        integer, intent(in)                                :: dist_size, nbins
+    
+        integer                                            :: i
+
+        allocate (dist_array(dist_size))
+        do i = 1, dist_size
+           dist_array(i) = MODULO(i-1, nbins)
+        end do
+      end subroutine dbcsr_make_dist
+
+  end subroutine ms_dbcsr_allocate
+  
 #endif
 
 end module MatrixSwitch

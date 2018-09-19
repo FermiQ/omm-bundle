@@ -10,3 +10,9 @@ LIBNAME = libMatrixSwitch.a
 BUILDPATH = ..
 
 PSPINCLUDEPATH = ../../pspBLAS/include
+
+# Uncomment to link and use DBCSR (https://github.com/cp2k/dbcsr)
+#OPTS     += -fopenmp
+#FPPFLAGS += -DHAVE_DBCSR
+#DBCSR     = <path to DBCSR installation directory>
+#DBCSRINC  = -I$(DBCSR)/include

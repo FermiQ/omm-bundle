@@ -11,7 +11,8 @@ all : example_sdden.x \
       example_sdden_wrapper.x \
       example_szden_wrapper.x \
       example_pddbc_wrapper.x \
-      example_pzdbc_wrapper.x
+      example_pzdbc_wrapper.x \
+      example_pdcsr_pddbc.x
 
 example_sdden.x : example_sdden.F90
 
@@ -29,10 +30,12 @@ example_pddbc_wrapper.x : example_pddbc_wrapper.F90
 
 example_pzdbc_wrapper.x : example_pzdbc_wrapper.F90
 
+example_pdcsr_pdcsc.x : example_pdcsr_pdcsc.F90
+
 clean : 
 	rm -f *.x
 
-LINK_MACRO = $< -I$(BUILDPATH)/include -I$(PSPINCLUDEPATH) $(LINALG_INCLUDES) $(BUILDPATH)/lib/$(LIBNAME) $(PSPLIB) $(LINALG_LIBS) -o $@
+LINK_MACRO = $< -I$(BUILDPATH)/include -I$(PSPINCLUDEPATH) $(LINALG_INCLUDES) $(BUILDPATH)/lib/$(LIBNAME) $(PSPLIB) $(DBCSRLIB) $(LINALG_LIBS) -o $@
 
 .F90.x : 
 	$(FORTRAN) $(OPTS) $(FPPFLAGS) $(LINK_MACRO)
