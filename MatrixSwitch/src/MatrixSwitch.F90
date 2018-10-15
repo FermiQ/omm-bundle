@@ -916,7 +916,7 @@ contains
                 call m_copy_external_pdbcpcoo(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
-             call die('mm_dmultiply: compile with pspBLAS')
+             call die('m_copy: compile with pspBLAS')
 #endif
           end if
        end if
@@ -934,7 +934,7 @@ contains
                 call m_copy_external_pdbcpcsc(m_name,A%zval,A%iaux1,threshold)
              end if
 #else
-             call die('mm_dmultiply: compile with pspBLAS')
+             call die('m_copy: compile with pspBLAS')
 #endif
           end if
        end if
@@ -954,7 +954,7 @@ contains
              endif
           endif
 #else
-          call die('mm_dmultiply: compile with MPI and DBCSR')
+          call die('m_copy: compile with MPI and DBCSR')
 #endif
     end select
 
@@ -1944,10 +1944,10 @@ contains
     call process_opM(opA,tcA)
     if (tcA==0) then
        if ((A%dim1/=C%dim1) .or. &
-            (A%dim2/=C%dim2)) call die('m_dadd: matrices A and C are not compatible')
+            (A%dim2/=C%dim2)) call die('m_zadd: matrices A and C are not compatible')
     else
        if ((A%dim1/=C%dim2) .or. &
-            (A%dim2/=C%dim1)) call die('m_dadd: matrices A and C are not compatible')
+            (A%dim2/=C%dim1)) call die('m_zadd: matrices A and C are not compatible')
     end if
 
     ! operation table
@@ -2044,7 +2044,7 @@ contains
            (A%spm%loc_dim2/=C%iaux2(2))) call die('m_zadd: matrices A and C must have identical parallel distributions')
        call m_add_pzcscpzdbcref(A,C,alpha,beta)
 #else
-       call die('m_dadd: compile with pspBLAS')
+       call die('m_zadd: compile with pspBLAS')
 #endif
     case (4)
        call m_add_szcscszdenref(A,tcA,C,alpha,beta)
@@ -2614,7 +2614,7 @@ contains
 #if defined(HAVE_MPI) && defined(HAVE_DBCSR)
        call dbcsr_scale(C%dbcsr_mat, beta)
 #else
-       call die('m_dget_element: compile with DBCSR')
+       call die('m_dscale: compile with DBCSR')
 #endif
     end select
 
@@ -2697,7 +2697,7 @@ contains
           else if (label .eq. 't1D') then
              ot=1
           else
-             call die('m_dscale: invalid implementation')
+             call die('m_zscale: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'csc') .and. &
@@ -2712,7 +2712,7 @@ contains
           else if (label .eq. 't1D') then
              ot=1
           else
-             call die('m_dscale: invalid implementation')
+             call die('m_zscale: invalid implementation')
           end if
        end if
     else if ((C%str_type .eq. 'csr') .and. &
@@ -2727,7 +2727,7 @@ contains
           else if (label .eq. 't1D') then
              ot=1
           else
-             call die('m_dscale: invalid implementation')
+             call die('m_zscale: invalid implementation')
           end if
        end if
     else
