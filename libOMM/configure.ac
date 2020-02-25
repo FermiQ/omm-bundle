@@ -17,7 +17,7 @@
 
 # Init Autoconf
 AC_PREREQ(2.69)
-AC_INIT([libOMM], [0.0.0],
+AC_INIT([libOMM], [1.0.0],
   [https://gitlab.com/ElectronicStructureLibrary/omm-bundle/issues],
   [libomm],
   [https://gitlab.com/ElectronicStructureLibrary/omm-bundle])
