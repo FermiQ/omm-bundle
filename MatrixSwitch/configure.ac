@@ -17,7 +17,10 @@
 
 # Init Autoconf
 AC_PREREQ(2.69)
-AC_INIT([MatrixSwitch], [0.0.0], [http://www.e-cam2020.eu:10080/ESL/omm/issues])
+AC_INIT([MatrixSwitch], [1.0.0],
+  [https://gitlab.com/ElectronicStructureLibrary/omm-bundle/issues],
+  [matrixswitch],
+  [https://gitlab.com/ElectronicStructureLibrary/omm-bundle])
 AC_REVISION([Autotools support for MatrixSwitch])
 AC_CONFIG_AUX_DIR(config/gnu)
 AC_CONFIG_MACRO_DIR([config/m4])
