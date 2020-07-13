@@ -3,6 +3,9 @@
 #endif
 
 module omm_rand
+#ifdef HAVE_MPI
+  use MatrixSwitch_ops, only : ms_mpi_rank
+#endif
 
 implicit none
 
@@ -29,7 +32,10 @@ contains
 #else
         call date_and_time(time=system_time)
         read (system_time,*) rtime
-        seed = int(rtime*1000.0_dp)
+        seed = int(rtime*100.0_dp)
+#endif
+#ifdef HAVE_MPI
+        seed = seed * (ms_mpi_rank + 1)
 #endif
 
     end function omm_rand_seed

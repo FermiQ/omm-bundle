@@ -89,6 +89,12 @@ module MatrixSwitch_m_register
   end interface m_register_pcsc
 #endif
 
+#if defined (HAVE_MPI) && defined(HAVE_DBCSR)
+  interface m_register_pdcsr
+     module procedure m_register_csr
+     module procedure m_update_csr
+  end interface m_register_pdcsr
+#endif
   !************************************************!
 
 contains
@@ -498,6 +504,53 @@ contains
     m_name%is_initialized=.true.
 
   end subroutine m_register_pzcsc
+#endif
+
+#if defined (HAVE_MPI) && defined(HAVE_DBCSR)
+
+  subroutine m_register_csr(m_name,nrows_loc,blocksize,id_rows,id_cols,nze_row,val)
+
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    integer, intent(in)                :: nrows_loc, blocksize
+    integer, intent(in), target        :: id_rows(:), id_cols(:), nze_row(:)
+    real(dp), intent(in), target       :: val(:)
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**********************************************!
+
+
+    m_name%iaux1 => id_rows
+    m_name%iaux2 => id_cols
+    m_name%iaux3 => nze_row
+    m_name%csr_blk = blocksize
+    m_name%csr_nrows = nrows_loc
+    m_name%csr_val => val
+
+  end subroutine m_register_csr
+
+  subroutine m_update_csr(m_name,val)
+
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in), target       :: val(:)
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**********************************************!
+
+    m_name%csr_val => val
+
+  end subroutine m_update_csr
 #endif
 
 end module MatrixSwitch_m_register

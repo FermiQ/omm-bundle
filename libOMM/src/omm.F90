@@ -1,7 +1,6 @@
 #if defined HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flavour,np,ip,cg_tol,long_out,dealloc,&
                m_storage,m_operation)
   use omm_ops
@@ -59,8 +58,10 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   logical :: conv ! CG minimization converged?
   logical :: ls_conv ! line search converged?
   logical :: ls_fail ! line search failed?
+  logical :: Use2D_sp
   logical, save :: log_start=.false.
   logical, allocatable, save :: first_call(:) ! first call for this value of ip?
+  logical :: keep_sparsity = .true.
 
   integer :: i
   integer :: j
@@ -70,6 +71,8 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   integer :: icg ! CG step num.
   integer :: n_step_max_inner ! max. num. steps for CG minimization (inner loop)
   integer :: n_step_max_outer=100 ! max. num. steps for CG minimization (outer loop)
+  integer :: bl_m ! blocksize for basis
+  integer :: bl_n ! blocksize for states
 
   real(dp) :: rn(2)
   real(dp) :: el
@@ -83,16 +86,17 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   real(dp) :: coeff(0:4) ! coeffs. of the quartic equation
   real(dp), allocatable, save :: x_min(:) ! line search position of minimum
 
-  type(matrix) :: SWd ! G^T*S*C matrix (n x n)
-  type(matrix) :: SWdd ! G^T*S*G matrix (n x n)
-  type(matrix) :: G ! gradient (n x m)
-  type(matrix) :: G_p ! gradient (n x m) at previous CG step
-  type(matrix) :: PG ! preconditioned gradient (n x m)
-  type(matrix) :: PG_p ! preconditioned gradient (n x m) at previous CG step
-  type(matrix) :: D ! conjugate search direction (n x m)
-  type(matrix) :: HC ! H*C matrix (n x m)
-  type(matrix) :: HG ! H*G matrix (n x m)
-  type(matrix) :: work1 ! work matrix (n x n)
+  type(matrix), save :: SWd ! G^T*S*C matrix (n x n)
+  type(matrix), save :: SWdd ! G^T*S*G matrix (n x n)
+  type(matrix), save :: G ! gradient (n x m)
+  type(matrix), save :: G_p ! gradient (n x m) at previous CG step
+  type(matrix), save :: work3 ! work matrix (n x m)
+  type(matrix), save :: PG ! preconditioned gradient (n x m)
+  type(matrix), save :: PG_p ! preconditioned gradient (n x m) at previous CG step
+  type(matrix), save :: D ! conjugate search direction (n x m)
+  type(matrix), save :: HC ! H*C matrix (n x m)
+  type(matrix), save :: HG ! H*G matrix (n x m)
+  type(matrix), save :: work1 ! work matrix (n x n)
   type(matrix), allocatable, save :: HW(:) ! Hamiltonian matrix in WF basis (n x n) for each value of ip
   type(matrix), allocatable, save :: HWd(:) ! G^T*H*C matrix (n x n) for each value of ip
   type(matrix), allocatable, save :: HWdd(:) ! G^T*H*G matrix (n x n) for each value of ip
@@ -121,6 +125,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
     open(newunit=log_unit,file='libOMM.log',status='replace')
     log_start=.true.
   end if
+
 
   if (S%is_initialized) then
     no_S=.false.
@@ -153,6 +158,20 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
     S_is_U=.false.
     use_precon=.false.
   end if
+
+
+  if(m_storage =='pdcsr') then
+    Use2D_sp = C_min%Use2D
+    bl_m = C_min%blk_size2
+    bl_n = C_min%blk_size1
+    if(use_Cholesky) then
+      call die('omm: Cholesky factorization is not available for sparse matrices')
+    end if
+    if(use_precon) then
+      call die('omm: Preconditioning is not available for sparse matrices')
+    end if
+  end if
+
 
   if (cg_tol<0.0_dp) then
     cg_tol_internal=1.0d-9
@@ -271,38 +290,79 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
     if (.not. allocated(P)) allocate(P(np))
   end if
   if (.not. allocated(work2)) allocate(work2(np))
+  
+  if(.not. (m_storage =='pdcsr')) then
+    if (.not. HW(ip)%is_initialized) call m_allocate(HW(ip),n,n,m_storage)
+    if (.not. HWd(ip)%is_initialized) call m_allocate(HWd(ip),n,n,m_storage)
+    if (.not. HWdd(ip)%is_initialized) call m_allocate(HWdd(ip),n,n,m_storage)
+    if (.not. SW(ip)%is_initialized) call m_allocate(SW(ip),n,n,m_storage)
+    if ((.not. use_Cholesky) .or. (.not. no_S)) then
+      if (.not. SC(ip)%is_initialized) call m_allocate(SC(ip),n,m,m_storage)
+     if (.not. SG(ip)%is_initialized) call m_allocate(SG(ip),n,m,m_storage)
+    end if
+    if (use_Cholesky) then
+      if (.not. C_Chl(ip)%is_initialized) call m_allocate(C_Chl(ip),n,m,m_storage)
+    end if
+    if (use_precon) then
+      if (.not. P(ip)%is_initialized) call m_allocate(P(ip),m,m,m_storage)
+      !if (.not. P(ip)%is_initialized) call m_register_psp_thre(P(ip),S%dval,S%iaux1,'csc',0.0_dp)
+    end if
+    if (.not. work2(ip)%is_initialized) call m_allocate(work2(ip),n,m,m_storage)
 
-  if (.not. HW(ip)%is_initialized) call m_allocate(HW(ip),n,n,m_storage)
-  if (.not. HWd(ip)%is_initialized) call m_allocate(HWd(ip),n,n,m_storage)
-  if (.not. HWdd(ip)%is_initialized) call m_allocate(HWdd(ip),n,n,m_storage)
-  if (.not. SW(ip)%is_initialized) call m_allocate(SW(ip),n,n,m_storage)
-  if ((.not. use_Cholesky) .or. (.not. no_S)) then
-    if (.not. SC(ip)%is_initialized) call m_allocate(SC(ip),n,m,m_storage)
-    if (.not. SG(ip)%is_initialized) call m_allocate(SG(ip),n,m,m_storage)
-  end if
-  if (use_Cholesky) then
-    if (.not. C_Chl(ip)%is_initialized) call m_allocate(C_Chl(ip),n,m,m_storage)
-  end if
-  if (use_precon) then
-    if (.not. P(ip)%is_initialized) call m_allocate(P(ip),m,m,m_storage)
-    !if (.not. P(ip)%is_initialized) call m_register_psp_thre(P(ip),S%dval,S%iaux1,'csc',0.0_dp)
-  end if
-  if (.not. work2(ip)%is_initialized) call m_allocate(work2(ip),n,m,m_storage)
+    if (.not. SWd%is_initialized) call m_allocate(SWd,n,n,m_storage)
+    if (.not. SWdd%is_initialized) call m_allocate(SWdd,n,n,m_storage)
+    if (.not. G%is_initialized) call m_allocate(G,n,m,m_storage)
+    if (.not. G_p%is_initialized) call m_allocate(G_p,n,m,m_storage)
+    if (use_precon) then
+      if (.not. PG%is_initialized) call m_allocate(PG,n,m,m_storage)
+      if (.not. PG_p%is_initialized) call m_allocate(PG_p,n,m,m_storage)
+    end if
+    if (.not. D%is_initialized) call m_allocate(D,n,m,m_storage)
+    if (.not. HC%is_initialized) call m_allocate(HC,n,m,m_storage)
+    if (.not. HG%is_initialized) call m_allocate(HG,n,m,m_storage)
+    if (.not. work1%is_initialized) call m_allocate(work1,n,n,m_storage)
 
-  if (.not. SWd%is_initialized) call m_allocate(SWd,n,n,m_storage)
-  if (.not. SWdd%is_initialized) call m_allocate(SWdd,n,n,m_storage)
-  if (.not. G%is_initialized) call m_allocate(G,n,m,m_storage)
-  if (.not. G_p%is_initialized) call m_allocate(G_p,n,m,m_storage)
-  if (use_precon) then
-    if (.not. PG%is_initialized) call m_allocate(PG,n,m,m_storage)
-    if (.not. PG_p%is_initialized) call m_allocate(PG_p,n,m,m_storage)
-  end if
-  if (.not. D%is_initialized) call m_allocate(D,n,m,m_storage)
-  if (.not. HC%is_initialized) call m_allocate(HC,n,m,m_storage)
-  if (.not. HG%is_initialized) call m_allocate(HG,n,m,m_storage)
-  if (.not. work1%is_initialized) call m_allocate(work1,n,n,m_storage)
+  else
+    if ((.not. use_Cholesky) .or. (.not. no_S)) then
+      if (.not. SC(ip)%is_initialized) call m_allocate(SC(ip),n,m,bl_n,bl_m,m_storage,Use2D_sp)
+      if (.not. SG(ip)%is_initialized) call m_allocate(SG(ip),n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    end if
+    if (.not. HW(ip)%is_initialized) call m_allocate(HW(ip),n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. HWd(ip)%is_initialized) call m_allocate(HWd(ip),n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. HWdd(ip)%is_initialized) call m_allocate(HWdd(ip),n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. SW(ip)%is_initialized) call m_allocate(SW(ip),n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. work2(ip)%is_initialized) call m_allocate(work2(ip),n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. SWd%is_initialized) call m_allocate(SWd,n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. SWdd%is_initialized) call m_allocate(SWdd,n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. G%is_initialized) call m_allocate(G,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. G_p%is_initialized) call m_allocate(G_p,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. work3%is_initialized) call m_allocate(work3,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. D%is_initialized) call m_allocate(D,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. HC%is_initialized) call m_allocate(HC,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. HG%is_initialized) call m_allocate(HG,n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    if (.not. work1%is_initialized) call m_allocate(work1,n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if(first_call(ip) .or. new_S) call m_copy(work3,C_min)
 
-  ! reduce the generalized problem to standard form using Cholesky factorization
+    call m_setzero(HW(ip))
+    call m_setzero(HWd(ip))
+    call m_setzero(HWdd(ip))
+    call m_setzero(work2(ip))
+    call m_setzero(SWd)
+    call m_setzero(SWdd)
+    call m_setzero(G)
+    call m_setzero(G_p)
+    call m_setzero(D)
+    call m_setzero(HC)
+    call m_setzero(HG)
+    call m_setzero(work1)
+    call m_setzero(SG(ip))
+    if (first_call(ip) .or. new_S) then
+      call m_setzero(SW(ip))
+      call m_setzero(SC(ip))
+    end if
+  end if
+
+    ! reduce the generalized problem to standard form using Cholesky factorization
   if (use_Cholesky) then
     if (new_S .and. (.not. S_is_U)) call m_factorize(S,m_operation)
     call m_reduce(S,H,m_operation)
@@ -327,19 +387,23 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   ! numbers between -0.5 and 0.5 (normalize at the end to avoid instabilities), unless we are
   ! reading them from file
   if (first_call(ip) .and. (.not. init_C)) then
-    seed = omm_rand_seed()
-    do i=1,m
-      do j=1,n
-        do k = 1,2
-          call omm_bsd_lcg(seed, rn(k))
+    if(.not. (m_storage =='pdcsr')) then
+      seed = omm_rand_seed()
+      do i=1,m
+        do j=1,n
+          do k = 1,2
+            call omm_bsd_lcg(seed, rn(k))
+          end do
+          !cmplx_el=cmplx(sign(0.5_dp*rn(1),rn(2)-0.5_dp),&
+          !               sign(0.5_dp*rn(3),rn(4)-0.5_dp),dp)
+          el=sign(0.5_dp*rn(1),rn(2)-0.5_dp)
+          call m_set_element(C_min,j,i,el,0.0_dp,m_operation)
         end do
-        !cmplx_el=cmplx(sign(0.5_dp*rn(1),rn(2)-0.5_dp),&
-        !               sign(0.5_dp*rn(3),rn(4)-0.5_dp),dp)
-        el=sign(0.5_dp*rn(1),rn(2)-0.5_dp)
-        call m_set_element(C_min,j,i,el,0.0_dp,m_operation)
       end do
-    end do
-    call m_scale(C_min,1.0d-2/sqrt(real(m,dp)),m_operation)
+      call m_scale(C_min,1.0d-2/sqrt(real(m,dp)),m_operation)
+    else
+      call die('omm: C_min sparse matrix must be initialized')
+    end if
   end if
   if (use_Cholesky .and. (init_C .or. new_S)) then
     call m_add(C_min,'n',C_Chl(ip),1.0_dp,0.0_dp,m_operation)
@@ -354,6 +418,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   else
     call calc_AW(H,C_min,HW(ip),HC,m_operation)
   end if
+
   ! -calculate the overlap matrix in WF basis: SW=C^T*S*C
   if (use_Cholesky) then
     if (first_call(ip) .or. init_C .or. new_S) call mm_multiply(C_Chl(ip),'n',C_Chl(ip),'c',SW(ip),1.0_dp,0.0_dp,m_operation)
@@ -366,6 +431,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
       call m_add(SG(ip),'n',SC(ip),x_min(ip),1.0_dp,m_operation)
     end if
   end if
+
   ! -calculate the gradient: G=2*(2*H*C-S*C*HW-H*C*SW)
   !  (note that we *reuse* H*C and S*C contained in HC and SC from the previous calls to calc_AW)
   if (use_Cholesky) then
@@ -375,6 +441,13 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   else
     call calc_G(HW(ip),SW(ip),G,HC,SC(ip),m_operation)
   end if
+
+  if(m_storage =='pdcsr') then
+    call m_copy(work3,G,keep_sparsity=keep_sparsity)
+    call m_setzero(G)
+    call m_copy(G,work3)
+  end if
+
   ! -calculate the preconditioned gradient by premultiplying G by P
   if (use_precon) call mm_multiply(G,'n',P(ip),'n',PG,1.0_dp,0.0_dp,m_operation)
   ! -calculate the additional matrices:
@@ -398,6 +471,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
       call mm_multiply(SC(ip),'n',G,'c',SWd,1.0_dp,0.0_dp,m_operation)
     end if
   end if
+
   if (use_precon) then
     call calc_AW(H,PG,HWdd(ip),HG,m_operation)
     call calc_AW(S,PG,SWdd,SG(ip),m_operation)
@@ -409,6 +483,7 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
       call calc_AW(S,G,SWdd,SG(ip),m_operation)
     end if
   end if
+
   call calc_coeff(HW(ip),SW(ip),HWd(ip),SWd,HWdd(ip),SWdd,work1,coeff,m_operation)
   e_min=coeff(0)
 
@@ -532,6 +607,13 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
           call calc_G(HW(ip),SW(ip),G,HC,SC(ip),m_operation)
         end if
       end if
+
+      if(m_storage =='pdcsr') then
+        call m_copy(work3,G,keep_sparsity=keep_sparsity)
+        call m_setzero(G)
+        call m_copy(G,work3)
+      end if
+
       if (use_precon) call mm_multiply(G,'n',P(ip),'n',PG,1.0_dp,0.0_dp,m_operation)
       if (ls_conv) then
         call m_add(G,'n',work2(ip),1.0_dp,0.0_dp,m_operation)
@@ -555,25 +637,42 @@ subroutine omm(m,n,H,S,new_S,e_min,D_min,calc_ED,eta,C_min,init_C,T,scale_T,flav
   end if
   if ((mpi_rank==0) .and. long_out) write(log_unit,'(a)') '+---------------------------------------------+'
 
-  if (work1%is_initialized) call m_deallocate(work1)
-  if (HG%is_initialized) call m_deallocate(HG)
-  if (HC%is_initialized) call m_deallocate(HC)
-  if (D%is_initialized) call m_deallocate(D)
-  if (PG_p%is_initialized) call m_deallocate(PG_p)
-  if (PG%is_initialized) call m_deallocate(PG)
-  if (G_p%is_initialized) call m_deallocate(G_p)
-  if (G%is_initialized) call m_deallocate(G)
-  if (SWdd%is_initialized) call m_deallocate(SWdd)
-  if (SWd%is_initialized) call m_deallocate(SWd)
+
+  if (dealloc) then
+    if (work1%is_initialized) call m_deallocate(work1)
+    if (HG%is_initialized) call m_deallocate(HG)
+    if (HC%is_initialized) call m_deallocate(HC)
+    if (D%is_initialized) call m_deallocate(D)
+    if (PG_p%is_initialized) call m_deallocate(PG_p)
+    if (PG%is_initialized) call m_deallocate(PG)
+    if (G_p%is_initialized) call m_deallocate(G_p)
+    if (G%is_initialized) call m_deallocate(G)
+    if (work3%is_initialized) call m_deallocate(work3)
+    if (SWdd%is_initialized) call m_deallocate(SWdd)
+    if (SWd%is_initialized) call m_deallocate(SWd)
+  end if
 
   if (.not. allocated(QW)) allocate(QW(np))
   if (.not. allocated(CD)) allocate(CD(np))
 
-  if (.not. QW(ip)%is_initialized) call m_allocate(QW(ip),n,n,m_storage)
-  if (.not. CD(ip)%is_initialized) call m_allocate(CD(ip),n,m,m_storage)
+  if(.not. (m_storage =='pdcsr')) then
+    if (.not. QW(ip)%is_initialized) call m_allocate(QW(ip),n,n,m_storage)
+    if (.not. CD(ip)%is_initialized) call m_allocate(CD(ip),n,m,m_storage)
+  else
+    if (.not. QW(ip)%is_initialized) call m_allocate(QW(ip),n,n,bl_n,bl_n,m_storage,Use2D_sp)
+    if (.not. CD(ip)%is_initialized) then
+      call m_allocate(CD(ip),n,m,bl_n,bl_m,m_storage,Use2D_sp)
+    end if
+  end if
 
   ! calculate the density matrix: D=C*(2*IW-SW)*C^T
-  call m_set(QW(ip),'a',0.0_dp,2.0_dp,m_operation)
+
+  if(.not. (m_storage =='pdcsr')) then
+    call m_set(QW(ip),'a',0.0_dp,2.0_dp,m_operation)
+  else
+    call m_set_diag_dbcsr(QW(ip), 2.0_dp)
+  end if
+
   call m_add(SW(ip),'n',QW(ip),-1.0_dp,1.0_dp,m_operation)
   if (use_Cholesky) then
     call m_add(C_Chl(ip),'n',C_min,1.0_dp,0.0_dp,m_operation)

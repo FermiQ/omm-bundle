@@ -46,6 +46,7 @@ module MatrixSwitch_ops
 #ifdef HAVE_DBCSR
   logical, save :: ms_dbcsr_init = .false. !< check if dbcsr is set.
   integer, save :: ms_dbcsr_group = mpi_comm_null !< Group communication
+  integer, save :: ms_dbcsr_brd_group = mpi_comm_null !< Group communication
 #endif
 
 #endif
@@ -92,9 +93,16 @@ module MatrixSwitch_ops
 #if defined(HAVE_MPI) && defined(HAVE_DBCSR)
      type(dbcsr_distribution_type)     :: dbcsr_dist
      type(dbcsr_type)                  :: dbcsr_mat
+     real(dp), pointer                 :: csr_val(:) => null()
+     integer                           :: blk_size1=0
+     integer                           :: blk_size2=0
+     integer                           :: csr_blk=0
+     integer                           :: csr_nrows=0
+     logical                           :: Use2D = .true.
 #endif
 
   end type matrix
+
 
   !**** INTERFACES ********************************!
 

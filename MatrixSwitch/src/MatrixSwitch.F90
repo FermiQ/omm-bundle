@@ -258,6 +258,7 @@ module MatrixSwitch
   interface m_allocate
      module procedure m_allocate_elements
      module procedure m_allocate_blocks
+     module procedure m_allocate_eq_blocks
   end interface m_allocate
 
   !************************************************!
@@ -266,6 +267,8 @@ module MatrixSwitch
   public :: m_allocate
   public :: m_deallocate
   public :: m_copy
+  public :: m_read
+  public :: m_write
   public :: m_convert
   public :: mm_multiply
   public :: m_add
@@ -273,6 +276,7 @@ module MatrixSwitch
   public :: mm_trace
   public :: m_scale
   public :: m_set
+  public :: m_setzero
   public :: m_set_element
   public :: m_get_element
   public :: m_register_sden
@@ -285,6 +289,10 @@ module MatrixSwitch
 #ifdef HAVE_DBCSR
   public :: ms_dbcsr_setup
   public :: ms_dbcsr_finalize
+  public :: m_convert_dbcsrcsr
+  public :: m_convert_csrdbcsr
+  public :: m_register_pdcsr
+  public :: m_set_diag_dbcsr
 #endif
 #endif
 #ifdef HAVE_PSPBLAS
@@ -433,12 +441,13 @@ contains
   !!                      the list of available formats. Default is \c pdcsr.
   !============================================================================!
 
-  subroutine m_allocate_blocks(m_name,row_sizes,col_sizes,label)
+  subroutine m_allocate_blocks(m_name,row_sizes,col_sizes,label,use2D)
     implicit none
 
     !**** INPUT ***********************************!
 
     character(5), intent(in), optional :: label
+    logical, intent(in), optional :: use2D
 
     integer, intent(in), dimension(:), pointer :: row_sizes
     integer, intent(in), dimension(:), pointer :: col_sizes
@@ -506,7 +515,12 @@ contains
     select case (st)
     case (1)
 #if defined(HAVE_MPI) && defined(HAVE_DBCSR)
-       call ms_dbcsr_allocate(m_name, row_sizes, col_sizes)
+       if(present(use2D)) then
+         call ms_dbcsr_allocate(m_name, row_sizes, col_sizes, use2D)
+         m_name%Use2D = use2D
+       else
+         call ms_dbcsr_allocate(m_name, row_sizes, col_sizes)
+       end if
 #else
        call die('m_allocate_blocks: compile with MPI and DBCSR')
 #endif
@@ -515,6 +529,55 @@ contains
     m_name%is_initialized=.true.
 
   end subroutine m_allocate_blocks
+
+  subroutine m_allocate_eq_blocks(m_name,dim1,dim2,blocksize1,blocksize2,label,use2D)
+
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(5), intent(in), optional :: label
+    logical, intent(in), optional :: use2D
+
+    integer, intent(in) :: dim1, dim2
+    integer, intent(in) :: blocksize1, blocksize2
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer:: nblocks1, nblocks2
+    integer, dimension(:), pointer :: row_sizes, col_sizes
+    integer :: i
+
+    !**********************************************!
+
+    m_name%blk_size1=blocksize1
+    m_name%blk_size2=blocksize2
+    nblocks1 = ceiling(real(dim1,dp)/blocksize1)
+    nblocks2 = ceiling(real(dim2,dp)/blocksize2)
+    allocate(row_sizes(1:nblocks1))
+    row_sizes(:) = blocksize1
+    allocate(col_sizes(1:nblocks2))
+    col_sizes(:) = blocksize2
+
+    if(present(use2D)) then
+      if(present(label)) then
+        call m_allocate_blocks(m_name,row_sizes,col_sizes,label=label,use2D=use2D)
+      else
+        call m_allocate_blocks(m_name,row_sizes,col_sizes,use2D=use2D)
+      end if
+    else
+       if(present(label)) then
+        call m_allocate_blocks(m_name,row_sizes,col_sizes,label=label)
+      else
+        call m_allocate_blocks(m_name,row_sizes,col_sizes)
+      end if
+    end if
+
+  end subroutine m_allocate_eq_blocks
 
   !============================================================================!
   !> @brief Deallocate matrix.
@@ -593,6 +656,7 @@ contains
          (.not. m_name%is_serial)) then
        call dbcsr_release(m_name%dbcsr_mat)
        call dbcsr_distribution_release(m_name%dbcsr_dist)
+       if(associated(m_name%csr_val)) nullify(m_name%csr_val)
     endif
 #endif
 
@@ -627,7 +691,7 @@ contains
   !!                                 \arg \c .false. Values are not shifted
   !!                                 (default).
   !============================================================================!
-  subroutine m_copy(m_name,A,label,threshold,threshold_is_soft)
+  subroutine m_copy(m_name,A,label,threshold,threshold_is_soft,keep_sparsity)
     implicit none
 
     !**** INPUT ***********************************!
@@ -635,6 +699,8 @@ contains
     character(5), intent(in), optional :: label
 
     logical, intent(in), optional :: threshold_is_soft
+
+    logical, intent(in), optional :: keep_sparsity
 
     real(dp), intent(in), optional :: threshold
 
@@ -948,7 +1014,11 @@ contains
                 call die('m_copy: Invalid DBCSR matrix to copy from')
              endif
              ! Copy DBCSR in DBCSR (deep-copy)
-             call dbcsr_copy(m_name%dbcsr_mat, A%dbcsr_mat)
+             if(present(keep_sparsity)) then
+               call dbcsr_copy(m_name%dbcsr_mat, A%dbcsr_mat, keep_sparsity=keep_sparsity)
+             else
+               call dbcsr_copy(m_name%dbcsr_mat, A%dbcsr_mat)
+             end if
              if (present(threshold)) then
                 call dbcsr_filter(m_name%dbcsr_mat, abs_threshold)
              endif
@@ -1039,6 +1109,125 @@ contains
     call m_deallocate(temp_matrix)
 
   end subroutine m_convert
+
+  subroutine m_read(m_name,filepath,file_exist,keep_sparsity)
+
+    implicit none
+    !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+    logical, intent(in), optional :: keep_sparsity
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** OUT ************************************!
+
+    logical, intent(out) :: file_exist
+
+    !**** INTERNAL ********************************!
+
+    integer :: st
+
+    !**********************************************!
+
+    if(m_name%is_serial) then
+      call die('m_read: not implemented for serial')
+    else
+#ifndef HAVE_MPI
+      call die('m_read: compile with MPI')
+#endif
+      if(m_name%is_real) then
+        if(m_name%str_type .eq. 'csr') then
+          st = 1
+        else
+          if(m_name%str_type .eq. 'dbc') then
+            st = 2
+          else
+            call die('m_read: not implemented for this matrix type')
+          end if
+        end if
+      else
+        call die('m_read: not implemented for complex')
+      end if
+    end if
+
+    select case (st)
+    case (1)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+      if(present(keep_sparsity)) then
+        call ms_dbcsr_read(m_name,filepath,file_exist,keep_sparsity=keep_sparsity)
+      else
+        call ms_dbcsr_read(m_name,filepath,file_exist)
+      end if
+#else
+      call die('m_read: compile with MPI and DBCSR')
+#endif
+   case (2)
+#if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+      call ms_pddbc_read(m_name,filepath,file_exist)
+#else
+      call die('m_read: compile with MPI and SCALAPACK')
+#endif
+    end select
+  end subroutine m_read
+
+
+  subroutine m_write(m_name,filepath)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: st
+
+    !**********************************************!
+
+     if(m_name%is_serial) then
+        call die('m_write: not implemented for serial')
+     else
+#ifndef HAVE_MPI
+     call die('m_write: compile with MPI')
+#endif
+     if(m_name%is_real) then
+        if(m_name%str_type .eq. 'csr') then
+          st = 1
+        else
+          if(m_name%str_type .eq. 'dbc') then
+            st = 2
+          else
+            call die('m_write: not implemented for this matrix type')
+          end if
+        end if
+      else
+        call die('m_write: not implemented for complex')
+      end if
+    end if
+
+    select case (st)
+    case (1)
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+      call ms_dbcsr_write(m_name,filepath)
+#else
+      call die('m_write: compile with MPI and DBCSR')
+#endif
+    case (2)
+#if defined(HAVE_MPI) && defined(HAVE_SCALAPACK)
+      call ms_pddbc_write(m_name,filepath)
+#else
+      call die('m_write: compile with MPI and SCALAPACK')
+#endif
+    end select
+  end subroutine m_write
+
 
   !============================================================================!
   !> @brief Matrix-matrix multiplication (real version).
@@ -2741,6 +2930,32 @@ contains
 
   end subroutine m_zscale
 
+  subroutine m_setzero(m_name, label)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    character(3), intent(in), optional :: label
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**********************************************!
+
+    if((.not. m_name%is_serial) .and. (m_name%is_real) .and.&
+      (m_name%str_type .eq. 'csr')) then
+#if defined(HAVE_MPI) && defined(HAVE_DBCSR)
+      call ms_setzero_dbcsr(m_name)
+#else
+      call die('m_write: compile with MPI and DBCSR')
+#endif
+    else
+      call m_set(m_name,'a',0.0_dp,0.0_dp,label)
+    endif
+
+  end subroutine m_setzero
+
   !============================================================================!
   !> @brief Set matrix (real version).
   !============================================================================!
@@ -3285,7 +3500,7 @@ contains
     select case (st)
     case (1)
 #if defined(HAVE_MPI) && defined(HAVE_DBCSR)
-       call dbcsr_distribution_get(C%dbcsr_dist, mynode=myproc)
+       myproc = ms_mpi_rank
        call dbcsr_get_stored_coordinates(C%dbcsr_mat, i, j, proc_holds_blk)
        if (myproc .eq. proc_holds_blk) then
           if (beta==0.0_dp) then
@@ -3694,6 +3909,187 @@ contains
     end if
 
   end subroutine ms_scalapack_allocate
+
+  subroutine ms_pddbc_write(m_name, filepath)
+
+    implicit none
+    !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: fout
+    integer :: blk_r, blk_c, nblks(2)
+    integer :: i, j, k, i_node
+    integer :: stat(mpi_status_size), mpi_err
+    integer :: i0, j0, size, size_i, size_j
+    real(dp), allocatable :: block(:)
+
+    !**********************************************!
+
+    if(ms_mpi_rank==0) then
+      open(newunit=fout,file=filepath,form="unformatted",status="replace",action="write")
+      write(fout) m_name%iaux1
+    end if
+
+    nblks(1)=(m_name%iaux1(3)-1)/m_name%iaux1(5)
+    nblks(2)=(m_name%iaux1(4)-1)/m_name%iaux1(6)
+    size=m_name%iaux1(5)*m_name%iaux1(6)
+    allocate(block(1:size))
+
+    do blk_r=0, nblks(1)
+      do blk_c=0, nblks(2)
+        i_node=mod(blk_r,ms_lap_nprow)+mod(blk_c,ms_lap_npcol)*ms_lap_nprow
+        if(ms_lap_order .eq. 'r') i_node=mod(blk_r,ms_lap_nprow)*ms_lap_npcol+mod(blk_c,ms_lap_npcol)
+        if((i_node==ms_mpi_rank) .or. (ms_mpi_rank==0)) then
+          block(:)=0.0_dp
+          i0=blk_r/ms_lap_nprow*m_name%iaux1(5)
+          j0=blk_c/ms_lap_npcol*m_name%iaux1(6)
+          size_i=m_name%iaux1(5)
+          size_j=m_name%iaux1(6)
+          if((blk_r+1)*size_i>m_name%iaux1(3)) size_i=m_name%iaux1(3)-blk_r*size_i
+          if((blk_c+1)*size_j>m_name%iaux1(4)) size_j=m_name%iaux1(4)-blk_c*size_j
+          !size=size_i*size_j
+          k=0
+          if(i_node==ms_mpi_rank) then
+            do i=1, size_i
+              do j=1, size_j
+                k=k+1
+                block(k)=m_name%dval(i0+i,j0+j)
+              end do
+            end do
+            if(i_node==0) then
+              write(fout) block(1:size)
+            else
+              call mpi_send(block(1:size),size,mpi_double_precision,0,1,ms_mpi_comm,mpi_err)
+              if (mpi_err/=0) call die('ms_pddbc_write: error in mpi_send')
+            end if
+          else if(ms_mpi_rank==0) then
+            call mpi_recv(block(1:size),size,mpi_double_precision,i_node,1,ms_mpi_comm,stat,mpi_err)
+            if (mpi_err/=0) call die('ms_pddbc_write: error in mpi_recv')
+            write(fout) block(1:size)
+          end if
+        end if
+      end do
+    end do
+
+    deallocate(block)
+    if(ms_mpi_rank==0) close(fout)
+  end subroutine ms_pddbc_write
+
+  subroutine ms_pddbc_read(m_name, filepath, file_exist)
+
+    implicit none
+    !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** OUT ***********************************!
+
+    logical, intent(out) :: file_exist
+
+
+    !**** INTERNAL ********************************!
+
+    integer :: fout
+    integer :: blk_r, blk_c, nblks(2), dim_loc(2)
+    integer :: i, j, k, l, i_node, desc(9), desc_old(9)
+    integer :: stat(mpi_status_size), mpi_err
+    integer :: i0, j0, size, size_i, size_j
+    real(dp), allocatable :: block(:), c_read(:,:)
+    integer :: info
+
+    !**** EXTERNAL ********************************!
+
+    integer, external :: numroc
+
+    !**********************************************!
+
+    inquire(file=filepath,exist=file_exist)
+    if(file_exist) then
+
+      if(ms_mpi_rank==0) then
+        open(newunit=fout,file=filepath,form="unformatted",status="old",action="read")
+        read(fout) desc
+      end if
+
+      call mpi_bcast(desc,9,mpi_integer,0,ms_mpi_comm,mpi_err)
+
+      if((m_name%iaux1(3) .ne. desc(3)) .or. (m_name%iaux1(4) .ne. desc(4))) then
+        call die('ms_pddbc_read: Wrong matrix size')
+      end if
+
+      call blacs_gridinfo(ms_lap_icontxt,i,j,k,l)
+      dim_loc(1)=numroc(desc(3),desc(5),k,0,ms_lap_nprow)
+      dim_loc(2)=numroc(desc(4),desc(6),l,0,ms_lap_npcol)
+
+      allocate(c_read(1:dim_loc(1),1:dim_loc(2)))
+      c_read(:,:) = 0.0_dp
+
+      nblks(1)=(desc(3)-1)/desc(5)
+      nblks(2)=(desc(4)-1)/desc(6)
+      size=desc(5)*desc(6)
+      allocate(block(1:size))
+
+      do blk_r=0, nblks(1)
+        do blk_c=0, nblks(2)
+          i_node=mod(blk_r,ms_lap_nprow)+mod(blk_c,ms_lap_npcol)*ms_lap_nprow
+          if(ms_lap_order .eq. 'r') i_node=mod(blk_r,ms_lap_nprow)*ms_lap_npcol+mod(blk_c,ms_lap_npcol)
+          if((i_node==ms_mpi_rank) .or. (ms_mpi_rank==0)) then
+            block(:)=0.0_dp
+            i0=blk_r/ms_lap_nprow*desc(5)
+            j0=blk_c/ms_lap_npcol*desc(6)
+            size_i=desc(5)
+            size_j=desc(6)
+            if((blk_r+1)*size_i>desc(3)) size_i=desc(3)-blk_r*size_i
+            if((blk_c+1)*size_j>desc(4)) size_j=desc(4)-blk_c*size_j
+            size=size_i*size_j
+            k=0
+            if(i_node==ms_mpi_rank) then
+              if(i_node==0) then
+                read(fout) block(1:size)
+              else
+                call mpi_recv(block(1:size),size,mpi_double_precision,0,1,ms_mpi_comm,stat,mpi_err)
+                if (mpi_err/=0) call die('ms_pddbc_read: error in mpi_recv')
+              end if
+              do i=1, size_i
+                do j=1, size_j
+                  k=k+1
+                  c_read(i0+i,j0+j)=block(k)
+                end do
+              end do
+            else if(ms_mpi_rank==0) then
+              read(fout) block(1:size)
+              call mpi_send(block(1:size),size,mpi_double_precision,i_node,1,ms_mpi_comm,mpi_err)
+              if (mpi_err/=0) call die('ms_pddbc_read: error in mpi_send')
+            end if
+          end if
+       end do
+      end do
+
+      if((m_name%iaux1(5)/=desc(5)) .or. (m_name%iaux1(6)/=desc(6))) then
+        call descinit(desc_old,desc(3),desc(4),desc(5),desc(6),0,0,ms_lap_icontxt,max(1,dim_loc(1)),info)
+        if (info/=0) call die('ms_pddbc_read: error in descinit')
+
+        call pdgemr2d(desc(3),desc(4),c_read,1,1,desc_old,m_name%dval,1,1,m_name%iaux1,ms_lap_icontxt)
+      else
+        m_name%dval(:,:)=c_read(:,:)
+      end if
+
+      deallocate(block)
+      if(allocated(c_read)) deallocate(c_read)
+      if(ms_mpi_rank==0) close(fout)
+    end if
+  end subroutine ms_pddbc_read
 #endif
 
 #if defined(HAVE_MPI) && defined(HAVE_DBCSR)
@@ -3707,7 +4103,7 @@ contains
   subroutine ms_dbcsr_setup(mpi_comm)
     integer, intent(in) :: mpi_comm
 
-    integer                 :: mpi_error, mpi_size
+    integer                 :: mpi_error
     integer, dimension(2)   :: dims
     logical, dimension(2)   :: period  = .true.
     logical                 :: reorder = .false.
@@ -3717,12 +4113,19 @@ contains
     endif
     ms_dbcsr_init = .true.
 
-    call mpi_comm_size(mpi_comm, mpi_size, mpi_error)
+    ms_mpi_comm=mpi_comm
+    call mpi_comm_size(ms_mpi_comm,ms_mpi_size,mpi_error)
+    call mpi_comm_rank(ms_mpi_comm,ms_mpi_rank,mpi_error)
 
     ! Set the 2D grid
     dims(:) = 0
-    call mpi_dims_create(mpi_size, 2, dims, mpi_error)
-    call mpi_cart_create(mpi_comm, 2, dims, period, reorder, ms_dbcsr_group, mpi_error)
+    call mpi_dims_create(ms_mpi_size, 2, dims, mpi_error)
+    call mpi_cart_create(ms_mpi_comm, 2, dims, period, reorder, ms_dbcsr_group, mpi_error)
+
+    ! Set the 1D grid
+    dims(1) = ms_mpi_size
+    dims(2) = 1
+    call mpi_cart_create(ms_mpi_comm, 2, dims, period, reorder, ms_dbcsr_brd_group, mpi_error)
 
     ! initialize libdbcsr
     call dbcsr_init_lib()
@@ -3748,6 +4151,9 @@ contains
     call mpi_comm_free(ms_dbcsr_group, mpi_error)
     ms_dbcsr_group = mpi_comm_null
 
+    call mpi_comm_free(ms_dbcsr_brd_group, mpi_error)
+    ms_dbcsr_brd_group = mpi_comm_null
+
     ms_dbcsr_init = .false.
 
   end subroutine ms_dbcsr_finalize
@@ -3763,7 +4169,7 @@ contains
   !! @param[in] Sizes of the column-blocks
   !============================================================================!
 
-  subroutine ms_dbcsr_allocate(A, row_sizes, col_sizes)
+  subroutine ms_dbcsr_allocate(A, row_sizes, col_sizes, use2D)
     implicit none
 
     !**** INOUT ***********************************!
@@ -3771,17 +4177,27 @@ contains
 
     !**** IN **************************************!
     integer, dimension(:), intent(in), pointer :: row_sizes, col_sizes
+    logical, intent(in), optional :: use2D
 
-    integer                           :: mpi_error
+    integer                           :: mpi_error, my_group
     integer, dimension(2)             :: dims, coords
     logical, dimension(2)             :: period
     integer, dimension(:), pointer    :: cd_data, rd_data
+    logical                           :: my_use2D
 
     if (.not. ms_dbcsr_init) then
        call die("ms_dbcsr_allocate: DBCSR not inizialized")
     endif
     
-    call mpi_cart_get(ms_dbcsr_group, 2, dims, period, coords, mpi_error)
+    my_use2D = .true.
+    if(present(use2D)) my_use2D = use2D
+
+    if(my_use2D) then
+      my_group = ms_dbcsr_group
+    else
+      my_group = ms_dbcsr_brd_group
+    end if
+    call mpi_cart_get(my_group, 2, dims, period, coords, mpi_error)
 
     ! Create distribution arrays (rows and columns)
     ! Block-cycling distribution
@@ -3789,7 +4205,7 @@ contains
     call dbcsr_make_dist(cd_data, SIZE(col_sizes), dims(2))
 
     call dbcsr_distribution_new (A%dbcsr_dist,&
-                                 group=ms_dbcsr_group,&
+                                 group=my_group,&
                                  row_dist=rd_data,&
                                  col_dist=cd_data,&
                                  reuse_arrays=.true.)
@@ -3801,7 +4217,6 @@ contains
     else
        call die("ms_dbcsr_allocate: DBCSR Complex type not implemented!")
     endif
-    call dbcsr_distribution_release(A%dbcsr_dist)
 
     contains
 
@@ -3818,7 +4233,286 @@ contains
       end subroutine dbcsr_make_dist
 
   end subroutine ms_dbcsr_allocate
-  
+
+  subroutine m_convert_csrdbcsr(m_name,threshold,bl_size)
+
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in), optional :: threshold
+    integer, intent(in), optional :: bl_size
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    real(dp), dimension(:,:), allocatable :: block_data
+    integer :: io, j, jo, ind, nrow, nrows_loc, n_bl, i
+    integer :: bsize1, bsize2, dim1, dim2, iblk, nblk
+    logical :: use2D = .false., found
+    character(5) :: m_storage
+    type(matrix) :: brd_m
+    integer :: nblk_zero, nblk_tot
+
+    !**********************************************!
+
+    bsize1 = m_name%csr_blk
+    bsize2 = bsize1
+    if(present(bl_size)) bsize2 = bl_size
+
+    dim1 = m_name%dim1
+    dim2 = m_name%dim2
+
+    m_storage ='pdcsr'
+    call m_allocate(brd_m,dim1,dim2,bsize1,bsize2,label=m_storage,use2D=use2D)
+
+    allocate(block_data(1:bsize1,1:bsize2))
+    block_data(:,:) = 0.0_dp
+    nblk = ceiling(real(brd_m%dim2,dp)/bsize2)
+
+    nrows_loc = m_name%csr_nrows
+    found = .false.
+    nblk_zero = 0
+    nblk_tot= 0
+    do iblk = 1, nblk
+      i = 0
+      do io = 1, nrows_loc
+        i = i + 1
+        do j = 1, m_name%iaux3(io)
+           ind = m_name%iaux1(io) + j
+           jo = m_name%iaux2(ind)
+           jo = jo - (iblk-1) * bsize2
+           if((jo .gt. 0) .and. (jo .le. bsize2)) then
+             block_data(i,jo) = m_name%csr_val(ind)
+             found = .true.
+           end if
+        end do
+        if((mod(io, bsize1) .eq. 0) .or. (io == nrows_loc)) then
+
+          i = 0
+          if(found) then
+            n_bl = (io - 1)/bsize1
+            nrow = ms_mpi_size * n_bl + ms_mpi_rank + 1
+            call m_set_element(brd_m, nrow, iblk, block_data,0.0_dp)
+            block_data(:,:) = 0.0_dp
+            found = .false.
+          else
+            nblk_zero = nblk_zero + 1
+          end if
+          nblk_tot = nblk_tot + 1
+        end if
+      end do
+    end do
+
+    deallocate(block_data)
+    call dbcsr_complete_redistribute(brd_m%dbcsr_mat, m_name%dbcsr_mat)
+    if (present(threshold)) then
+      call dbcsr_filter(m_name%dbcsr_mat,abs(threshold))
+    endif
+    call m_deallocate(brd_m)
+
+  end subroutine m_convert_csrdbcsr
+
+  subroutine m_convert_dbcsrcsr(m_name,threshold,bl_size)
+    implicit none
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in), optional :: threshold
+    integer, intent(in), optional :: bl_size
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer   :: io, j, jo, ind, nrow, nrows_loc, n_bl, i
+    real(dp),pointer :: myblock(:,:)
+    logical :: found
+    integer :: bsize1, bsize2, dim1, dim2, iblk, nblk
+    logical :: use2D = .false.
+    character(5) :: m_storage
+    type(matrix) :: brd_m
+
+    !**********************************************!
+
+    bsize1 = m_name%csr_blk
+    bsize2 = bsize1
+    if(present(bl_size)) bsize2 = bl_size
+
+    dim1 = m_name%dim1
+    dim2 = m_name%dim2
+
+    m_storage ='pdcsr'
+    call m_allocate(brd_m,dim1,dim2,bsize1,bsize2,label=m_storage,use2D=use2D)
+
+    if (present(threshold)) then
+      call dbcsr_filter(m_name%dbcsr_mat,abs(threshold))
+    endif
+    call dbcsr_complete_redistribute(m_name%dbcsr_mat,brd_m%dbcsr_mat)
+
+    nrows_loc = m_name%csr_nrows
+
+    nblk = ceiling(real(brd_m%dim2,dp)/bsize2)
+    found = .false.
+    do iblk = 1, nblk
+      do io = 1, nrows_loc
+        if(mod(io, bsize1) .eq. 1) then
+          found = .false.
+          n_bl = (io - 1)/bsize1
+          nrow = ms_mpi_size * n_bl + ms_mpi_rank + 1
+          call m_get_element(brd_m,nrow,iblk,myblock,found)
+          i = 0
+        end if
+        i = i + 1
+        do j = 1, m_name%iaux3(io)
+          ind = m_name%iaux1(io) + j
+          jo = m_name%iaux2(ind)
+          jo = jo - bsize2 * (iblk - 1)
+          if((jo .gt. 0) .and. (jo .le. bsize2)) then
+            if(found) then
+              m_name%csr_val(ind) = myblock(i,jo)
+            else
+              m_name%csr_val(ind) = 0.0_dp
+            end if
+          end if
+        end do
+      end do
+    end do
+    call m_deallocate(brd_m)
+
+  end subroutine m_convert_dbcsrcsr
+
+  subroutine m_set_diag_dbcsr(m_name, alpha)
+
+    !**** INPUT ***********************************!
+
+    real(dp), intent(in) :: alpha
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**********************************************!
+
+    call ms_setzero_dbcsr(m_name)
+    call dbcsr_add_on_diag(m_name%dbcsr_mat,alpha)
+
+  end subroutine m_set_diag_dbcsr
+
+  subroutine ms_setzero_dbcsr(m_name)
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**********************************************!
+
+    call dbcsr_set(m_name%dbcsr_mat,0.0_dp)
+    call dbcsr_filter(m_name%dbcsr_mat,1.0d-15)
+
+  end subroutine ms_setzero_dbcsr
+
+  subroutine ms_dbcsr_write(m_name,filepath)
+
+    !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+
+    !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+    !**** INTERNAL ********************************!
+
+    integer :: fout
+    character(len=120) :: filepath_bl
+
+    !**********************************************!
+
+    filepath_bl=trim(filepath)//'_DATA'
+    if(ms_mpi_rank==0) then
+      open(newunit=fout,file=filepath_bl,form="unformatted",status="replace",action="write")
+      write(fout) m_name%dim1, m_name%dim2, m_name%blk_size1, m_name%blk_size2
+      close(fout)
+    end if
+    call dbcsr_binary_write(m_name%dbcsr_mat,filepath)
+
+  end subroutine ms_dbcsr_write
+
+  subroutine ms_dbcsr_read(m_name,filepath,file_exist,keep_sparsity)
+
+   !**** INPUT ***********************************!
+
+    character(len=*), intent(in) :: filepath
+    logical, intent(in), optional :: keep_sparsity
+
+   !**** INOUT ***********************************!
+
+    type(matrix), intent(inout) :: m_name
+
+   !**** OUT *************************************!
+
+    logical, intent(out) :: file_exist
+
+   !**** INTERNAL ********************************!
+
+    logical :: file_exist_bl, my_keep_sparsity
+    type(matrix) :: C_restart
+    integer :: C_data(4), fout, mpi_err
+    character(len=120) :: filepath_bl
+
+   !**********************************************!
+
+    filepath_bl=trim(filepath)//'_DATA'
+    inquire(file=filepath_bl,exist=file_exist_bl)
+
+    if(file_exist_bl) then
+      if(ms_mpi_rank==0) then
+        open(newunit=fout,file=filepath_bl,form="unformatted",status="old",action="read")
+        read(fout) C_data
+        print'(a,i5,a,i5,a,i5,a,i5)',' C_data ',C_data(1),' ',C_data(2),' ',C_data(3),' ',C_data(4)
+        close(fout)
+      end if
+
+      call mpi_bcast(C_data,4,mpi_integer,0,ms_mpi_comm,mpi_err)
+    else
+      C_data(1)=m_name%dim1
+      C_data(2)=m_name%dim2
+      C_data(3)=m_name%blk_size1
+      C_data(4)=m_name%blk_size2
+    end if
+
+    my_keep_sparsity=.false.
+    if(present(keep_sparsity)) my_keep_sparsity=keep_sparsity
+    if((m_name%dim1 .ne. C_data(1)) .or. (m_name%dim2 .ne. C_data(2)) &
+        .or. (m_name%blk_size1 .ne. C_data(3)) .or. (m_name%blk_size2 .ne. C_data(4)) &
+        .or. my_keep_sparsity) then
+      inquire(file=filepath,exist=file_exist)
+      if(file_exist) then
+        if (.not. C_restart%is_initialized) call m_allocate(C_restart,C_data(1),C_data(2),&
+          C_data(3),C_data(4),label='pdcsr',use2D=m_name%Use2D)
+        call dbcsr_binary_read(filepath,C_restart%dbcsr_dist,ms_dbcsr_group,C_restart%dbcsr_mat)
+        if(my_keep_sparsity) then
+          call dbcsr_complete_redistribute(C_restart%dbcsr_mat,m_name%dbcsr_mat,&
+            keep_sparsity=my_keep_sparsity)
+        else
+          call dbcsr_complete_redistribute(C_restart%dbcsr_mat,m_name%dbcsr_mat)
+        end if
+        if(C_restart%is_initialized) call m_deallocate(C_restart)
+      end if
+    else
+      inquire(file=filepath,exist=file_exist)
+      if(file_exist) then
+        call dbcsr_binary_read(filepath,m_name%dbcsr_dist,ms_dbcsr_group,m_name%dbcsr_mat)
+      end if
+    end if
+
+  end subroutine ms_dbcsr_read
 #endif
 
 end module MatrixSwitch
